@@ -12,7 +12,7 @@ export type Tool = {
 
 export const TOOLS: Tool[] = [
   { slug: "grab", name: "Grab from X", description: "Paste an X post link and get its GIF.", href: "/", status: "live" },
-  { slug: "convert", name: "Upload & convert", description: "Turn a GIF or video into GIF, MP4, WebM or WebP.", href: "/tools", status: "soon" },
+  { slug: "convert", name: "Upload & convert", description: "Turn a GIF or video into GIF, MP4, WebM or WebP.", href: "/tools/convert", status: "live" },
   { slug: "compress", name: "Compress & resize", description: "Shrink a GIF to fit X, Discord or any size limit.", href: "/tools", status: "soon" },
   { slug: "speed", name: "Speed & reverse", description: "Speed up, slow down, reverse or boomerang a GIF.", href: "/tools", status: "soon" },
   { slug: "trim", name: "Trim", description: "Cut a GIF down to the best moment.", href: "/tools", status: "soon" },

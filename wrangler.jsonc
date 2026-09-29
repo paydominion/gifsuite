@@ -12,6 +12,7 @@
   "vars": {
     "MAX_SOURCE_MB": "50",
     "MAX_DURATION_S": "60",
+    "MAX_UPLOAD_MB": "25",
     "AUTO_HIDE_REPORTS": "5"
   },
   "d1_databases": [
@@ -24,7 +25,10 @@
   ],
   "durable_objects": { "bindings": [{ "name": "PROCESSOR", "class_name": "MediaProcessor" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["MediaProcessor"] }],
-  "ratelimits": [{ "name": "GRAB_LIMITER", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }],
+  "ratelimits": [
+    { "name": "GRAB_LIMITER", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } },
+    { "name": "UPLOAD_LIMITER", "namespace_id": "1003", "simple": { "limit": 20, "period": 60 } }
+  ],
 
   "env": {
     // ── Staging: same setup, separate data, on a staging subdomain ─────────────
@@ -32,6 +36,7 @@
       "vars": {
         "MAX_SOURCE_MB": "50",
         "MAX_DURATION_S": "60",
+        "MAX_UPLOAD_MB": "25",
         "AUTO_HIDE_REPORTS": "5"
       },
       "d1_databases": [
@@ -42,7 +47,10 @@
         { "class_name": "MediaProcessor", "image": "./processor/Dockerfile", "max_instances": 2, "instance_type": "standard-1" }
       ],
       "durable_objects": { "bindings": [{ "name": "PROCESSOR", "class_name": "MediaProcessor" }] },
-      "ratelimits": [{ "name": "GRAB_LIMITER", "namespace_id": "1002", "simple": { "limit": 10, "period": 60 } }]
+      "ratelimits": [
+        { "name": "GRAB_LIMITER", "namespace_id": "1002", "simple": { "limit": 10, "period": 60 } },
+        { "name": "UPLOAD_LIMITER", "namespace_id": "1004", "simple": { "limit": 20, "period": 60 } }
+      ]
     },
 
     // ── Dev: `npm run dev` on your Mac. Real X, local processor, local D1/R2, no Docker. ──
@@ -53,6 +61,7 @@
         "PROCESSOR_URL": "http://127.0.0.1:3297",
         "MAX_SOURCE_MB": "50",
         "MAX_DURATION_S": "60",
+        "MAX_UPLOAD_MB": "25",
         "AUTO_HIDE_REPORTS": "5"
       },
       "d1_databases": [
@@ -73,7 +82,8 @@
         "TRUST_FORWARDED_FOR": "1",
         "AUTO_HIDE_REPORTS": "3",
         "MAX_SOURCE_MB": "50",
-        "MAX_DURATION_S": "60"
+        "MAX_DURATION_S": "60",
+        "MAX_UPLOAD_MB": "3"
       },
       "d1_databases": [
         { "binding": "DB", "database_name": "gifsuite-test", "database_id": "test", "migrations_dir": "migrations" }

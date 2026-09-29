@@ -10,19 +10,26 @@ const ORIGIN = `http://127.0.0.1:${PORT}`;
 const FIXTURES = path.join(import.meta.dirname, "..", ".fixtures");
 
 // Small generated clips, so no binary files live in git.
+const lavfi = (source, seconds, ...encode) => ["-f", "lavfi", "-i", source, "-t", String(seconds), ...encode];
+const h264 = ["-pix_fmt", "yuv420p", "-c:v", "libx264"];
 const CLIPS = {
-  "cat.mp4": ["testsrc=size=320x240:rate=10", 2],
-  "dog.mp4": ["testsrc2=size=480x360:rate=25", 2],
-  "big.mp4": ["mandelbrot=size=640x480:rate=30", 3],
+  // Served by the fake X.
+  "cat.mp4": lavfi("testsrc=size=320x240:rate=10", 2, ...h264),
+  "dog.mp4": lavfi("testsrc2=size=480x360:rate=25", 2, ...h264),
+  "big.mp4": lavfi("mandelbrot=size=640x480:rate=30", 3, ...h264),
+  // Uploads for the convert tests.
+  "odd.gif": lavfi("testsrc=size=301x201:rate=10", 2),
+  "clip.webm": lavfi("testsrc=size=320x240:rate=10", 2, "-c:v", "libvpx-vp9"),
+  "long.mp4": lavfi("color=c=blue:size=64x64:rate=1", 70, ...h264),
 };
 fs.mkdirSync(FIXTURES, { recursive: true });
-for (const [name, [source, seconds]] of Object.entries(CLIPS)) {
+for (const [name, args] of Object.entries(CLIPS)) {
   const file = path.join(FIXTURES, name);
-  if (!fs.existsSync(file)) {
-    execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", source,
-      "-t", String(seconds), "-pix_fmt", "yuv420p", "-c:v", "libx264", "-y", file]);
-  }
+  if (!fs.existsSync(file)) execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", ...args, "-y", file]);
 }
+// Hostile upload: a playlist pointing at the fake X and a local file, dressed up with a .gif name.
+fs.writeFileSync(path.join(FIXTURES, "evil.gif"),
+  `#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\n${"http://127.0.0.1:" + PORT}/__leak\n#EXTINF:1,\nfile:///etc/passwd\n#EXT-X-ENDLIST\n`);
 
 const gif = (clip, w, h, ms) => ({
   type: "animated_gif",
@@ -47,6 +54,7 @@ const POSTS = {
   "600": post("600", "longvid", "way too long", [gif("cat.mp4", 320, 240, 90_000)]),
 };
 const deleted = new Set();
+let leaks = 0;
 
 http
   .createServer((req, res) => {
@@ -77,6 +85,12 @@ http
       deleted.add(url.searchParams.get("id"));
       return res.writeHead(204).end();
     }
+    // Counts requests that a hostile upload tricked the processor into making (must stay 0).
+    if (url.pathname === "/__leak") {
+      leaks++;
+      return res.writeHead(200).end("leaked");
+    }
+    if (url.pathname === "/__leaks") return res.writeHead(200, { "content-type": "application/json" }).end(String(leaks));
     if (url.pathname === "/health") return res.writeHead(200).end("ok");
     res.writeHead(404).end();
   })

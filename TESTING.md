@@ -29,6 +29,8 @@
   | 405 | an unavailable post |
   | 500 | X being down |
   | 600 | a video that's too long |
+
+  It also generates upload files for the convert tests: `odd.gif` (301×201), `clip.webm`, `long.mp4` (70s), and `evil.gif`, a playlist pretending to be a GIF. Any request that playlist manages to trigger is counted at `/__leaks`, which must stay 0.
   | any other ID | a post that doesn't exist |
 
 - The test-only settings live in the `test` environment of `wrangler.jsonc`: `X_SYNDICATION_URL`, `X_MEDIA_HOSTS`, `PROCESSOR_URL`, `TRUST_FORWARDED_FOR` and a test admin token. Production never sets them.
@@ -44,7 +46,7 @@
 ## Human test checklists
 
 ### 0.1 Test system
-- [ ] Run `npm run check:all` in `~/gifsuite`. It should end with `58 passed` (unit), `58 passed` (API + browser) and "client files clean", with no failures.
+- [ ] Run `npm run check:all` in `~/gifsuite`. It should end with `71 passed` (unit), `74 passed` (API + browser) and "client files clean", with no failures.
 - [ ] Run `npx playwright test --project=e2e --headed` and watch Chrome grab a GIF, download it, and open the X post box.
 - [ ] Optional: in `processor/presets.mjs`, change `maxWidth: 320` to `300` and run `npm run check`. It should **fail**. Then change it back.
 - [ ] `npm run dev` on port 3217 still works normally while tests run.
@@ -68,6 +70,13 @@
 - [ ] **Tools** menu: opens on click, closes with Escape or by clicking elsewhere, and "See all tools" goes to `/tools`.
 - [ ] Click **Grab GIF** with the box empty: it says "Paste an X post link first."
 - [ ] On your phone, the home page and a GIF page fit the screen with no sideways scrolling.
+
+### 1. Upload & convert
+- [ ] Tools → Upload & convert. Drop in a GIF from your Mac, pick MP4 + Low, and click **Convert & download**. The file downloads and plays.
+- [ ] Try a phone video (MOV) → GIF, and a WebM → WebP. The preview shows the result.
+- [ ] Rename a text file to `something.gif` and upload it: you get "isn't a GIF, MP4, MOV or WebM".
+- [ ] Copy an image file in Finder and press ⌘V on the page: it's picked up like a dropped file.
+- [ ] Converted files never appear on the timeline (uploads are private and not stored).
 
 ### Current app (regression, check before each launch)
 - [ ] Paste an X GIF link → the GIF page opens, the video plays, and the author is shown.

@@ -39,16 +39,25 @@ const post = (body: ArrayBuffer): RequestInit => ({
   headers: { "content-type": "application/octet-stream" },
 });
 
-export async function probe(video: ArrayBuffer): Promise<Probe> {
-  return (await call("/probe", post(video))).json() as Promise<Probe>;
+/** The processor's input container: gif, mov (MP4/MOV) or matroska (WebM). */
+export type Input = "gif" | "mov" | "matroska";
+
+export async function probe(video: ArrayBuffer, input: Input = "mov"): Promise<Probe> {
+  return (await call(`/probe?input=${input}`, post(video))).json() as Promise<Probe>;
 }
 
 export async function render(video: ArrayBuffer, name: "poster" | "preview"): Promise<ArrayBuffer> {
   return (await call(`/render?name=${name}`, post(video))).arrayBuffer();
 }
 
-export async function convert(video: ArrayBuffer, format: string, quality: string): Promise<ArrayBuffer> {
-  return (await call(`/convert?format=${format}&quality=${quality}`, post(video))).arrayBuffer();
+export async function convert(
+  video: ArrayBuffer,
+  format: string,
+  quality: string,
+  { input = "mov", maxDurationMs }: { input?: Input; maxDurationMs?: number } = {},
+): Promise<ArrayBuffer> {
+  const limit = maxDurationMs ? `&maxDurationMs=${maxDurationMs}` : "";
+  return (await call(`/convert?input=${input}&format=${format}&quality=${quality}${limit}`, post(video))).arrayBuffer();
 }
 
 /** yt-dlp's metadata for a post's media slot (1-based), used when X's embed endpoint fails. */

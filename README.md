@@ -27,7 +27,8 @@ Plain settings live in `wrangler.jsonc` under `vars`, per environment (`dev`, `t
 | `ADMIN_TOKEN` | **secret** (24+ chars) | Enables `POST /api/admin/hide` (header `x-admin-token`) |
 | `VISITOR_SALT` | **secret** | Used to count unique visitors without storing IPs |
 | `AUTO_HIDE_REPORTS` | var | Distinct reporters before a GIF is hidden (default 5) |
-| `MAX_SOURCE_MB` / `MAX_DURATION_S` | var | Limits on grabbed videos (default 50 / 60) |
+| `MAX_SOURCE_MB` / `MAX_DURATION_S` | var | Limits on grabbed videos (default 50 / 60); the duration limit also applies to uploads |
+| `MAX_UPLOAD_MB` | var | Largest file the upload tools accept (default 25) |
 | `PROCESSOR_URL` | var, dev/test only | Where the local media processor listens. In production the Container is used instead. |
 
 ## How it works
@@ -37,6 +38,7 @@ Plain settings live in `wrangler.jsonc` under `vars`, per environment (`dev`, `t
 | X fetcher | `lib/x/fetchTweetMedia.ts` | Resolves a post link to its MP4 through X's public embed endpoint, falling back to yt-dlp in the processor |
 | Grab pipeline | `lib/ingest.ts` | Downloads the MP4, has the processor probe it and make the poster and timeline preview, stores everything in R2, and saves the D1 row. Deduplicated per post and media slot. |
 | Converter | `lib/media/convert.ts` | Makes each format and quality on first request and keeps it in R2 |
+| Upload & convert | `app/api/convert/route.ts` | Converts an uploaded file and returns it. Checks the type from the file's bytes (`lib/media/sniff.ts`); nothing is stored. |
 | Media processor | `processor/` | The only place ffmpeg, gif2webp and yt-dlp run. A Cloudflare Container in production, a plain Node process locally. Presets are in `processor/presets.mjs`. |
 | Events | `events` table | Records grabs, views, downloads, shares and reports, which will feed the Trending page |
 

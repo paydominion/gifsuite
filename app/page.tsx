@@ -30,15 +30,28 @@ export default async function Home() {
           <Link href="/tools" className="text-sm font-semibold text-muted hover:text-fg">All tools →</Link>
         </div>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {moreTools.map((tool) => (
-            <li key={tool.slug} className={`${cardClass} p-4`}>
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold">{tool.name}</h3>
-                <Badge>Soon</Badge>
-              </div>
-              <p className="mt-1 text-xs text-muted">{tool.description}</p>
-            </li>
-          ))}
+          {moreTools.map((tool) => {
+            const body = (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold">{tool.name}</h3>
+                  {tool.status === "live" ? <Badge tone="accent">New</Badge> : <Badge>Soon</Badge>}
+                </div>
+                <p className="mt-1 text-xs text-muted">{tool.description}</p>
+              </>
+            );
+            return (
+              <li key={tool.slug}>
+                {tool.status === "live" ? (
+                  <Link href={tool.href} className={`${cardClass} block h-full p-4 transition-colors hover:border-accent`}>
+                    {body}
+                  </Link>
+                ) : (
+                  <div className={`${cardClass} h-full p-4`}>{body}</div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </section>
 

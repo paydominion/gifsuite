@@ -58,3 +58,11 @@ export async function limitGrab(req: Request): Promise<boolean> {
   if (limiter) return (await limiter.limit({ key })).success;
   return rateLimit(key, 10, 60_000);
 }
+
+/** 20 uploads per minute per visitor for the file tools (convert, and later the others). */
+export async function limitUpload(req: Request): Promise<boolean> {
+  const key = `upload:${clientIp(req)}`;
+  const limiter = bindings().UPLOAD_LIMITER;
+  if (limiter) return (await limiter.limit({ key })).success;
+  return rateLimit(key, 20, 60_000);
+}

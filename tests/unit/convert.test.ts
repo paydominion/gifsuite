@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ffmpegArgs, isFormat, isQuality } from "../../processor/presets.mjs";
+import { ffmpegArgs, inputArgs, isFormat, isInput, isQuality } from "../../processor/presets.mjs";
 
 const vf = (args: string[]) => args[args.indexOf("-vf") + 1];
 
@@ -30,9 +30,27 @@ describe("ffmpegArgs", () => {
 
   it("keeps the original MP4 untouched at high quality", () => {
     expect(ffmpegArgs("mp4", "high", 30, "in", "out")).toEqual(
-      ["-i", "in", "-c", "copy", "-movflags", "+faststart", "-f", "mp4", "out"],
+      [...inputArgs("mov", "in"), "-c", "copy", "-movflags", "+faststart", "-f", "mp4", "out"],
     );
     expect(ffmpegArgs("mp4", "low", 30, "in", "out")).toContain("libx264");
+  });
+
+  it("re-encodes a GIF to MP4 even at high quality, with even dimensions", () => {
+    const args = ffmpegArgs("mp4", "high", 10, "in", "out", "gif");
+    expect(args).toContain("libx264");
+    expect(vf(args)).toContain("trunc(min(1080,iw)/2)*2");
+  });
+
+  it("locks every input to one container and local files only", () => {
+    for (const input of ["gif", "mov", "matroska"] as const) {
+      for (const f of ["gif", "mp4", "webm"] as const) {
+        const args = ffmpegArgs(f, "medium", 30, "in", "out", input);
+        const i = args.indexOf("-i");
+        expect(args.slice(i - 4, i + 2)).toEqual(["-protocol_whitelist", "file", "-f", input, "-i", "in"]);
+      }
+    }
+    expect(["gif", "mov", "matroska"].every(isInput)).toBe(true);
+    expect(["hls", "concat", "lavfi", "http", "__proto__"].some(isInput)).toBe(false);
   });
 
   it("always forces the output container, so a file name can't pick a format", () => {
