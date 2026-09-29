@@ -6,14 +6,14 @@ export const dynamic = "force-dynamic";
 
 const PAGE = 24;
 
-export default function Home() {
-  const items = listGifs(PAGE);
+export default async function Home() {
+  const items = await listGifs(PAGE);
   return (
     <div className="space-y-10">
       <section className="mx-auto max-w-2xl space-y-4 pt-6 text-center">
         <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">Grab any GIF from X.</h1>
         <p className="text-muted">
-          Paste a post link. Download it as GIF, MP4, WebM or WebP, and share it to X, WhatsApp and everywhere else.
+          Paste a post link. Download it as GIF, MP4, WebM or WebP in any quality, and post it back to X.
         </p>
         <GrabForm />
       </section>

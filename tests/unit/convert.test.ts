@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ffmpegArgs, isFormat, isQuality } from "@/lib/media/convert";
+import { ffmpegArgs, isFormat, isQuality } from "../../processor/presets.mjs";
 
 const vf = (args: string[]) => args[args.indexOf("-vf") + 1];
 

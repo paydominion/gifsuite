@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { countDistinctReporters, getGif, recordEvent, setHidden } from "@/db/gifs";
 import { clientIp, rateLimit, visitorHash } from "@/lib/request";
+import { setting } from "@/lib/cloudflare";
 
 const CLIENT_EVENTS = new Set(["view", "share", "report"]);
-const AUTO_HIDE_REPORTS = Number(process.env.AUTO_HIDE_REPORTS ?? 5);
+// Read per request: on Cloudflare, settings are available once a request is being handled.
+const AUTO_HIDE_REPORTS = () => Number(setting("AUTO_HIDE_REPORTS") ?? 5);
 
 export async function POST(req: Request) {
   // sendBeacon posts text/plain, so parse the body ourselves.
@@ -16,13 +18,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "bad event" }, { status: 400 });
   }
   if (!rateLimit(`event:${clientIp(req)}`, 120, 60_000)) return new NextResponse(null, { status: 429 });
-  if (!getGif(body.gifId)) return NextResponse.json({ error: "not found" }, { status: 404 });
+  if (!(await getGif(body.gifId))) return NextResponse.json({ error: "not found" }, { status: 404 });
 
   const detail = body.detail?.slice(0, 40);
-  recordEvent(body.gifId, body.type as "view" | "share" | "report", detail, visitorHash(req));
+  await recordEvent(body.gifId, body.type as "view" | "share" | "report", detail, visitorHash(req));
 
-  if (body.type === "report" && countDistinctReporters(body.gifId) >= AUTO_HIDE_REPORTS) {
-    setHidden(body.gifId, true);
+  if (body.type === "report" && (await countDistinctReporters(body.gifId)) >= AUTO_HIDE_REPORTS()) {
+    await setHidden(body.gifId, true);
   }
   return new NextResponse(null, { status: 204 });
 }

@@ -15,6 +15,10 @@ const eslintConfig = defineConfig([
     // Test run output
     ".next-test/**",
     ".next-leakcheck/**",
+    // Cloudflare build output and generated types
+    ".open-next/**",
+    ".wrangler/**",
+    "cloudflare-env.d.ts",
     ".test-data/**",
     "test-results/**",
     "playwright-report/**",

@@ -1,6 +1,5 @@
 import "server-only";
-import crypto from "node:crypto";
-import { db } from "./index";
+import { bindings } from "@/lib/cloudflare";
 
 export type Gif = {
   id: string;
@@ -33,7 +32,9 @@ const COLUMNS = `
   tweet_retweets AS tweetRetweets, width, height, duration_ms AS durationMs,
   has_audio AS hasAudio, created_at AS createdAt, hidden, tags, ai_caption AS aiCaption`;
 
-function toGif(row: Record<string, unknown> | undefined): Gif | null {
+const db = () => bindings().DB;
+
+function toGif(row: Record<string, unknown> | null): Gif | null {
   if (!row) return null;
   return {
     ...(row as Omit<Gif, "hasAudio" | "hidden" | "tags">),
@@ -45,64 +46,70 @@ function toGif(row: Record<string, unknown> | undefined): Gif | null {
 
 export function newGifId(): string {
   const alphabet = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const bytes = crypto.randomBytes(10);
+  const bytes = crypto.getRandomValues(new Uint8Array(10));
   return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
 }
 
-export function getGif(id: string): Gif | null {
-  return toGif(db.prepare(`SELECT ${COLUMNS} FROM gifs WHERE id = ?`).get(id));
+export async function getGif(id: string): Promise<Gif | null> {
+  return toGif(await db().prepare(`SELECT ${COLUMNS} FROM gifs WHERE id = ?`).bind(id).first());
 }
 
-export function findGifByTweet(tweetId: string, mediaIndex: number): Gif | null {
+export async function findGifByTweet(tweetId: string, mediaIndex: number): Promise<Gif | null> {
   return toGif(
-    db
+    await db()
       .prepare(`SELECT ${COLUMNS} FROM gifs WHERE tweet_id = ? AND media_index = ?`)
-      .get(tweetId, mediaIndex),
+      .bind(tweetId, mediaIndex)
+      .first(),
   );
 }
 
 /** Newest-first public timeline. `before` is the createdAt cursor of the last item seen. */
-export function listGifs(limit: number, before?: number): Gif[] {
-  const rows = db
+export async function listGifs(limit: number, before?: number): Promise<Gif[]> {
+  const { results } = await db()
     .prepare(
       `SELECT ${COLUMNS} FROM gifs WHERE hidden = 0 AND created_at < ?
        ORDER BY created_at DESC LIMIT ?`,
     )
-    .all(before ?? Number.MAX_SAFE_INTEGER, limit);
-  return rows.map((r: Record<string, unknown>) => toGif(r)!);
+    .bind(before ?? Number.MAX_SAFE_INTEGER, limit)
+    .all<Record<string, unknown>>();
+  return results.map((r) => toGif(r)!);
 }
 
 export type NewGif = Omit<Gif, "createdAt" | "hidden" | "tags" | "aiCaption">;
 
-export function insertGif(g: NewGif): Gif {
-  db.prepare(
-    `INSERT INTO gifs (id, tweet_id, media_index, media_type, source_url, tweet_url,
-       author_handle, author_name, tweet_text, tweet_likes, tweet_retweets,
-       width, height, duration_ms, has_audio, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run(
-    g.id, g.tweetId, g.mediaIndex, g.mediaType, g.sourceUrl, g.tweetUrl,
-    g.authorHandle, g.authorName, g.tweetText, g.tweetLikes, g.tweetRetweets,
-    g.width, g.height, g.durationMs, g.hasAudio ? 1 : 0, Date.now(),
-  );
-  return getGif(g.id)!;
-}
-
-export function setHidden(id: string, hidden: boolean): boolean {
-  return db.prepare(`UPDATE gifs SET hidden = ? WHERE id = ?`).run(hidden ? 1 : 0, id).changes > 0;
-}
-
-export function recordEvent(gifId: string, type: EventType, detail?: string, visitor?: string) {
-  db.prepare(
-    `INSERT INTO events (gif_id, type, detail, visitor, created_at) VALUES (?, ?, ?, ?, ?)`,
-  ).run(gifId, type, detail ?? null, visitor ?? null, Date.now());
-}
-
-export function countDistinctReporters(gifId: string): number {
-  const row = db
+export async function insertGif(g: NewGif): Promise<Gif> {
+  await db()
     .prepare(
-      `SELECT COUNT(DISTINCT visitor) AS n FROM events WHERE gif_id = ? AND type = 'report'`,
+      `INSERT INTO gifs (id, tweet_id, media_index, media_type, source_url, tweet_url,
+         author_handle, author_name, tweet_text, tweet_likes, tweet_retweets,
+         width, height, duration_ms, has_audio, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .get(gifId) as { n: number };
-  return row.n;
+    .bind(
+      g.id, g.tweetId, g.mediaIndex, g.mediaType, g.sourceUrl, g.tweetUrl,
+      g.authorHandle, g.authorName, g.tweetText, g.tweetLikes, g.tweetRetweets,
+      g.width, g.height, g.durationMs, g.hasAudio ? 1 : 0, Date.now(),
+    )
+    .run();
+  return (await getGif(g.id))!;
+}
+
+export async function setHidden(id: string, hidden: boolean): Promise<boolean> {
+  const { meta } = await db().prepare(`UPDATE gifs SET hidden = ? WHERE id = ?`).bind(hidden ? 1 : 0, id).run();
+  return meta.changes > 0;
+}
+
+export async function recordEvent(gifId: string, type: EventType, detail?: string, visitor?: string) {
+  await db()
+    .prepare(`INSERT INTO events (gif_id, type, detail, visitor, created_at) VALUES (?, ?, ?, ?, ?)`)
+    .bind(gifId, type, detail ?? null, visitor ?? null, Date.now())
+    .run();
+}
+
+export async function countDistinctReporters(gifId: string): Promise<number> {
+  const row = await db()
+    .prepare(`SELECT COUNT(DISTINCT visitor) AS n FROM events WHERE gif_id = ? AND type = 'report'`)
+    .bind(gifId)
+    .first<{ n: number }>();
+  return row?.n ?? 0;
 }

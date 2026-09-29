@@ -19,7 +19,7 @@ export function GrabForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ url: link }),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
       if (!res.ok) throw new Error(data.error ?? "Something went wrong.");
       router.push(`/g/${data.id}`);
     } catch (err) {

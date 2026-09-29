@@ -4,7 +4,6 @@
 import { execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 
 const DIST = ".next-leakcheck";
@@ -12,13 +11,17 @@ const SECRETS = ["ADMIN_TOKEN", "VISITOR_SALT"];
 const markers = Object.fromEntries(SECRETS.map((name) => [name, `LEAKCHECK_${name}_${crypto.randomBytes(8).toString("hex")}`]));
 
 // Code that only belongs on the server. Seeing it in the browser bundle means a server module leaked.
-const SERVER_ONLY = ["node:sqlite", "child_process", "timingSafeEqual", "cdn.syndication.twimg.com", "gif2webp"];
+// Whole words only: React's own code has names like `targetContainers`.
+const SERVER_ONLY = [
+  "timingSafeEqual", "cdn.syndication.twimg.com", "getContainer", "PROCESSOR_URL",
+  "X_SYNDICATION_URL", "TRUST_FORWARDED_FOR", "INSERT INTO gifs",
+].map((word) => [word, new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`)]);
 
 console.log("Building with marker secrets…");
 fs.rmSync(DIST, { recursive: true, force: true });
 execFileSync("npx", ["next", "build"], {
   stdio: ["ignore", "ignore", "inherit"],
-  env: { ...process.env, ...markers, NEXT_DIST_DIR: DIST, DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), "leakcheck-")) },
+  env: { ...process.env, ...markers, NEXT_DIST_DIR: DIST },
 });
 
 const clientDir = path.join(DIST, "static");
@@ -33,7 +36,7 @@ for (const file of fs.readdirSync(clientDir, { recursive: true })) {
     if (text.includes(marker)) problems.push(`${file}: contains the value of ${name}`);
     if (text.includes(name)) problems.push(`${file}: mentions ${name}`);
   }
-  for (const needle of SERVER_ONLY) if (text.includes(needle)) problems.push(`${file}: contains server-only code (${needle})`);
+  for (const [word, pattern] of SERVER_ONLY) if (pattern.test(text)) problems.push(`${file}: contains server-only code (${word})`);
 }
 fs.rmSync(DIST, { recursive: true, force: true });
 

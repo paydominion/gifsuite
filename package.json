@@ -3,9 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/dev.mjs",
     "build": "next build",
-    "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
     "test:api": "playwright test --project=api",
@@ -15,9 +14,15 @@
     "typecheck": "next typegen >/dev/null && tsc --noEmit",
     "prepare": "git config core.hooksPath .githooks",
     "scan:secrets": "node scripts/scan-secrets.mjs",
-    "check:leaks": "node scripts/check-bundle-leaks.mjs"
+    "check:leaks": "node scripts/check-bundle-leaks.mjs",
+    "cf-types": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "deploy:staging": "opennextjs-cloudflare build && wrangler d1 migrations apply DB --remote --env staging && wrangler deploy --env staging",
+    "deploy:production": "opennextjs-cloudflare build && wrangler d1 migrations apply DB --remote && wrangler deploy",
+    "build:cloudflare": "opennextjs-cloudflare build"
   },
   "dependencies": {
+    "@cloudflare/containers": "^0.3.7",
+    "@opennextjs/cloudflare": "^1.20.7",
     "next": "16.3.6",
     "react": "19.2.8",
     "react-dom": "19.2.8"
@@ -28,10 +33,12 @@
     "@types/node": "^25.9.8",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.27.7",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "wrangler": "^4.143.0"
   }
 }

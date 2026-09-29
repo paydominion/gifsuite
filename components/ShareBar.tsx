@@ -15,8 +15,8 @@ export function ShareBar({ gifId, authorHandle, pageUrl }: Props) {
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/gif/${gifId}/origin`)
-      .then((res) => res.json())
-      .then((data: { available: boolean | null; mediaUrl: string | null }) => {
+      .then((res) => res.json() as Promise<{ available: boolean | null; mediaUrl: string | null }>)
+      .then((data) => {
         if (cancelled) return;
         setOrigin(data.available && data.mediaUrl ? { status: "available", mediaUrl: data.mediaUrl } : { status: "gone" });
       })

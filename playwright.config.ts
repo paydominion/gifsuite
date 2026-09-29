@@ -1,9 +1,12 @@
 import { defineConfig } from "@playwright/test";
 
-// The test app gets its own port, build folder and data folder, and talks to a
-// local fake X, so it never touches the real X or the data from `npm run dev`.
+// The test app runs in Cloudflare's own Worker runtime (`wrangler dev --env test`) with local
+// D1 and R2 in .test-data, the media processor as a plain process, and a fake X, so tests
+// never touch the real X, Cloudflare, or the data from `npm run dev`.
 const APP_PORT = 3299;
 const FAKE_X_PORT = 3298;
+const PROCESSOR_PORT = 3296; // not 3297, which `npm run dev` uses
+const STATE = ".test-data/wrangler";
 
 export default defineConfig({
   testDir: "tests",
@@ -27,20 +30,21 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
+      command: "node processor/server.mjs",
+      url: `http://127.0.0.1:${PROCESSOR_PORT}/health`,
+      // The yt-dlp fallback always fails in tests, so "X is down" is predictable.
+      env: { PORT: String(PROCESSOR_PORT), HOST: "127.0.0.1", YTDLP_PATH: "false" },
+    },
+    {
       // A production build, so tests check exactly what gets deployed (including the strict CSP).
-      command: `rm -rf .test-data && npx next build && npx next start -p ${APP_PORT}`,
+      command: [
+        "rm -rf .test-data",
+        "npx opennextjs-cloudflare build",
+        `npx wrangler d1 migrations apply DB --local --env test --persist-to ${STATE}`,
+        `npx wrangler dev --env test --port ${APP_PORT} --ip 127.0.0.1 --persist-to ${STATE} --log-level warn`,
+      ].join(" && "),
       url: `http://localhost:${APP_PORT}/api/gifs`,
-      timeout: 300_000,
-      env: {
-        DATA_DIR: ".test-data",
-        NEXT_DIST_DIR: ".next-test",
-        X_SYNDICATION_URL: `http://127.0.0.1:${FAKE_X_PORT}/tweet-result`,
-        X_MEDIA_HOSTS: `127.0.0.1:${FAKE_X_PORT}`,
-        YTDLP_PATH: "false", // the fallback always fails in tests, so "X is down" is predictable
-        ADMIN_TOKEN: "test-admin-token-not-a-real-secret", // test-only value
-        TRUST_FORWARDED_FOR: "1", // lets tests act as many visitors via x-forwarded-for
-        AUTO_HIDE_REPORTS: "3",
-      },
+      timeout: 600_000,
     },
   ],
 });

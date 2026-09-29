@@ -6,17 +6,18 @@
 |---|---|---|
 | `npm test` | Unit tests only (Vitest): URL parsing, conversion settings, ranges, rate limits, secret scanner | ~1s |
 | `npm run scan:secrets` | Scans every file in the repo for keys, tokens and `.env` files | ~1s |
-| `npm run check` | Secret scan + typecheck + lint + unit tests + API tests. **Run before every commit.** | ~1 min |
-| `npm run test:e2e` | Browser tests: clicks through the real site in Chrome (headless) | ~1 min |
+| `npm run check` | Secret scan + typecheck + lint + unit tests + API tests. **Run before every commit.** | ~3 min |
+| `npm run test:e2e` | Browser tests: clicks through the real site in Chrome (headless) | ~3 min |
 | `npm run check:leaks` | Builds the site with marker secrets and checks the browser bundle for leaks | ~30s |
-| `npm run check:all` | Everything above | ~2 min |
+| `npm run check:all` | Everything above | ~6 min |
 
 `npx playwright test --project=e2e --headed` shows the browser while the tests run.
 
 ## How it works
 
 - **Unit tests** (`tests/unit`) check small pieces of logic with no server.
-- **API tests** (`tests/api`) and **browser tests** (`tests/e2e`) start their own **production build** of the app on port **3299**, so they check exactly what gets deployed, including the strict Content Security Policy. It uses its own data folder (`.test-data`, wiped on every run) and its own build folder (`.next-test`), so it never touches your real data or your `npm run dev` server.
+- **API tests** (`tests/api`) and **browser tests** (`tests/e2e`) build the app exactly as it deploys (`opennextjs-cloudflare build`) and run it in **Cloudflare's own Worker runtime** (`wrangler dev --env test`) on port **3299**, with a local D1 database and R2 bucket in `.test-data` (wiped every run). So they check what gets deployed, including the strict Content Security Policy, without touching Cloudflare, your real data or your `npm run dev` server.
+- A test copy of the **media processor** runs on port **3296** (`npm run dev` uses 3297).
 - **Fake X** (`tests/fake-x/server.mjs`, port **3298**) stands in for X. It serves test posts and small videos made with ffmpeg, so tests never call the real X and give the same result every time. Its test posts:
 
   | Post | Behaves like |
@@ -30,7 +31,7 @@
   | 600 | a video that's too long |
   | any other ID | a post that doesn't exist |
 
-- The only test-specific switches are environment variables set in `playwright.config.ts`: `X_SYNDICATION_URL`, `X_MEDIA_HOSTS`, `DATA_DIR`, `NEXT_DIST_DIR`. Production never sets them.
+- The test-only settings live in the `test` environment of `wrangler.jsonc`: `X_SYNDICATION_URL`, `X_MEDIA_HOSTS`, `PROCESSOR_URL`, `TRUST_FORWARDED_FOR` and a test admin token. Production never sets them.
 
 ## Rules for new features
 
@@ -43,9 +44,9 @@
 ## Human test checklists
 
 ### 0.1 Test system
-- [ ] Run `npm run check:all` in `~/gifsuite`. It should end with `42 passed`, then `49 passed`, and no failures.
+- [ ] Run `npm run check:all` in `~/gifsuite`. It should end with `58 passed` (unit), `53 passed` (API + browser) and "client files clean", with no failures.
 - [ ] Run `npx playwright test --project=e2e --headed` and watch Chrome grab a GIF, download it, and open the X post box.
-- [ ] Optional: in `lib/media/convert.ts`, change `maxWidth: 320` to `300` and run `npm run check`. It should **fail**. Then change it back.
+- [ ] Optional: in `processor/presets.mjs`, change `maxWidth: 320` to `300` and run `npm run check`. It should **fail**. Then change it back.
 - [ ] `npm run dev` on port 3217 still works normally while tests run.
 
 ### 0.2 Security baseline
@@ -53,6 +54,13 @@
 - [ ] `cp .env.example .env.local`, fill in values, and check `git status` doesn't list `.env.local`.
 - [ ] Open the site and check the browser DevTools console shows no "Content Security Policy" errors while you grab, download and post.
 - [ ] `npm run check:leaks` ends with "client files clean".
+
+### 0.3 Move to Cloudflare
+- [ ] `npm run dev` starts **both** the processor and the site, and http://localhost:3217 loads.
+- [ ] Grab a real X GIF link, then download it as Low GIF and High WebP. Both files open.
+- [ ] Stop and restart `npm run dev`: the GIF is still on the timeline (local D1 and R2 keep data in `.wrangler/`).
+- [ ] Docker Desktop running: `docker build -t gifsuite-processor processor/` succeeds (this is the image Cloudflare runs).
+- [ ] Staging (after your `npx wrangler login` and the steps in `DEPLOY.md`): grab a real X link on `staging.yourdomain.com`.
 
 ### Current app (regression, check before each launch)
 - [ ] Paste an X GIF link → the GIF page opens, the video plays, and the author is shown.

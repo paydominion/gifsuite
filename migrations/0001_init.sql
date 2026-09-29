@@ -1,12 +1,4 @@
-import "server-only";
-import { DatabaseSync } from "node:sqlite";
-import fs from "node:fs";
-import path from "node:path";
-import { DATA_DIR, MEDIA_DIR } from "@/lib/paths";
-
-const SCHEMA = `
-PRAGMA journal_mode = WAL;
-PRAGMA foreign_keys = ON;
+-- GifSuite schema for Cloudflare D1 (SQLite). Applied with `wrangler d1 migrations apply`.
 
 CREATE TABLE IF NOT EXISTS gifs (
   id             TEXT PRIMARY KEY,
@@ -42,18 +34,3 @@ CREATE TABLE IF NOT EXISTS events (
 );
 CREATE INDEX IF NOT EXISTS events_gif_type ON events (gif_id, type);
 CREATE INDEX IF NOT EXISTS events_created ON events (created_at);
-`;
-
-declare global {
-  var __gifsuiteDb: DatabaseSync | undefined;
-}
-
-function open(): DatabaseSync {
-  fs.mkdirSync(MEDIA_DIR, { recursive: true });
-  const db = new DatabaseSync(path.join(DATA_DIR, "gifsuite.db"));
-  db.exec(SCHEMA);
-  return db;
-}
-
-// Reuse one connection across dev hot reloads.
-export const db: DatabaseSync = (globalThis.__gifsuiteDb ??= open());

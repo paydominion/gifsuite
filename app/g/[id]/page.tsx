@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getGif } from "@/db/gifs";
+import { setting } from "@/lib/cloudflare";
 import { DownloadButtons } from "@/components/DownloadButtons";
 import { ShareBar } from "@/components/ShareBar";
 import { ReportButton, ViewTracker } from "@/components/GifActions";
@@ -9,7 +10,8 @@ import { ReportButton, ViewTracker } from "@/components/GifActions";
 export const dynamic = "force-dynamic";
 
 async function siteUrl(): Promise<string> {
-  if (process.env.PUBLIC_BASE_URL) return process.env.PUBLIC_BASE_URL.replace(/\/$/, "");
+  const configured = setting("PUBLIC_BASE_URL");
+  if (configured) return configured.replace(/\/$/, "");
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
   const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
@@ -18,7 +20,7 @@ async function siteUrl(): Promise<string> {
 
 export async function generateMetadata({ params }: PageProps<"/g/[id]">): Promise<Metadata> {
   const { id } = await params;
-  const gif = getGif(id);
+  const gif = await getGif(id);
   if (!gif || gif.hidden) return {};
   const base = await siteUrl();
   const title = gif.tweetText ? `${gif.tweetText.slice(0, 70)} — @${gif.authorHandle}` : `GIF by @${gif.authorHandle}`;
@@ -40,7 +42,7 @@ export async function generateMetadata({ params }: PageProps<"/g/[id]">): Promis
 
 export default async function GifPage({ params }: PageProps<"/g/[id]">) {
   const { id } = await params;
-  const gif = getGif(id);
+  const gif = await getGif(id);
   if (!gif || gif.hidden) notFound();
   const pageUrl = `${await siteUrl()}/g/${id}`;
 

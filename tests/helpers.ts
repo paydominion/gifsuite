@@ -1,4 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
+import fs from "node:fs";
 import path from "node:path";
 import type { APIRequestContext } from "@playwright/test";
 
@@ -27,9 +28,17 @@ export async function deleteOnFakeX(request: APIRequestContext, tweetId: string)
   await request.post(`${FAKE_X}/__delete?id=${tweetId}`);
 }
 
-/** Read-only look at the test server's database, for checking what got recorded. */
+/**
+ * Read-only look at the test server's database, for checking what got recorded.
+ * Wrangler keeps the local D1 database as an SQLite file under .test-data/wrangler.
+ */
 export function testDb(): DatabaseSync {
-  return new DatabaseSync(path.join(process.cwd(), ".test-data", "gifsuite.db"), { readOnly: true });
+  const root = path.join(process.cwd(), ".test-data", "wrangler", "v3", "d1");
+  const file = fs
+    .readdirSync(root, { recursive: true, encoding: "utf8" })
+    .find((f) => f.endsWith(".sqlite") && !f.endsWith("metadata.sqlite"));
+  if (!file) throw new Error(`no local D1 database under ${root}`);
+  return new DatabaseSync(path.join(root, file), { readOnly: true });
 }
 
 export function countEvents(gifId: string, type: string, detail?: string): number {

@@ -1,8 +1,5 @@
 import "server-only";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-
-const execFileAsync = promisify(execFile);
+import { setting } from "@/lib/cloudflare";
 
 export class GrabError extends Error {
   constructor(
@@ -53,8 +50,9 @@ export function parseTweetUrl(input: string): { tweetId: string; mediaSlot: numb
 }
 
 // Overridable only so the test suite can point at a local fake X.
-const SYNDICATION_URL = process.env.X_SYNDICATION_URL ?? "https://cdn.syndication.twimg.com/tweet-result";
-const MEDIA_HOSTS = (process.env.X_MEDIA_HOSTS ?? "video.twimg.com").split(",");
+// Read per call: on Cloudflare, settings are only available while handling a request.
+const syndicationUrl = () => setting("X_SYNDICATION_URL") ?? "https://cdn.syndication.twimg.com/tweet-result";
+const mediaHosts = () => (setting("X_MEDIA_HOSTS") ?? "video.twimg.com").split(",");
 
 // Token scheme used by X's own embed widget (same as the react-tweet package).
 export function syndicationToken(id: string): string {
@@ -85,7 +83,7 @@ function bestMp4(variants: Variant[]): string | null {
 
 async function fromSyndication(tweetId: string, mediaSlot: number | null): Promise<TweetMedia> {
   const res = await fetch(
-    `${SYNDICATION_URL}?id=${tweetId}&lang=en&token=${syndicationToken(tweetId)}`,
+    `${syndicationUrl()}?id=${tweetId}&lang=en&token=${syndicationToken(tweetId)}`,
     { headers: { "user-agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(15_000) },
   );
   if (res.status === 404) throw new GrabError("That post doesn't exist, was deleted, or is private.", 404);
@@ -137,15 +135,9 @@ type YtDlpInfo = {
 };
 
 async function fromYtDlp(tweetId: string, mediaSlot: number | null): Promise<TweetMedia> {
-  const bin = process.env.YTDLP_PATH ?? "yt-dlp";
-  const slot = (mediaSlot ?? 0) + 1;
-  const { stdout } = await execFileAsync(
-    bin,
-    ["-j", "--no-warnings", "-f", "best[ext=mp4]/best", "--playlist-items", String(slot),
-     `https://x.com/i/status/${tweetId}`],
-    { timeout: 30_000, maxBuffer: 20 * 1024 * 1024 },
-  );
-  const info = JSON.parse(stdout.trim().split("\n")[0]) as YtDlpInfo;
+  // yt-dlp runs in the media processor; loaded lazily so URL parsing stays dependency-free.
+  const { ytdlpInfo } = await import("@/lib/media/processor");
+  const info = (await ytdlpInfo(tweetId, (mediaSlot ?? 0) + 1)) as YtDlpInfo;
   if (!info.url) throw new GrabError("That post has no GIF or video in it.", 422);
   const handle = info.uploader_id ?? "unknown";
   return {
@@ -182,7 +174,7 @@ export async function fetchTweetMedia(input: string): Promise<TweetMedia> {
       throw new GrabError("Couldn't get media from X right now. Try again in a minute.", 502);
     }
   }
-  if (!MEDIA_HOSTS.includes(new URL(media.mp4Url).host)) {
+  if (!mediaHosts().includes(new URL(media.mp4Url).host)) {
     throw new GrabError("Unexpected media host from X.", 502);
   }
   return media;

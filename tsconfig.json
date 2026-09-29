@@ -44,6 +44,8 @@
     "node_modules",
     ".next-test",
     ".next-leakcheck",
+    ".open-next",
+    ".wrangler",
     ".test-data"
   ]
 }

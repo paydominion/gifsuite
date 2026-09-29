@@ -1,0 +1,84 @@
+// GifSuite on Cloudflare. No secrets in this file: they're set with `wrangler secret put NAME`.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gifsuite",
+  "main": "worker.ts",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "observability": { "enabled": true },
+
+  // ── Production ────────────────────────────────────────────────────────────────
+  "vars": {
+    "MAX_SOURCE_MB": "50",
+    "MAX_DURATION_S": "60",
+    "AUTO_HIDE_REPORTS": "5"
+  },
+  "d1_databases": [
+    // database_id is filled in by `wrangler d1 create gifsuite` (see DEPLOY.md).
+    { "binding": "DB", "database_name": "gifsuite", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+  ],
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "gifsuite-media" }],
+  "containers": [
+    { "class_name": "MediaProcessor", "image": "./processor/Dockerfile", "max_instances": 5, "instance_type": "standard-1" }
+  ],
+  "durable_objects": { "bindings": [{ "name": "PROCESSOR", "class_name": "MediaProcessor" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["MediaProcessor"] }],
+  "ratelimits": [{ "name": "GRAB_LIMITER", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }],
+
+  "env": {
+    // ── Staging: same setup, separate data, on a staging subdomain ─────────────
+    "staging": {
+      "vars": {
+        "MAX_SOURCE_MB": "50",
+        "MAX_DURATION_S": "60",
+        "AUTO_HIDE_REPORTS": "5"
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "gifsuite-staging", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+      ],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "gifsuite-media-staging" }],
+      "containers": [
+        { "class_name": "MediaProcessor", "image": "./processor/Dockerfile", "max_instances": 2, "instance_type": "standard-1" }
+      ],
+      "durable_objects": { "bindings": [{ "name": "PROCESSOR", "class_name": "MediaProcessor" }] },
+      "ratelimits": [{ "name": "GRAB_LIMITER", "namespace_id": "1002", "simple": { "limit": 10, "period": 60 } }]
+    },
+
+    // ── Dev: `npm run dev` on your Mac. Real X, local processor, local D1/R2, no Docker. ──
+    "dev": {
+      // The local processor lives on 127.0.0.1, so the public-only fetch flag is off here.
+      "compatibility_flags": ["nodejs_compat"],
+      "vars": {
+        "PROCESSOR_URL": "http://127.0.0.1:3297",
+        "MAX_SOURCE_MB": "50",
+        "MAX_DURATION_S": "60",
+        "AUTO_HIDE_REPORTS": "5"
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "gifsuite-dev", "database_id": "dev", "migrations_dir": "migrations" }
+      ],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "gifsuite-media-dev" }]
+    },
+
+    // ── Test: local only (`npm run check`). Fake X, local processor, no Docker. ──
+    "test": {
+      // Tests fetch from the fake X on 127.0.0.1, so the public-only fetch flag is off here.
+      "compatibility_flags": ["nodejs_compat"],
+      "vars": {
+        "X_SYNDICATION_URL": "http://127.0.0.1:3298/tweet-result",
+        "X_MEDIA_HOSTS": "127.0.0.1:3298",
+        "PROCESSOR_URL": "http://127.0.0.1:3296",
+        "ADMIN_TOKEN": "test-admin-token-not-a-real-secret",
+        "TRUST_FORWARDED_FOR": "1",
+        "AUTO_HIDE_REPORTS": "3",
+        "MAX_SOURCE_MB": "50",
+        "MAX_DURATION_S": "60"
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "gifsuite-test", "database_id": "test", "migrations_dir": "migrations" }
+      ],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "gifsuite-media-test" }]
+    }
+  }
+}

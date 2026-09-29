@@ -1,19 +1,18 @@
 import "server-only";
 import crypto from "node:crypto";
+import { bindings, setting } from "@/lib/cloudflare";
 
 /**
  * The visitor's IP. Cloudflare sets `cf-connecting-ip` on every request it forwards, and
  * a visitor can't override it. `x-forwarded-for` can be faked by anyone, so it's only
- * trusted when TRUST_FORWARDED_FOR=1 (the test suite uses it to simulate many visitors).
+ * used when TRUST_FORWARDED_FOR=1 (the test suite uses it to simulate many visitors).
  */
 export function clientIp(req: Request): string {
-  const cf = req.headers.get("cf-connecting-ip");
-  if (cf) return cf;
-  if (process.env.TRUST_FORWARDED_FOR === "1") {
+  if (setting("TRUST_FORWARDED_FOR") === "1") {
     const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0].trim();
     if (forwarded) return forwarded;
   }
-  return "unknown";
+  return req.headers.get("cf-connecting-ip") ?? "unknown";
 }
 
 /** Constant-time comparison, so response timing doesn't reveal how much of a secret matched. */
@@ -28,14 +27,18 @@ export function visitorHash(req: Request): string {
   const day = new Date().toISOString().slice(0, 10);
   return crypto
     .createHash("sha256")
-    .update(`${clientIp(req)}|${req.headers.get("user-agent") ?? ""}|${day}|${process.env.VISITOR_SALT ?? "gifsuite"}`)
+    .update(`${clientIp(req)}|${req.headers.get("user-agent") ?? ""}|${day}|${setting("VISITOR_SALT") ?? "gifsuite"}`)
     .digest("hex")
     .slice(0, 16);
 }
 
 const hits = new Map<string, number[]>();
 
-/** Sliding-window in-memory rate limit. Returns true if the call is allowed. */
+/**
+ * Sliding-window in-memory rate limit. Returns true if the call is allowed.
+ * On Cloudflare each Worker instance has its own memory, so this is only a local fallback;
+ * production uses the shared limiter in `limitGrab`.
+ */
 export function rateLimit(key: string, max: number, windowMs: number): boolean {
   const now = Date.now();
   const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
@@ -46,4 +49,12 @@ export function rateLimit(key: string, max: number, windowMs: number): boolean {
   recent.push(now);
   hits.set(key, recent);
   return true;
+}
+
+/** 10 grabs per minute per visitor, shared across all of Cloudflare when the limiter is bound. */
+export async function limitGrab(req: Request): Promise<boolean> {
+  const key = `grab:${clientIp(req)}`;
+  const limiter = bindings().GRAB_LIMITER;
+  if (limiter) return (await limiter.limit({ key })).success;
+  return rateLimit(key, 10, 60_000);
 }
