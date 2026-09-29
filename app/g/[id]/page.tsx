@@ -6,6 +6,7 @@ import { setting } from "@/lib/cloudflare";
 import { DownloadButtons } from "@/components/DownloadButtons";
 import { ShareBar } from "@/components/ShareBar";
 import { ReportButton, ViewTracker } from "@/components/GifActions";
+import { Card, SectionLabel, cardClass } from "@/components/ui/Card";
 
 export const dynamic = "force-dynamic";
 
@@ -47,48 +48,58 @@ export default async function GifPage({ params }: PageProps<"/g/[id]">) {
   const pageUrl = `${await siteUrl()}/g/${id}`;
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="mx-auto grid max-w-6xl items-start gap-8 lg:grid-cols-[minmax(0,1fr)_400px]">
       <ViewTracker gifId={id} />
-      <div className="overflow-hidden rounded-2xl border border-line bg-panel">
-        <video
-          src={`/media/${id}/source.mp4`}
-          poster={`/media/${id}/poster.jpg`}
-          autoPlay
-          muted
-          loop
-          playsInline
-          controls={gif.hasAudio}
-          width={gif.width}
-          height={gif.height}
-          className="mx-auto block max-h-[70vh] h-auto w-full object-contain"
-        />
-      </div>
-
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <a href={gif.tweetUrl} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">
-            {gif.authorName} <span className="font-normal text-muted">@{gif.authorHandle}</span>
-          </a>
-          {gif.tweetText && <p className="whitespace-pre-line text-sm">{gif.tweetText}</p>}
-          <p className="text-xs text-muted">
-            {gif.tweetLikes.toLocaleString()} likes on X · {(gif.durationMs / 1000).toFixed(1)}s · {gif.width}×{gif.height}
-            {" · "}
-            <a href={gif.tweetUrl} target="_blank" rel="noopener noreferrer" className="underline">View original post</a>
-          </p>
+      <div className="space-y-4 lg:sticky lg:top-20">
+        <div className={`${cardClass} overflow-hidden bg-panel`}>
+          <video
+            src={`/media/${id}/source.mp4`}
+            poster={`/media/${id}/poster.jpg`}
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls={gif.hasAudio}
+            width={gif.width}
+            height={gif.height}
+            className="mx-auto block h-auto max-h-[70vh] w-full object-contain"
+          />
         </div>
-
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Download</h2>
-          <DownloadButtons gifId={id} />
-        </section>
-
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Share</h2>
-          <ShareBar gifId={id} authorHandle={gif.authorHandle} pageUrl={pageUrl} />
-        </section>
-
-        <ReportButton gifId={id} />
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+          <span>{gif.tweetLikes.toLocaleString()} likes on X</span>
+          <span aria-hidden>·</span>
+          <span>{(gif.durationMs / 1000).toFixed(1)}s</span>
+          <span aria-hidden>·</span>
+          <span>{gif.width}×{gif.height}</span>
+          <span aria-hidden>·</span>
+          <a href={gif.tweetUrl} target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-fg">
+            View original post ↗
+          </a>
+        </div>
       </div>
+
+      <aside className="space-y-4">
+        <Card className="space-y-2 p-5">
+          <a href={gif.tweetUrl} target="_blank" rel="noopener noreferrer" className="block font-semibold hover:underline">
+            {gif.authorName} <span className="font-medium text-muted">@{gif.authorHandle}</span>
+          </a>
+          {gif.tweetText && <p className="whitespace-pre-line text-sm text-muted">{gif.tweetText}</p>}
+        </Card>
+
+        <Card className="space-y-3 p-5">
+          <SectionLabel>Download</SectionLabel>
+          <DownloadButtons gifId={id} />
+        </Card>
+
+        <Card className="space-y-3 p-5">
+          <SectionLabel>Share</SectionLabel>
+          <ShareBar gifId={id} authorHandle={gif.authorHandle} pageUrl={pageUrl} />
+        </Card>
+
+        <div className="px-1">
+          <ReportButton gifId={id} />
+        </div>
+      </aside>
     </div>
   );
 }

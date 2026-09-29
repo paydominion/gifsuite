@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { track } from "@/lib/track";
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Field";
 
 type Props = { gifId: string; authorHandle: string; pageUrl: string };
 type Origin = { status: "checking" } | { status: "available"; mediaUrl: string } | { status: "gone" };
@@ -50,21 +52,16 @@ export function ShareBar({ gifId, authorHandle, pageUrl }: Props) {
         </p>
       ) : (
         <>
-          <textarea
+          <Textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             maxLength={260}
             rows={2}
             placeholder="Write your caption…"
-            className="w-full resize-none rounded-xl border border-line bg-panel px-4 py-3 outline-none placeholder:text-muted focus:border-accent"
           />
-          <button
-            onClick={postOriginalOnX}
-            disabled={origin.status !== "available"}
-            className="w-full rounded-xl bg-accent px-4 py-3 font-semibold text-accent-ink hover:brightness-110 disabled:opacity-60"
-          >
+          <Button onClick={postOriginalOnX} disabled={origin.status !== "available"} variant="primary" size="lg" className="w-full">
             {origin.status === "available" ? "Post on X" : "Checking the original post…"}
-          </button>
+          </Button>
           {origin.status === "available" && (
             <p className="text-xs text-muted">
               Plays the original GIF in your post, credited &ldquo;From @{authorHandle}&rdquo;. Nothing to upload.
@@ -73,9 +70,9 @@ export function ShareBar({ gifId, authorHandle, pageUrl }: Props) {
         </>
       )}
 
-      <button onClick={copyLink} className="text-xs text-muted underline-offset-2 hover:text-fg hover:underline">
+      <Button onClick={copyLink} variant="ghost" size="sm">
         Copy link to this page
-      </button>
+      </Button>
       {status && <p role="status" className="text-sm text-muted">{status}</p>}
     </div>
   );

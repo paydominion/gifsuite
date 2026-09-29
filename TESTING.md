@@ -44,7 +44,7 @@
 ## Human test checklists
 
 ### 0.1 Test system
-- [ ] Run `npm run check:all` in `~/gifsuite`. It should end with `58 passed` (unit), `53 passed` (API + browser) and "client files clean", with no failures.
+- [ ] Run `npm run check:all` in `~/gifsuite`. It should end with `58 passed` (unit), `58 passed` (API + browser) and "client files clean", with no failures.
 - [ ] Run `npx playwright test --project=e2e --headed` and watch Chrome grab a GIF, download it, and open the X post box.
 - [ ] Optional: in `processor/presets.mjs`, change `maxWidth: 320` to `300` and run `npm run check`. It should **fail**. Then change it back.
 - [ ] `npm run dev` on port 3217 still works normally while tests run.
@@ -61,6 +61,13 @@
 - [ ] Stop and restart `npm run dev`: the GIF is still on the timeline (local D1 and R2 keep data in `.wrangler/`).
 - [ ] Docker Desktop running: `docker build -t gifsuite-processor processor/` succeeds (this is the image Cloudflare runs).
 - [ ] Staging (after your `npx wrangler login` and the steps in `DEPLOY.md`): grab a real X link on `staging.yourdomain.com`.
+
+### 0.4 UI foundation
+- [ ] Every page uses the Satoshi font (compare with the fontshare.com sample).
+- [ ] Switch your Mac between Light and Dark appearance: both look right, with no unreadable text.
+- [ ] **Tools** menu: opens on click, closes with Escape or by clicking elsewhere, and "See all tools" goes to `/tools`.
+- [ ] Click **Grab GIF** with the box empty: it says "Paste an X post link first."
+- [ ] On your phone, the home page and a GIF page fit the screen with no sideways scrolling.
 
 ### Current app (regression, check before each launch)
 - [ ] Paste an X GIF link → the GIF page opens, the video plays, and the author is shown.

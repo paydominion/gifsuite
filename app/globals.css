@@ -1,41 +1,79 @@
 @import "tailwindcss";
 
+/* ── Design tokens ────────────────────────────────────────────────────────────
+   Every color in the UI comes from here. Components use the Tailwind names
+   (bg-surface, text-muted, border-line…), never raw hex values. */
+
 :root {
-  --bg: #fafaf9;
-  --panel: #f0efec;
-  --line: #dcdad4;
-  --fg: #16161a;
+  --bg: #fbfbfa;
+  --surface: #ffffff;
+  --panel: #f3f3f1;
+  --line: #e4e3df;
+  --line-strong: #cfcdc7;
+  --fg: #121214;
   --muted: #6b6a66;
+  --subtle: #9a9893;
   --accent: #c6ff3d;
-  --accent-ink: #111111;
+  --accent-hover: #b4f01f;
+  --accent-ink: #121214;
+  --ring: #4f7bff;
   --danger: #d63b3b;
+  --success: #15803d;
+  --shadow-color: 20 20 18;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0c0c0e;
-    --panel: #17171b;
-    --line: #2a2a30;
-    --fg: #f2f2ee;
-    --muted: #8d8c88;
+    --bg: #0b0b0d;
+    --surface: #121215;
+    --panel: #19191d;
+    --line: #26262c;
+    --line-strong: #36363e;
+    --fg: #f3f3ef;
+    --muted: #9a9993;
+    --subtle: #6c6b67;
+    --accent-hover: #d4ff66;
+    --ring: #7c9cff;
     --danger: #ff6b6b;
+    --success: #4ade80;
+    --shadow-color: 0 0 0;
   }
 }
 
 @theme inline {
   --color-bg: var(--bg);
+  --color-surface: var(--surface);
   --color-panel: var(--panel);
   --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
   --color-fg: var(--fg);
   --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --color-accent-ink: var(--accent-ink);
+  --color-ring: var(--ring);
   --color-danger: var(--danger);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-success: var(--success);
+
+  --font-sans: var(--font-satoshi), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --shadow-card: 0 1px 2px rgb(var(--shadow-color) / 0.06), 0 8px 24px -12px rgb(var(--shadow-color) / 0.18);
+  --shadow-pop: 0 12px 40px -8px rgb(var(--shadow-color) / 0.35);
+}
+
+html {
+  color-scheme: light dark;
 }
 
 body {
   background: var(--bg);
   color: var(--fg);
+  font-feature-settings: "ss01" on;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
 }

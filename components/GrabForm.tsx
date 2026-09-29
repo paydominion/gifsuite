@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Field";
 
 export function GrabForm() {
   const router = useRouter();
@@ -10,7 +12,11 @@ export function GrabForm() {
   const [error, setError] = useState<string | null>(null);
 
   async function grab(link: string) {
-    if (!link.trim() || busy) return;
+    if (busy) return;
+    if (!link.trim()) {
+      setError("Paste an X post link first.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -46,35 +52,26 @@ export function GrabForm() {
       }}
       className="w-full"
     >
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <input
+      <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-2 shadow-card sm:flex-row">
+        <Input
           type="url"
           inputMode="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://x.com/someone/status/…"
           aria-label="X post link"
-          className="min-w-0 flex-1 rounded-xl border border-line bg-panel px-4 py-3 text-base outline-none placeholder:text-muted focus:border-accent"
+          className="min-w-0 flex-1 border-transparent hover:border-transparent"
         />
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={pasteAndGrab}
-            disabled={busy}
-            className="rounded-xl border border-line px-4 py-3 font-medium hover:bg-panel disabled:opacity-50"
-          >
+          <Button onClick={pasteAndGrab} disabled={busy} size="lg" variant="ghost">
             Paste
-          </button>
-          <button
-            type="submit"
-            disabled={busy || !url.trim()}
-            className="flex-1 rounded-xl bg-accent px-6 py-3 font-semibold text-accent-ink hover:brightness-110 disabled:opacity-50 sm:flex-none"
-          >
+          </Button>
+          <Button type="submit" disabled={busy} size="lg" variant="primary" className="flex-1 sm:flex-none">
             {busy ? "Grabbing…" : "Grab GIF"}
-          </button>
+          </Button>
         </div>
       </div>
-      {error && <p role="alert" className="mt-2 text-sm text-danger">{error}</p>}
+      {error && <p role="alert" className="mt-3 text-sm font-medium text-danger">{error}</p>}
     </form>
   );
 }

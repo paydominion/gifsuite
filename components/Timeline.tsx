@@ -20,7 +20,10 @@ function Tile({ gif }: { gif: Gif }) {
   }, []);
 
   return (
-    <Link href={`/g/${gif.id}`} className="group mb-3 block break-inside-avoid overflow-hidden rounded-xl border border-line bg-panel">
+    <Link
+      href={`/g/${gif.id}`}
+      className="group mb-3 block break-inside-avoid overflow-hidden rounded-2xl border border-line bg-surface shadow-card transition-colors hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
       <video
         ref={ref}
         src={`/media/${gif.id}/preview.mp4`}
@@ -31,11 +34,11 @@ function Tile({ gif }: { gif: Gif }) {
         preload="none"
         width={gif.width}
         height={gif.height}
-        className="block h-auto w-full"
+        className="block h-auto w-full bg-panel"
       />
-      <div className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
-        <span className="truncate text-muted group-hover:text-fg">@{gif.authorHandle}</span>
-        <span className="shrink-0 text-xs text-muted">{new Date(gif.createdAt).toLocaleDateString()}</span>
+      <div className="flex items-center justify-between gap-2 px-3 py-2.5 text-sm">
+        <span className="truncate font-medium text-muted group-hover:text-fg">@{gif.authorHandle}</span>
+        <span className="shrink-0 text-xs text-subtle">{new Date(gif.createdAt).toLocaleDateString()}</span>
       </div>
     </Link>
   );
@@ -64,7 +67,12 @@ export function Timeline({ initial, initialCursor }: { initial: Gif[]; initialCu
   }, [cursor, loading]);
 
   if (items.length === 0) {
-    return <p className="py-16 text-center text-muted">No GIFs yet. Paste an X link above to grab the first one.</p>;
+    return (
+      <div className="rounded-2xl border border-dashed border-line-strong px-6 py-16 text-center">
+        <p className="font-semibold">No GIFs yet</p>
+        <p className="mt-1 text-sm text-muted">Paste an X link above to grab the first one.</p>
+      </div>
+    );
   }
 
   return (
@@ -74,7 +82,7 @@ export function Timeline({ initial, initialCursor }: { initial: Gif[]; initialCu
           <Tile key={g.id} gif={g} />
         ))}
       </div>
-      <div ref={sentinel} className="py-6 text-center text-sm text-muted">
+      <div ref={sentinel} className="py-8 text-center text-sm text-subtle">
         {cursor === null ? "You're all caught up." : loading ? "Loading…" : ""}
       </div>
     </>

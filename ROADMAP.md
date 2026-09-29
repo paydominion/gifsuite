@@ -26,7 +26,7 @@ A feature is not done until a human has tested it.
 | 0.1 | ✅ **Test system** | M | Unit tests (Vitest) for the logic. API tests that run against a **fake X** and fixture videos, so tests never touch the real X and never flake. Browser tests (Playwright, using your installed Chrome, so there's no big download). One command runs everything. The API and browser tests only check behavior from the outside, so they prove the app still works after the Cloudflare move in 0.3. |
 | 0.2 | ✅ **Security baseline** | S | Secrets only in `.env.local` / `.dev.vars` (never committed) with example templates. Server-only code can't end up in the browser. A pre-commit hook that **blocks commits containing secrets**. Security headers, including a Content Security Policy (CSP). A test that scans the built site for leaked secrets. Rate limits now use Cloudflare's `cf-connecting-ip`, which visitors can't fake (was `x-forwarded-for`). |
 | 0.3 | ✅ **Move to Cloudflare** (staging deploy waits on your `wrangler login`, see DEPLOY.md) | L | Rebuild the plumbing, keeping every feature working (see *Deployment*): Next.js on **Workers** (OpenNext adapter), **D1** in place of the local SQLite file, **R2** in place of the local media folder, and a **Container** running ffmpeg, gif2webp and yt-dlp. Then deploy to a **staging** subdomain, so the real setup is proven long before launch. |
-| 0.4 | **UI foundation** | M | **Satoshi** (downloaded from Fontshare, self-hosted). Design tokens for colors, spacing and type sizes. Shared buttons, inputs, cards and toasts. An app shell with a **Tools** menu, so each new tool slots in. |
+| 0.4 | ✅ **UI foundation** | M | **Satoshi** (downloaded from Fontshare, self-hosted). Design tokens for colors, spacing and type sizes. Shared buttons, inputs, cards and toasts. An app shell with a **Tools** menu, so each new tool slots in. |
 
 ## Phase 1: Easy tools (reuse the existing ffmpeg converter)
 
@@ -44,7 +44,7 @@ A feature is not done until a human has tested it.
 | 5 | **Photo → GIF** | M | One photo with an effect: zoom-in (Ken Burns), pan, pulse or shake. |
 | 6 | **Screenshots → GIF** | M | Several images as a slideshow. Drag to reorder, set time per frame, optional crossfade. |
 | 7 | **Crop** | M | Aspect presets (1:1, 16:9, 9:16) plus a drag box. |
-| 8 | **Text captions** | M/L | Meme-style top/bottom text or free text, with a font, color and outline. |
+| 8 | **Text captions** | M/L | Meme-style top/bottom text or free text, with a font, color and outline. **Caption fonts must be openly licensed (e.g. SIL OFL): the Satoshi license forbids offering it to users for their own content** (see `app/fonts/LICENSE.md`). |
 
 ## Phase 3: Launch prep → deploy v1
 

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { Segmented } from "@/components/ui/Segmented";
 
 const QUALITIES = [
-  { id: "low", label: "Low", hint: "320px · 10fps — smallest, for quick sends" },
-  { id: "medium", label: "Medium", hint: "480px · 15fps — balanced size and quality" },
-  { id: "high", label: "High", hint: "Original size & frame rate — best quality, biggest file" },
+  { value: "low", label: "Low", hint: "320px · 10fps. Smallest, for quick sends." },
+  { value: "medium", label: "Medium", hint: "480px · 15fps. Balanced size and quality." },
+  { value: "high", label: "High", hint: "Original size and frame rate. Best quality, biggest file." },
 ] as const;
 
 const FORMATS = [
@@ -15,7 +16,7 @@ const FORMATS = [
   { id: "webp", label: "WebP", hint: "Animated sticker" },
 ] as const;
 
-type Quality = (typeof QUALITIES)[number]["id"];
+type Quality = (typeof QUALITIES)[number]["value"];
 
 function formatBytes(n: number): string {
   return n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`;
@@ -47,37 +48,30 @@ export function DownloadButtons({ gifId }: { gifId: string }) {
   }
 
   return (
-    <div className="space-y-2">
-      <div role="radiogroup" aria-label="Quality" className="flex rounded-xl border border-line p-1 text-sm">
-        {QUALITIES.map((q) => (
-          <button
-            key={q.id}
-            role="radio"
-            aria-checked={quality === q.id}
-            onClick={() => setQuality(q.id)}
-            disabled={busy !== null}
-            className={`flex-1 rounded-lg px-3 py-1.5 font-medium ${quality === q.id ? "bg-fg text-bg" : "text-muted hover:text-fg"}`}
-          >
-            {q.label}
-          </button>
-        ))}
-      </div>
-      <p className="text-xs text-muted">{QUALITIES.find((q) => q.id === quality)!.hint}</p>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+    <div className="space-y-3">
+      <Segmented label="Quality" options={[...QUALITIES]} value={quality} onChange={setQuality} disabled={busy !== null} />
+      <p className="text-xs text-muted">{QUALITIES.find((q) => q.value === quality)!.hint}</p>
+      <div className="grid grid-cols-2 gap-2">
         {FORMATS.map((f) => (
           <button
             key={f.id}
+            type="button"
             onClick={() => download(f.id)}
             disabled={busy !== null}
-            className="rounded-xl border border-line bg-panel px-3 py-3 text-left hover:border-accent disabled:opacity-60"
+            className="group rounded-xl border border-line bg-surface px-3.5 py-3 text-left transition-colors hover:border-accent hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
           >
-            <span className="block font-semibold">{busy === f.id ? "Converting…" : `↓ ${f.label}`}</span>
+            <span className="flex items-center gap-1.5 font-semibold">
+              <svg aria-hidden width="14" height="14" viewBox="0 0 14 14" className="text-muted group-hover:text-fg">
+                <path d="M7 2v7.5M3.5 6 7 9.5 10.5 6M2.5 12h9" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {busy === f.id ? "Converting…" : f.label}
+            </span>
             <span className="block text-xs text-muted">{f.hint}</span>
           </button>
         ))}
       </div>
       {message && (
-        <p role={message.error ? "alert" : "status"} className={`text-sm ${message.error ? "text-danger" : "text-muted"}`}>
+        <p role={message.error ? "alert" : "status"} className={`text-sm ${message.error ? "font-medium text-danger" : "text-muted"}`}>
           {message.text}
         </p>
       )}

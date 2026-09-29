@@ -17,7 +17,8 @@ export function ReportButton({ gifId }: { gifId: string }) {
         setDone(true);
       }}
       disabled={done}
-      className="text-xs text-muted underline-offset-2 hover:text-danger hover:underline disabled:no-underline"
+      type="button"
+      className="text-xs font-medium text-subtle underline-offset-2 hover:text-danger hover:underline disabled:no-underline"
     >
       {done ? "Reported — thanks" : "Report this GIF"}
     </button>
