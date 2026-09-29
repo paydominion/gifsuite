@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { gifDir } from "@/lib/media/convert";
+import { parseRange } from "@/lib/http-range";
 
 const FILES: Record<string, string> = {
   "source.mp4": "video/mp4",
@@ -29,15 +30,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     "cache-control": "public, max-age=31536000, immutable",
   };
 
-  const range = req.headers.get("range")?.match(/^bytes=(\d*)-(\d*)$/);
-  if (range && (range[1] || range[2])) {
-    let start = range[1] ? Number(range[1]) : size - Number(range[2]);
-    let end = range[1] && range[2] ? Number(range[2]) : size - 1;
-    start = Math.max(0, start);
-    end = Math.min(end, size - 1);
-    if (start > end) {
-      return new Response(null, { status: 416, headers: { "content-range": `bytes */${size}` } });
-    }
+  const range = parseRange(req.headers.get("range"), size);
+  if (range === "unsatisfiable") {
+    return new Response(null, { status: 416, headers: { "content-range": `bytes */${size}` } });
+  }
+  if (range) {
+    const { start, end } = range;
     return new Response(Readable.toWeb(fs.createReadStream(full, { start, end })) as ReadableStream, {
       status: 206,
       headers: { ...headers, "content-range": `bytes ${start}-${end}/${size}`, "content-length": String(end - start + 1) },

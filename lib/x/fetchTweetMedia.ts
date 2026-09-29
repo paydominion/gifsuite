@@ -51,8 +51,12 @@ export function parseTweetUrl(input: string): { tweetId: string; mediaSlot: numb
   return { tweetId: m[1], mediaSlot: m[2] ? Number(m[2]) - 1 : null };
 }
 
+// Overridable only so the test suite can point at a local fake X.
+const SYNDICATION_URL = process.env.X_SYNDICATION_URL ?? "https://cdn.syndication.twimg.com/tweet-result";
+const MEDIA_HOSTS = (process.env.X_MEDIA_HOSTS ?? "video.twimg.com").split(",");
+
 // Token scheme used by X's own embed widget (same as the react-tweet package).
-function syndicationToken(id: string): string {
+export function syndicationToken(id: string): string {
   return ((Number(id) / 1e15) * Math.PI).toString(36).replace(/(0+|\.)/g, "");
 }
 
@@ -80,7 +84,7 @@ function bestMp4(variants: Variant[]): string | null {
 
 async function fromSyndication(tweetId: string, mediaSlot: number | null): Promise<TweetMedia> {
   const res = await fetch(
-    `https://cdn.syndication.twimg.com/tweet-result?id=${tweetId}&lang=en&token=${syndicationToken(tweetId)}`,
+    `${SYNDICATION_URL}?id=${tweetId}&lang=en&token=${syndicationToken(tweetId)}`,
     { headers: { "user-agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(15_000) },
   );
   if (res.status === 404) throw new GrabError("That post doesn't exist, was deleted, or is private.", 404);
@@ -177,7 +181,7 @@ export async function fetchTweetMedia(input: string): Promise<TweetMedia> {
       throw new GrabError("Couldn't get media from X right now. Try again in a minute.", 502);
     }
   }
-  if (new URL(media.mp4Url).hostname !== "video.twimg.com") {
+  if (!MEDIA_HOSTS.includes(new URL(media.mp4Url).host)) {
     throw new GrabError("Unexpected media host from X.", 502);
   }
   return media;

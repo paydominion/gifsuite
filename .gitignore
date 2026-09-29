@@ -42,3 +42,10 @@ next-env.d.ts
 
 # GifSuite media + database
 /data
+
+# Test runs
+/.test-data
+/.next-test
+/tests/.fixtures
+/test-results
+/playwright-report

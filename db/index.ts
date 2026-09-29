@@ -1,9 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
-
-export const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), "data");
-export const MEDIA_DIR = path.join(DATA_DIR, "media");
+import { DATA_DIR, MEDIA_DIR } from "@/lib/paths";
 
 const SCHEMA = `
 PRAGMA journal_mode = WAL;

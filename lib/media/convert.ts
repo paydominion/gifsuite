@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { MEDIA_DIR } from "@/db";
+import { MEDIA_DIR } from "@/lib/paths";
 import { ffmpeg, gif2webp, probe } from "./ffmpeg";
 
 export const FORMATS = {
@@ -33,7 +33,7 @@ export function isQuality(q: string | null): q is Quality {
 export const gifDir = (id: string) => path.join(MEDIA_DIR, id);
 export const sourcePath = (id: string) => path.join(gifDir(id), "source.mp4");
 
-function ffmpegArgs(
+export function ffmpegArgs(
   format: Exclude<Format, "webp">, quality: Quality, sourceFps: number, src: string, out: string,
 ): string[] {
   const q = QUALITIES[quality];

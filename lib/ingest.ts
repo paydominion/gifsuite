@@ -3,7 +3,7 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { findGifByTweet, insertGif, newGifId, type Gif } from "@/db/gifs";
-import { MEDIA_DIR } from "@/db";
+import { MEDIA_DIR } from "@/lib/paths";
 import { fetchTweetMedia, GrabError } from "@/lib/x/fetchTweetMedia";
 import { ffmpeg, probe } from "@/lib/media/ffmpeg";
 
