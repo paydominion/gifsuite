@@ -4,17 +4,19 @@
 
 | Command | What it runs | Time |
 |---|---|---|
-| `npm test` | Unit tests only (Vitest): URL parsing, conversion settings, ranges, rate limits | ~1s |
-| `npm run check` | Typecheck + lint + unit tests + API tests. **Run before every commit.** | ~30s |
-| `npm run test:e2e` | Browser tests: clicks through the real site in Chrome (headless) | ~30s |
-| `npm run check:all` | Everything above | ~1 min |
+| `npm test` | Unit tests only (Vitest): URL parsing, conversion settings, ranges, rate limits, secret scanner | ~1s |
+| `npm run scan:secrets` | Scans every file in the repo for keys, tokens and `.env` files | ~1s |
+| `npm run check` | Secret scan + typecheck + lint + unit tests + API tests. **Run before every commit.** | ~1 min |
+| `npm run test:e2e` | Browser tests: clicks through the real site in Chrome (headless) | ~1 min |
+| `npm run check:leaks` | Builds the site with marker secrets and checks the browser bundle for leaks | ~30s |
+| `npm run check:all` | Everything above | ~2 min |
 
 `npx playwright test --project=e2e --headed` shows the browser while the tests run.
 
 ## How it works
 
 - **Unit tests** (`tests/unit`) check small pieces of logic with no server.
-- **API tests** (`tests/api`) and **browser tests** (`tests/e2e`) start their own copy of the app on port **3299**. It uses its own data folder (`.test-data`, wiped on every run) and its own build folder (`.next-test`), so it never touches your real data or your `npm run dev` server.
+- **API tests** (`tests/api`) and **browser tests** (`tests/e2e`) start their own **production build** of the app on port **3299**, so they check exactly what gets deployed, including the strict Content Security Policy. It uses its own data folder (`.test-data`, wiped on every run) and its own build folder (`.next-test`), so it never touches your real data or your `npm run dev` server.
 - **Fake X** (`tests/fake-x/server.mjs`, port **3298**) stands in for X. It serves test posts and small videos made with ffmpeg, so tests never call the real X and give the same result every time. Its test posts:
 
   | Post | Behaves like |
@@ -45,6 +47,12 @@
 - [ ] Run `npx playwright test --project=e2e --headed` and watch Chrome grab a GIF, download it, and open the X post box.
 - [ ] Optional: in `lib/media/convert.ts`, change `maxWidth: 320` to `300` and run `npm run check`. It should **fail**. Then change it back.
 - [ ] `npm run dev` on port 3217 still works normally while tests run.
+
+### 0.2 Security baseline
+- [ ] Try to commit a secret: `echo "ADMIN_TOKEN=f3a9c17be24d8e90b1c5a6d7" > probe.txt && git add probe.txt && git commit -m test`. It should be **blocked**. Then run `git rm --cached probe.txt && rm probe.txt`. <!-- secret-scan: allow -->
+- [ ] `cp .env.example .env.local`, fill in values, and check `git status` doesn't list `.env.local`.
+- [ ] Open the site and check the browser DevTools console shows no "Content Security Policy" errors while you grab, download and post.
+- [ ] `npm run check:leaks` ends with "client files clean".
 
 ### Current app (regression, check before each launch)
 - [ ] Paste an X GIF link → the GIF page opens, the video plays, and the author is shown.

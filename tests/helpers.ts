@@ -3,7 +3,7 @@ import path from "node:path";
 import type { APIRequestContext } from "@playwright/test";
 
 export const FAKE_X = "http://127.0.0.1:3298";
-export const ADMIN_TOKEN = "test-admin-token";
+export const ADMIN_TOKEN = "test-admin-token-not-a-real-secret";
 
 /** Headers that make a request look like a new visitor, so rate limits and report counts don't leak between tests. */
 export function visitor(): Record<string, string> {

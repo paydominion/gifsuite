@@ -1,9 +1,20 @@
 import { expect, test } from "@playwright/test";
 import { deleteOnFakeX, grabId } from "../helpers";
 
-// Never actually load X during tests: answer its URLs with a blank page.
-test.beforeEach(async ({ context }) => {
+const cspViolations: string[] = [];
+
+test.beforeEach(async ({ context, page }) => {
+  // Never actually load X during tests: answer its URLs with a blank page.
   await context.route(/^https:\/\/(x|twitter)\.com\//, (route) => route.fulfill({ body: "fake X page" }));
+  // The Content Security Policy must not block anything the app itself needs.
+  cspViolations.length = 0;
+  page.on("console", (msg) => {
+    if (/Content Security Policy|Refused to (load|execute|apply)/i.test(msg.text())) cspViolations.push(msg.text());
+  });
+});
+
+test.afterEach(() => {
+  expect(cspViolations, "CSP blocked part of the app").toEqual([]);
 });
 
 test("paste a link, grab the GIF, land on its page", async ({ page }) => {

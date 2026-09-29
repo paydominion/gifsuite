@@ -1,3 +1,4 @@
+import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 import { MEDIA_DIR } from "@/lib/paths";

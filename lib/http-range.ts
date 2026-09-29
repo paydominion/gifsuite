@@ -1,3 +1,4 @@
+import "server-only";
 /**
  * Parses a single `Range: bytes=…` header against a file of `size` bytes.
  * Returns null when there is no usable range (serve the whole file),

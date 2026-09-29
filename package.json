@@ -10,8 +10,12 @@
     "test": "vitest run",
     "test:api": "playwright test --project=api",
     "test:e2e": "playwright test --project=e2e",
-    "check": "tsc --noEmit && eslint && vitest run && playwright test --project=api",
-    "check:all": "tsc --noEmit && eslint && vitest run && playwright test"
+    "check": "npm run scan:secrets && npm run typecheck && eslint && vitest run && playwright test --project=api",
+    "check:all": "npm run scan:secrets && npm run typecheck && eslint && vitest run && playwright test && npm run check:leaks",
+    "typecheck": "next typegen >/dev/null && tsc --noEmit",
+    "prepare": "git config core.hooksPath .githooks",
+    "scan:secrets": "node scripts/scan-secrets.mjs",
+    "check:leaks": "node scripts/check-bundle-leaks.mjs"
   },
   "dependencies": {
     "next": "16.3.6",

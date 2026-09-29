@@ -1,11 +1,26 @@
+import "server-only";
 import crypto from "node:crypto";
 
+/**
+ * The visitor's IP. Cloudflare sets `cf-connecting-ip` on every request it forwards, and
+ * a visitor can't override it. `x-forwarded-for` can be faked by anyone, so it's only
+ * trusted when TRUST_FORWARDED_FOR=1 (the test suite uses it to simulate many visitors).
+ */
 export function clientIp(req: Request): string {
-  return (
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    req.headers.get("x-real-ip") ||
-    "local"
-  );
+  const cf = req.headers.get("cf-connecting-ip");
+  if (cf) return cf;
+  if (process.env.TRUST_FORWARDED_FOR === "1") {
+    const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0].trim();
+    if (forwarded) return forwarded;
+  }
+  return "unknown";
+}
+
+/** Constant-time comparison, so response timing doesn't reveal how much of a secret matched. */
+export function safeEqual(a: string, b: string): boolean {
+  const x = crypto.createHash("sha256").update(a).digest();
+  const y = crypto.createHash("sha256").update(b).digest();
+  return crypto.timingSafeEqual(x, y);
 }
 
 /** Anonymous per-day visitor id: lets us count unique people without storing IPs. */

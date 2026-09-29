@@ -1,3 +1,4 @@
+import "server-only";
 import { spawn } from "node:child_process";
 
 const FFMPEG = process.env.FFMPEG_PATH ?? "ffmpeg";

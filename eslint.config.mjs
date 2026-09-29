@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Test run output
     ".next-test/**",
+    ".next-leakcheck/**",
     ".test-data/**",
     "test-results/**",
     "playwright-report/**",

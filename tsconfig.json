@@ -36,11 +36,14 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     ".next-test/types/**/*.ts",
-    ".next-test/dev/types/**/*.ts"
+    ".next-test/dev/types/**/*.ts",
+    ".next-leakcheck/types/**/*.ts",
+    ".next-leakcheck/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     ".next-test",
+    ".next-leakcheck",
     ".test-data"
   ]
 }

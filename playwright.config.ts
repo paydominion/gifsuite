@@ -27,16 +27,18 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: `rm -rf .test-data && npx next dev -p ${APP_PORT}`,
+      // A production build, so tests check exactly what gets deployed (including the strict CSP).
+      command: `rm -rf .test-data && npx next build && npx next start -p ${APP_PORT}`,
       url: `http://localhost:${APP_PORT}/api/gifs`,
-      timeout: 180_000,
+      timeout: 300_000,
       env: {
         DATA_DIR: ".test-data",
         NEXT_DIST_DIR: ".next-test",
         X_SYNDICATION_URL: `http://127.0.0.1:${FAKE_X_PORT}/tweet-result`,
         X_MEDIA_HOSTS: `127.0.0.1:${FAKE_X_PORT}`,
         YTDLP_PATH: "false", // the fallback always fails in tests, so "X is down" is predictable
-        ADMIN_TOKEN: "test-admin-token", // test-only value, not a secret
+        ADMIN_TOKEN: "test-admin-token-not-a-real-secret", // test-only value
+        TRUST_FORWARDED_FOR: "1", // lets tests act as many visitors via x-forwarded-for
         AUTO_HIDE_REPORTS: "3",
       },
     },
