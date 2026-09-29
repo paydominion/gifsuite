@@ -46,7 +46,7 @@ export function parseTweetUrl(input: string): { tweetId: string; mediaSlot: numb
   if (!X_HOSTS.test(url.hostname)) {
     throw new GrabError("Only X (Twitter) post links are supported right now.");
   }
-  const m = url.pathname.match(/\/status(?:es)?\/(\d{5,25})(?:\/(?:video|photo)\/(\d+))?/);
+  const m = url.pathname.match(/\/status(?:es)?\/(\d{1,25})(?:\/(?:video|photo)\/(\d+))?/);
   if (!m) throw new GrabError("Couldn't find a post in that link. Open the post and copy its link.");
   return { tweetId: m[1], mediaSlot: m[2] ? Number(m[2]) - 1 : null };
 }
@@ -94,7 +94,7 @@ async function fromSyndication(tweetId: string, mediaSlot: number | null): Promi
 
   const media = tweet.mediaDetails ?? [];
   const isMotion = (d: MediaDetail | undefined) => d?.type === "animated_gif" || d?.type === "video";
-  let index = mediaSlot !== null && isMotion(media[mediaSlot]) ? mediaSlot : media.findIndex(isMotion);
+  const index = mediaSlot !== null && isMotion(media[mediaSlot]) ? mediaSlot : media.findIndex(isMotion);
   if (index < 0) throw new GrabError("That post has no GIF or video in it.", 422);
 
   const detail = media[index];
@@ -181,4 +181,34 @@ export async function fetchTweetMedia(input: string): Promise<TweetMedia> {
     throw new GrabError("Unexpected media host from X.", 502);
   }
   return media;
+}
+
+/**
+ * Link that makes X embed this post's GIF inside a new post, credited "From @author".
+ * X numbers media slots from 1 in these links.
+ */
+export function originalMediaUrl(authorHandle: string, tweetId: string, mediaIndex: number): string {
+  return `https://x.com/${authorHandle}/status/${tweetId}/video/${mediaIndex + 1}`;
+}
+
+const originCache = new Map<string, { available: boolean | null; expires: number }>();
+
+/**
+ * Is the post's GIF still live on X? `null` means X couldn't be reached.
+ * Cached so that repeated shares of the same GIF don't each hit X.
+ */
+export async function isOriginalAvailable(tweetId: string, mediaIndex: number): Promise<boolean | null> {
+  const key = `${tweetId}:${mediaIndex}`;
+  const hit = originCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.available;
+
+  let available: boolean | null;
+  try {
+    available = (await fromSyndication(tweetId, mediaIndex)).mediaIndex === mediaIndex;
+  } catch (err) {
+    available = err instanceof GrabError ? false : null;
+  }
+  const ttl = available === null ? 2 * 60_000 : 30 * 60_000;
+  originCache.set(key, { available, expires: Date.now() + ttl });
+  return available;
 }

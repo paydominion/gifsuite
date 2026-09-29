@@ -68,7 +68,7 @@ export function listGifs(limit: number, before?: number): Gif[] {
        ORDER BY created_at DESC LIMIT ?`,
     )
     .all(before ?? Number.MAX_SAFE_INTEGER, limit);
-  return rows.map((r) => toGif(r)!);
+  return rows.map((r: Record<string, unknown>) => toGif(r)!);
 }
 
 export type NewGif = Omit<Gif, "createdAt" | "hidden" | "tags" | "aiCaption">;

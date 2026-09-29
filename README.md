@@ -1,12 +1,12 @@
 # GifSuite
 
-Paste an X (Twitter) post link, get the GIF, download it as GIF / MP4 / WebM / WebP, share it to X, WhatsApp, Telegram, Facebook and Reddit.
+Paste an X (Twitter) post link, get the GIF, download it as GIF / MP4 / WebM / WebP in low, medium or high quality, and post it back to X as the original GIF.
 Every grabbed GIF lands on a public timeline.
 
 ## Run it
 
 ```bash
-brew install ffmpeg yt-dlp   # ffmpeg is required; yt-dlp is a fallback fetcher
+brew install ffmpeg webp yt-dlp   # ffmpeg + webp required; yt-dlp is a fallback fetcher
 npm install
 npm run dev                  # http://localhost:3000
 ```
@@ -23,7 +23,7 @@ Data lives in `./data` (SQLite database + media files).
 | `ADMIN_TOKEN` | unset | Enables `POST /api/admin/hide` (header `x-admin-token`) |
 | `AUTO_HIDE_REPORTS` | `5` | Distinct reporters before a GIF is hidden automatically |
 | `MAX_SOURCE_MB` / `MAX_DURATION_S` | `50` / `60` | Limits on grabbed videos |
-| `FFMPEG_PATH`, `FFPROBE_PATH`, `YTDLP_PATH` | on `PATH` | Binary locations |
+| `FFMPEG_PATH`, `FFPROBE_PATH`, `GIF2WEBP_PATH`, `YTDLP_PATH` | on `PATH` | Binary locations |
 
 ## How it works
 

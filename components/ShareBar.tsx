@@ -4,107 +4,79 @@ import { useEffect, useState } from "react";
 import { track } from "@/lib/track";
 
 type Props = { gifId: string; authorHandle: string; pageUrl: string };
-
-const enc = encodeURIComponent;
+type Origin = { status: "checking" } | { status: "available"; mediaUrl: string } | { status: "gone" };
 
 export function ShareBar({ gifId, authorHandle, pageUrl }: Props) {
   const [caption, setCaption] = useState("");
-  const [canShareFiles, setCanShareFiles] = useState(false);
+  const [origin, setOrigin] = useState<Origin>({ status: "checking" });
   const [status, setStatus] = useState<string | null>(null);
 
+  // If the original post is still up, X can embed its GIF directly — no upload needed.
   useEffect(() => {
-    const probe = new File([new Blob()], "x.mp4", { type: "video/mp4" });
-    setCanShareFiles(!!navigator.canShare?.({ files: [probe] }));
-  }, []);
+    let cancelled = false;
+    fetch(`/api/gif/${gifId}/origin`)
+      .then((res) => res.json())
+      .then((data: { available: boolean | null; mediaUrl: string | null }) => {
+        if (cancelled) return;
+        setOrigin(data.available && data.mediaUrl ? { status: "available", mediaUrl: data.mediaUrl } : { status: "gone" });
+      })
+      .catch(() => !cancelled && setOrigin({ status: "gone" }));
+    return () => {
+      cancelled = true;
+    };
+  }, [gifId]);
 
-  const text = caption.trim() || `via @${authorHandle}`;
-
-  const links = [
-    { id: "x", label: "X", href: `https://x.com/intent/post?text=${enc(text)}&url=${enc(pageUrl)}` },
-    { id: "whatsapp", label: "WhatsApp", href: `https://wa.me/?text=${enc(`${text} ${pageUrl}`)}` },
-    { id: "telegram", label: "Telegram", href: `https://t.me/share/url?url=${enc(pageUrl)}&text=${enc(text)}` },
-    { id: "facebook", label: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${enc(pageUrl)}` },
-    { id: "reddit", label: "Reddit", href: `https://www.reddit.com/submit?url=${enc(pageUrl)}&title=${enc(text)}` },
-  ];
-
-  async function fetchFile(): Promise<File> {
-    const res = await fetch(`/api/gif/${gifId}/download?format=mp4`);
-    if (!res.ok) throw new Error();
-    return new File([await res.blob()], `${authorHandle}-${gifId}.mp4`, { type: "video/mp4" });
-  }
-
-  // Phones: hand the actual video to the share sheet (X, WhatsApp, Instagram, TikTok…).
-  async function shareFile() {
-    setStatus("Preparing…");
-    try {
-      const file = await fetchFile();
-      await navigator.share({ files: [file], text });
-      track(gifId, "share", "native");
-      setStatus(null);
-    } catch (err) {
-      setStatus((err as Error).name === "AbortError" ? null : "Sharing didn't work. Try Download instead.");
-    }
-  }
-
-  // Desktop: X can't receive a file from a link, so download it and open the composer to attach it.
-  async function postToX() {
-    setStatus("Downloading the MP4 — attach it in the X composer.");
-    try {
-      const file = await fetchFile();
-      const url = URL.createObjectURL(file);
-      Object.assign(document.createElement("a"), { href: url, download: file.name }).click();
-      setTimeout(() => URL.revokeObjectURL(url), 10_000);
-      window.open(`https://x.com/intent/post?text=${enc(text)}`, "_blank", "noopener");
-      track(gifId, "share", "x-upload");
-    } catch {
-      setStatus("Couldn't download the file. Try again.");
-    }
+  function postOriginalOnX() {
+    if (origin.status !== "available") return;
+    // X credits the author itself ("From @author"), so only the user's caption goes in.
+    const params = new URLSearchParams({ url: origin.mediaUrl });
+    if (caption.trim()) params.set("text", caption.trim());
+    window.open(`https://x.com/intent/post?${params}`, "_blank", "noopener");
+    track(gifId, "share", "x-original");
   }
 
   async function copyLink() {
     await navigator.clipboard.writeText(pageUrl);
-    track(gifId, "share", "copy");
+    track(gifId, "share", "copy-link");
     setStatus("Link copied!");
     setTimeout(() => setStatus(null), 2000);
   }
 
   return (
     <div className="space-y-3">
-      <textarea
-        value={caption}
-        onChange={(e) => setCaption(e.target.value)}
-        maxLength={280}
-        rows={2}
-        placeholder={`Write your caption… (default: via @${authorHandle})`}
-        className="w-full resize-none rounded-xl border border-line bg-panel px-4 py-3 outline-none placeholder:text-muted focus:border-accent"
-      />
-      <div className="flex flex-wrap gap-2">
-        {canShareFiles ? (
-          <button onClick={shareFile} className="rounded-xl bg-accent px-4 py-2.5 font-semibold text-accent-ink hover:brightness-110">
-            Share GIF to an app…
-          </button>
-        ) : (
-          <button onClick={postToX} className="rounded-xl bg-accent px-4 py-2.5 font-semibold text-accent-ink hover:brightness-110">
-            Post it on X
-          </button>
-        )}
-        {links.map((l) => (
-          <a
-            key={l.id}
-            href={l.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => track(gifId, "share", l.id)}
-            className="rounded-xl border border-line px-4 py-2.5 font-medium hover:bg-panel"
+      {origin.status === "gone" ? (
+        <p className="text-sm text-muted">
+          The original post is no longer on X. Download the GIF above to share it.
+        </p>
+      ) : (
+        <>
+          <textarea
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            maxLength={260}
+            rows={2}
+            placeholder="Write your caption…"
+            className="w-full resize-none rounded-xl border border-line bg-panel px-4 py-3 outline-none placeholder:text-muted focus:border-accent"
+          />
+          <button
+            onClick={postOriginalOnX}
+            disabled={origin.status !== "available"}
+            className="w-full rounded-xl bg-accent px-4 py-3 font-semibold text-accent-ink hover:brightness-110 disabled:opacity-60"
           >
-            {l.label}
-          </a>
-        ))}
-        <button onClick={copyLink} className="rounded-xl border border-line px-4 py-2.5 font-medium hover:bg-panel">
-          Copy link
-        </button>
-      </div>
-      {status && <p className="text-sm text-muted">{status}</p>}
+            {origin.status === "available" ? "Post on X" : "Checking the original post…"}
+          </button>
+          {origin.status === "available" && (
+            <p className="text-xs text-muted">
+              Plays the original GIF in your post, credited &ldquo;From @{authorHandle}&rdquo;. Nothing to upload.
+            </p>
+          )}
+        </>
+      )}
+
+      <button onClick={copyLink} className="text-xs text-muted underline-offset-2 hover:text-fg hover:underline">
+        Copy link to this page
+      </button>
+      {status && <p role="status" className="text-sm text-muted">{status}</p>}
     </div>
   );
 }
