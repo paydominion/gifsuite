@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, SectionLabel } from "@/components/ui/Card";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { Segmented } from "@/components/ui/Segmented";
+import { Preview, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs } from "./shared";
 
 type Format = "gif" | "mp4" | "webm" | "webp";
 type Quality = "low" | "medium" | "high";
@@ -27,24 +28,6 @@ const QUALITY_HINT: Record<Quality, string> = {
 };
 
 type Result = { url: string; name: string; size: number; format: Format };
-
-function formatBytes(n: number): string {
-  return n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`;
-}
-
-/** Shows a GIF/WebP as an image and MP4/WebM as a looping video. */
-function Preview({ url, isVideo, label }: { url: string; isVideo: boolean; label: string }) {
-  return (
-    <div className="overflow-hidden rounded-xl border border-line bg-panel">
-      {isVideo ? (
-        <video src={url} autoPlay muted loop playsInline aria-label={label} className="mx-auto block max-h-80 w-auto" />
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element -- a local blob preview, not a page image
-        <img src={url} alt={label} className="mx-auto block max-h-80 w-auto" />
-      )}
-    </div>
-  );
-}
 
 export function ConvertTool({ maxUploadMb }: { maxUploadMb: number }) {
   const [file, setFile] = useState<{ file: File; url: string } | null>(null);
@@ -77,10 +60,6 @@ export function ConvertTool({ maxUploadMb }: { maxUploadMb: number }) {
     [maxUploadMb],
   );
 
-  function download(r: Result) {
-    Object.assign(document.createElement("a"), { href: r.url, download: r.name }).click();
-  }
-
   async function run() {
     if (!file) return;
     setBusy(true);
@@ -97,10 +76,9 @@ export function ConvertTool({ maxUploadMb }: { maxUploadMb: number }) {
         throw new Error(data.error ?? "Something went wrong converting that file.");
       }
       const blob = await res.blob();
-      const base = file.file.name.replace(/\.[^.]+$/, "").replace(/[^\w.-]+/g, "_").slice(0, 60) || "gifsuite";
-      const next = { url: URL.createObjectURL(blob), name: `${base}-${quality}.${format}`, size: blob.size, format };
+      const next = { url: URL.createObjectURL(blob), name: `${baseName(file.file)}-${quality}.${format}`, size: blob.size, format };
       setResult(next);
-      download(next);
+      saveAs(next.url, next.name);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -108,14 +86,12 @@ export function ConvertTool({ maxUploadMb }: { maxUploadMb: number }) {
     }
   }
 
-  const isVideoFile = (f: File) => /^video\//.test(f.type) || /\.(mp4|mov|m4v|webm)$/i.test(f.name);
-
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-4">
         {!file ? (
           <Dropzone
-            accept="image/gif,video/mp4,video/quicktime,video/webm,.gif,.mp4,.mov,.m4v,.webm"
+            accept={UPLOAD_ACCEPT}
             hint={`GIF, MP4, MOV or WebM, up to ${maxUploadMb} MB. Your file isn't stored.`}
             onFile={choose}
             disabled={busy}
@@ -153,7 +129,7 @@ export function ConvertTool({ maxUploadMb }: { maxUploadMb: number }) {
                   Saved {result.name} ({formatBytes(result.size)})
                 </p>
               </div>
-              <Button size="sm" variant="secondary" onClick={() => download(result)}>
+              <Button size="sm" variant="secondary" onClick={() => saveAs(result.url, result.name)}>
                 Download again
               </Button>
             </div>

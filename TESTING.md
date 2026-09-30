@@ -46,7 +46,7 @@
 ## Human test checklists
 
 ### 0.1 Test system
-- [ ] Run `npm run check:all` in `~/gifsuite`. It should end with `71 passed` (unit), `74 passed` (API + browser) and "client files clean", with no failures.
+- [ ] Run `npm run check:all` in `~/gifsuite`. It should end with `97 passed` (unit), `88 passed` (API + browser) and "client files clean", with no failures.
 - [ ] Run `npx playwright test --project=e2e --headed` and watch Chrome grab a GIF, download it, and open the X post box.
 - [ ] Optional: in `processor/presets.mjs`, change `maxWidth: 320` to `300` and run `npm run check`. It should **fail**. Then change it back.
 - [ ] `npm run dev` on port 3217 still works normally while tests run.
@@ -76,6 +76,19 @@
 - [ ] Rename a text file to `something.gif` and upload it: you get "isn't a GIF, MP4, MOV or WebM".
 - [ ] Copy an image file in Finder and press ⌘V on the page: it's picked up like a dropped file.
 - [ ] Converted files never appear on the timeline (uploads are private and not stored).
+
+### 2. Compress & resize
+- [ ] Tools → Compress & resize. Drop in a large GIF or a short video, choose **X**, and click **Compress & download**. The result is under 15 MB and still looks good.
+- [ ] Choose **Custom**, enter `1`, and compress again. The result is under 1 MB and the page shows the width, fps and colors it used.
+- [ ] Upload a tiny GIF with a big target: it says the file is already small enough and is unchanged.
+- [ ] Set an impossible target (Custom `0.02`) on a long clip: it says it couldn't get under the limit and gives you its smallest attempt.
+
+### Blog
+- [ ] Open **Blog** in the header. The four tips posts are listed; open each and read it for tone and accuracy.
+- [ ] Each post ends with a "Try it free" box that opens the right tool.
+- [ ] On your phone, the comparison table in "GIF vs MP4 vs WebM vs WebP" scrolls inside the post without the page scrolling sideways.
+- [ ] Add `status: draft` to a post, run `npm run dev`, and check it shows a red DRAFT label locally. Then remove the line.
+- [ ] Read `content/BLOG_PLAYBOOK.md` and run the loop prompt once on a history topic to see stage 1 (research) produce a research file.
 
 ### Current app (regression, check before each launch)
 - [ ] Paste an X GIF link → the GIF page opens, the video plays, and the author is shown.

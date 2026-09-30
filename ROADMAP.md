@@ -33,7 +33,7 @@ A feature is not done until a human has tested it.
 | # | Feature | Size | Notes |
 |---|---|---|---|
 | 1 | ✅ **Upload & convert** | S/M | Upload a GIF, MP4, WebM or WebP and download it in any format and quality. Adds **secure uploads**: file type checked from the file's actual contents, size limits, ffprobe validation, and random file names. Every later tool uses this. |
-| 2 | **Compress / resize** | S | Presets such as "Under 15 MB (X)", "Under 8 MB (Discord)" and "Under 1 MB", or a custom width. |
+| 2 | ✅ **Compress / resize** | S | Presets such as "Under 15 MB (X)", "Under 8 MB (Discord)" and "Under 1 MB", or a custom width. |
 | 3 | **Speed, reverse, boomerang** | S | 0.25×–4× speed, play backwards, or forward-then-back loop. |
 | 4 | **Trim** | M | Pick a start and end on a live preview. The backend is easy; the slider UI is the work. |
 
@@ -114,6 +114,12 @@ Setup, done in 0.3:
 - Security headers: CSP, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`.
 - Admin endpoints need a long random token. Rate limits apply everywhere, backed by Cloudflare's.
 - Run `npm audit` before every deploy.
+
+## Blog (added 2026-09-30)
+
+- ✅ `/blog` with SEO tags, structured data, sitemap and robots rules. Staging is hidden from search engines; only production (`ALLOW_INDEXING=1`) is indexed.
+- ✅ Four tips posts published.
+- The **history of the GIF** series is written through `content/BLOG_PLAYBOOK.md`: an AI loop does research, drafting and fact-checking, and a human approves twice. The queue is `content/TOPICS.md`.
 
 ## Done
 - ✅ X grabber (link → GIF), dedup per post, public timeline

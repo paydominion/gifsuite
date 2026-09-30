@@ -30,6 +30,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Logo />
             <div className="ml-4 flex items-center gap-1">
               <ToolsMenu />
+              <Link href="/blog" className="inline-flex h-9 items-center rounded-lg px-3 text-sm font-semibold text-muted transition-colors hover:bg-panel hover:text-fg">
+                Blog
+              </Link>
               <Link href="/#latest" className="hidden h-9 items-center rounded-lg px-3 text-sm font-semibold text-muted transition-colors hover:bg-panel hover:text-fg sm:inline-flex">
                 Latest
               </Link>
@@ -45,7 +48,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <footer className="border-t border-line">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm text-muted">
             <span>© {new Date().getFullYear()} GifSuite · Not affiliated with X Corp.</span>
-            <Link href="/tools" className="font-semibold hover:text-fg">All tools</Link>
+            <span className="flex gap-4">
+              <Link href="/blog" className="font-semibold hover:text-fg">Blog</Link>
+              <Link href="/tools" className="font-semibold hover:text-fg">All tools</Link>
+            </span>
           </div>
         </footer>
       </body>

@@ -60,6 +60,35 @@ export async function convert(
   return (await call(`/convert?input=${input}&format=${format}&quality=${quality}${limit}`, post(video))).arrayBuffer();
 }
 
+export type Compressed = {
+  data: ArrayBuffer;
+  width: number;
+  fps: number;
+  colors: number;
+  /** false when even the smallest settings couldn't reach the target */
+  targetMet: boolean;
+  /** true when the upload already fit and was returned untouched */
+  unchanged: boolean;
+};
+
+/** Makes a GIF at or under `targetBytes`, trying smaller settings until it fits. */
+export async function compress(
+  video: ArrayBuffer,
+  { input, targetBytes, maxWidth = 0, maxDurationMs }: { input: Input; targetBytes: number; maxWidth?: number; maxDurationMs?: number },
+): Promise<Compressed> {
+  const limit = maxDurationMs ? `&maxDurationMs=${maxDurationMs}` : "";
+  const res = await call(`/compress?input=${input}&targetBytes=${targetBytes}&maxWidth=${maxWidth}${limit}`, post(video));
+  const h = (name: string) => res.headers.get(`x-gifsuite-${name}`);
+  return {
+    data: await res.arrayBuffer(),
+    width: Number(h("width")),
+    fps: Number(h("fps")),
+    colors: Number(h("colors")),
+    targetMet: h("target-met") === "true",
+    unchanged: h("unchanged") === "true",
+  };
+}
+
 /** yt-dlp's metadata for a post's media slot (1-based), used when X's embed endpoint fails. */
 export async function ytdlpInfo(tweetId: string, slot: number): Promise<Record<string, unknown>> {
   return (await call(`/ytdlp?tweetId=${tweetId}&slot=${slot}`)).json() as Promise<Record<string, unknown>>;

@@ -94,3 +94,83 @@ export const RENDERS = {
     [...inputArgs("mov", src), "-t", "15", "-an", "-vf", "scale='trunc(min(360,iw)/2)*2':-2", "-c:v", "libx264", "-crf", "30",
       "-preset", "veryfast", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-f", "mp4", out] },
 };
+
+// ── Compress to a target size ───────────────────────────────────────────────────
+
+/** Limits for the compress tool's search. */
+export const COMPRESS = { minWidth: 120, minFps: 5, minColors: 32, maxAttempts: 6 };
+
+/**
+ * @typedef {{ width: number, fps: number, colors: number }} GifSettings
+ */
+
+/**
+ * ffmpeg arguments for a GIF with explicit settings.
+ * @param {GifSettings} s @param {string} src @param {string} out @param {keyof typeof INPUTS} [input]
+ */
+export function gifArgs(s, src, out, input = "mov") {
+  return [...inputArgs(input, src), "-vf",
+    `fps=${s.fps},scale=${s.width}:-1:flags=lanczos,split[a][b];` +
+    `[a]palettegen=max_colors=${s.colors}:stats_mode=diff[p];` +
+    `[b][p]paletteuse=dither=bayer:bayer_scale=${s.colors > 128 ? 4 : 5}:diff_mode=rectangle`,
+    "-loop", "0", "-f", "gif", out];
+}
+
+/**
+ * The best-quality settings to try first.
+ * @param {{ width: number, fps: number }} source @param {number} [maxWidth] 0 or missing keeps the source width
+ * @returns {GifSettings}
+ */
+export function firstAttempt(source, maxWidth = 0) {
+  return {
+    width: Math.max(COMPRESS.minWidth, Math.min(source.width, maxWidth || source.width)),
+    fps: Math.max(COMPRESS.minFps, Math.min(Math.round(source.fps) || 15, 20)),
+    colors: 256,
+  };
+}
+
+/**
+ * Settings that should land under `target` bytes, given that `prev` produced `size` bytes.
+ * A GIF's size grows roughly with pixels × frames, so the saving is split between frame rate,
+ * colours and width (which counts twice, hence the square root). Returns null once every
+ * setting is at its floor and nothing smaller can be tried.
+ * @param {GifSettings} prev @param {number} size @param {number} target
+ * @returns {GifSettings | null}
+ */
+export function nextAttempt(prev, size, target) {
+  const ratio = Math.min((target / size) * 0.9, 0.95); // aim a little under the target
+  let { width, fps, colors } = prev;
+
+  // Frame rate: smooth enough down to 10fps; go lower only when far from the target.
+  if (fps > 10) fps = Math.max(10, Math.round(fps * Math.sqrt(ratio)));
+  else if (ratio < 0.35) fps = Math.max(COMPRESS.minFps, Math.round(fps * 0.8));
+
+  // Colours: fewer colours are the most visible loss, so drop them late and gently.
+  if (ratio < 0.2 && colors > 64) colors = 64;
+  else if (ratio < 0.5 && colors > 128) colors = 128;
+
+  // Width takes whatever saving is still needed.
+  const colorSaving = colors === prev.colors ? 1 : colors <= 64 ? 0.65 : 0.8;
+  const scale = Math.sqrt(Math.min(ratio / ((fps / prev.fps) * colorSaving), 1));
+  width = Math.max(COMPRESS.minWidth, Math.min(Math.floor(prev.width * scale), Math.floor(prev.width * 0.95)));
+
+  // Last resort, once the picture can't get any smaller.
+  if (width === COMPRESS.minWidth && prev.width === COMPRESS.minWidth && colors > COMPRESS.minColors) {
+    colors = COMPRESS.minColors;
+  }
+
+  if (width === prev.width && fps === prev.fps && colors === prev.colors) return null;
+  return { width, fps, colors };
+}
+
+/**
+ * When a result lands well under the target, the unused room can buy back width.
+ * Returns wider settings to try, or null if the result is already close enough (or as wide as allowed).
+ * @param {GifSettings} prev @param {number} size @param {number} target @param {number} maxWidth
+ * @returns {GifSettings | null}
+ */
+export function growAttempt(prev, size, target, maxWidth) {
+  if (size > target * 0.75) return null;
+  const width = Math.min(maxWidth, Math.floor(prev.width * Math.sqrt((target * 0.92) / size)));
+  return width >= prev.width * 1.05 ? { ...prev, width } : null;
+}

@@ -5,26 +5,28 @@
   "packageManager": "npm@11.6.2",
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "build": "next build",
+    "build": "npm run content && next build",
     "lint": "eslint",
     "test": "vitest run",
     "test:api": "playwright test --project=api",
     "test:e2e": "playwright test --project=e2e",
     "check": "npm run scan:secrets && npm run typecheck && eslint && vitest run && playwright test --project=api",
     "check:all": "npm run scan:secrets && npm run typecheck && eslint && vitest run && playwright test && npm run check:leaks",
-    "typecheck": "next typegen >/dev/null && tsc --noEmit",
+    "typecheck": "npm run content && next typegen >/dev/null && tsc --noEmit",
     "prepare": "git config core.hooksPath .githooks",
     "scan:secrets": "node scripts/scan-secrets.mjs",
-    "check:leaks": "node scripts/check-bundle-leaks.mjs",
+    "check:leaks": "npm run content && node scripts/check-bundle-leaks.mjs",
     "cf-types": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "deploy:staging": "opennextjs-cloudflare build && wrangler d1 migrations apply DB --remote --env staging && wrangler deploy --env staging",
     "deploy:production": "opennextjs-cloudflare build && wrangler d1 migrations apply DB --remote && wrangler deploy",
     "build:cloudflare": "opennextjs-cloudflare build",
-    "deploy:status": "sh scripts/deploy-status.sh"
+    "deploy:status": "sh scripts/deploy-status.sh",
+    "content": "node scripts/build-content.mjs"
   },
   "dependencies": {
     "@cloudflare/containers": "^0.3.7",
     "@opennextjs/cloudflare": "^1.20.7",
+    "marked": "^18.0.14",
     "next": "16.3.6",
     "react": "19.2.8",
     "react-dom": "19.2.8"

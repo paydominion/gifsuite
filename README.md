@@ -29,6 +29,7 @@ Plain settings live in `wrangler.jsonc` under `vars`, per environment (`dev`, `t
 | `AUTO_HIDE_REPORTS` | var | Distinct reporters before a GIF is hidden (default 5) |
 | `MAX_SOURCE_MB` / `MAX_DURATION_S` | var | Limits on grabbed videos (default 50 / 60); the duration limit also applies to uploads |
 | `MAX_UPLOAD_MB` | var | Largest file the upload tools accept (default 25) |
+| `ALLOW_INDEXING` | var, production only | `1` lets search engines index the site. Anything else sends `noindex` and a disallow-all robots.txt. |
 | `PROCESSOR_URL` | var, dev/test only | Where the local media processor listens. In production the Container is used instead. |
 
 ## How it works
@@ -39,6 +40,8 @@ Plain settings live in `wrangler.jsonc` under `vars`, per environment (`dev`, `t
 | Grab pipeline | `lib/ingest.ts` | Downloads the MP4, has the processor probe it and make the poster and timeline preview, stores everything in R2, and saves the D1 row. Deduplicated per post and media slot. |
 | Converter | `lib/media/convert.ts` | Makes each format and quality on first request and keeps it in R2 |
 | Upload & convert | `app/api/convert/route.ts` | Converts an uploaded file and returns it. Checks the type from the file's bytes (`lib/media/sniff.ts`); nothing is stored. |
+| Compress & resize | `app/api/compress/route.ts` | Shrinks an upload into a GIF under a target size. The processor tries smaller settings until it fits (`nextAttempt` / `growAttempt` in `processor/presets.mjs`). |
+| Blog | `content/blog/*.md` → `scripts/build-content.mjs` | Markdown posts are validated and compiled at build time into `lib/blog/posts.generated.json`. How posts get written: `content/BLOG_PLAYBOOK.md`. |
 | Media processor | `processor/` | The only place ffmpeg, gif2webp and yt-dlp run. A Cloudflare Container in production, a plain Node process locally. Presets are in `processor/presets.mjs`. |
 | Events | `events` table | Records grabs, views, downloads, shares and reports, which will feed the Trending page |
 

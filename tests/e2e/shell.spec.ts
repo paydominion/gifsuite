@@ -53,8 +53,8 @@ test("the tools page shows which tools are live", async ({ page }) => {
   await page.getByRole("link", { name: "See all tools →" }).click();
   await expect(page).toHaveURL("/tools");
   await expect(page.getByRole("heading", { name: "All tools" })).toBeVisible();
-  await expect(page.getByText("Live", { exact: true })).toHaveCount(2);
-  await expect(page.getByText("Coming soon", { exact: true })).toHaveCount(7);
+  await expect(page.getByText("Live", { exact: true })).toHaveCount(3);
+  await expect(page.getByText("Coming soon", { exact: true })).toHaveCount(6);
   await page.getByRole("link", { name: /Grab from X/ }).click();
   await expect(page).toHaveURL("/");
 });

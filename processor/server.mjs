@@ -7,6 +7,8 @@
 //   POST /render?name=poster|preview              body: MP4 → image/video bytes
 //   POST /convert?input=…&format=…&quality=…      body: video → converted bytes
 //        (&maxDurationMs=… rejects longer inputs with 413)
+//   POST /compress?input=…&targetBytes=…&maxWidth=…  body: video → GIF at or under the target size
+//        (result settings come back in x-gifsuite-* headers; x-gifsuite-target-met says if it fit)
 //
 // input is the container: gif, mov (MP4/MOV) or matroska (WebM). Defaults to mov.
 //   GET  /ytdlp?tweetId=…&slot=…         → yt-dlp's JSON for an X post (fallback fetcher)
@@ -16,7 +18,10 @@ import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
-import { FORMATS, RENDERS, ffmpegArgs, inputArgs, isFormat, isInput, isQuality, QUALITIES } from "./presets.mjs";
+import {
+  COMPRESS, FORMATS, QUALITIES, RENDERS, ffmpegArgs, firstAttempt, gifArgs, growAttempt, inputArgs, isFormat, isInput, isQuality,
+  nextAttempt,
+} from "./presets.mjs";
 
 const PORT = Number(process.env.PORT ?? 8080);
 const HOST = process.env.HOST ?? "0.0.0.0";
@@ -116,8 +121,8 @@ async function saveBody(req, file) {
   if (bytes === 0) throw new HttpError(400, "empty input");
 }
 
-function sendFile(res, file, mime) {
-  res.writeHead(200, { "content-type": mime, "content-length": fs.statSync(file).size });
+function sendFile(res, file, mime, headers = {}) {
+  res.writeHead(200, { "content-type": mime, "content-length": fs.statSync(file).size, ...headers });
   return pipeline(fs.createReadStream(file), res);
 }
 
@@ -180,6 +185,56 @@ async function handle(req, res, url) {
           throw new HttpError(422, "could not decode input");
         }
         return sendFile(res, out, FORMATS[format].mime);
+      }
+
+      if (url.pathname === "/compress") {
+        const targetBytes = Number(url.searchParams.get("targetBytes"));
+        const maxWidth = Number(url.searchParams.get("maxWidth") ?? 0);
+        if (!Number.isInteger(targetBytes) || targetBytes < 10_000 || targetBytes > 100 * 1024 * 1024) {
+          throw new HttpError(400, "bad target size");
+        }
+        if (!Number.isInteger(maxWidth) || maxWidth < 0 || maxWidth > 4096) throw new HttpError(400, "bad width");
+        const info = await probe(src, input);
+        const maxDurationMs = Number(url.searchParams.get("maxDurationMs") ?? 0);
+        if (maxDurationMs && info.durationMs > maxDurationMs) throw new HttpError(413, "too long");
+
+        const meta = (s, attempts, met, unchanged = false) => ({
+          "x-gifsuite-width": String(s.width), "x-gifsuite-fps": String(s.fps), "x-gifsuite-colors": String(s.colors),
+          "x-gifsuite-attempts": String(attempts), "x-gifsuite-target-met": String(met), "x-gifsuite-unchanged": String(unchanged),
+        });
+
+        // A GIF that already fits and needs no resize goes back untouched.
+        const sourceSize = fs.statSync(src).size;
+        if (input === "gif" && sourceSize <= targetBytes && (!maxWidth || info.width <= maxWidth)) {
+          return sendFile(res, src, "image/gif", meta({ width: info.width, fps: Math.round(info.fps), colors: 256 }, 0, true, true));
+        }
+
+        const first = firstAttempt(info, maxWidth);
+        let settings = first;
+        let fits = null; // the biggest (best-looking) result that is within the target
+        let smallest = null; // fallback if nothing fits
+        let attempts = 0;
+        while (settings && attempts < COMPRESS.maxAttempts) {
+          attempts++;
+          const out = path.join(dir, `try-${attempts}.gif`);
+          try {
+            await ffmpeg(gifArgs(settings, src, out, input));
+          } catch (err) {
+            console.warn(`[processor] could not compress ${input}:`, String(err).slice(0, 300));
+            throw new HttpError(422, "could not decode input");
+          }
+          const result = { out, size: fs.statSync(out).size, settings };
+          if (!smallest || result.size < smallest.size) smallest = result;
+          if (result.size <= targetBytes) {
+            if (!fits || result.size > fits.size) fits = result;
+            // Well under the target? Spend the spare room on a wider picture.
+            settings = growAttempt(settings, result.size, targetBytes, first.width);
+          } else {
+            settings = nextAttempt(settings, result.size, targetBytes);
+          }
+        }
+        const best = fits ?? smallest;
+        return sendFile(res, best.out, "image/gif", meta(best.settings, attempts, !!fits));
       }
 
       throw new HttpError(404, "not found");

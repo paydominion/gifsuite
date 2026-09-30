@@ -1,23 +1,13 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getGif } from "@/db/gifs";
-import { setting } from "@/lib/cloudflare";
+import { siteUrl } from "@/lib/site";
 import { DownloadButtons } from "@/components/DownloadButtons";
 import { ShareBar } from "@/components/ShareBar";
 import { ReportButton, ViewTracker } from "@/components/GifActions";
 import { Card, SectionLabel, cardClass } from "@/components/ui/Card";
 
 export const dynamic = "force-dynamic";
-
-async function siteUrl(): Promise<string> {
-  const configured = setting("PUBLIC_BASE_URL");
-  if (configured) return configured.replace(/\/$/, "");
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
-}
 
 export async function generateMetadata({ params }: PageProps<"/g/[id]">): Promise<Metadata> {
   const { id } = await params;

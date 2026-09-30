@@ -60,3 +60,6 @@ next-env.d.ts
 /.open-next
 /.wrangler
 /.deploy-logs
+
+# Compiled from content/blog by scripts/build-content.mjs
+/lib/blog/posts.generated.json

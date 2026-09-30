@@ -30,6 +30,8 @@ export function proxy(request: NextRequest) {
   requestHeaders.set("Content-Security-Policy", csp);
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("Content-Security-Policy", csp);
+  // Only production (ALLOW_INDEXING=1) may appear in search results; staging and previews must not.
+  if (process.env.ALLOW_INDEXING !== "1") response.headers.set("X-Robots-Tag", "noindex, nofollow");
   return response;
 }
 

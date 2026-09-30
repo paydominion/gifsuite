@@ -10,6 +10,8 @@
 
   // ── Production ────────────────────────────────────────────────────────────────
   "vars": {
+    // Only production is allowed into search engines. Staging, dev and test leave this unset.
+    "ALLOW_INDEXING": "1",
     "MAX_SOURCE_MB": "50",
     "MAX_DURATION_S": "60",
     "MAX_UPLOAD_MB": "25",
