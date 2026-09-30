@@ -5,39 +5,23 @@
    (bg-surface, text-muted, border-line…), never raw hex values. */
 
 :root {
-  --bg: #fbfbfa;
-  --surface: #ffffff;
-  --panel: #f3f3f1;
-  --line: #e4e3df;
-  --line-strong: #cfcdc7;
-  --fg: #121214;
-  --muted: #6b6a66;
-  --subtle: #9a9893;
-  --accent: #c6ff3d;
-  --accent-hover: #b4f01f;
-  --accent-ink: #121214;
-  --ring: #4f7bff;
-  --danger: #d63b3b;
-  --success: #15803d;
-  --shadow-color: 20 20 18;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b0b0d;
-    --surface: #121215;
-    --panel: #19191d;
-    --line: #26262c;
-    --line-strong: #36363e;
-    --fg: #f3f3ef;
-    --muted: #9a9993;
-    --subtle: #6c6b67;
-    --accent-hover: #d4ff66;
-    --ring: #7c9cff;
-    --danger: #ff6b6b;
-    --success: #4ade80;
-    --shadow-color: 0 0 0;
-  }
+  /* Ink and sun: one dark theme. Yellow is the only colour; everything else is a warm grey. */
+  --bg: #111110;
+  --surface: #191917;
+  --panel: #21211e;
+  --line: #2e2d28;
+  --line-strong: #45443c;
+  --fg: #f5f2e6;
+  --muted: #aaa695;
+  --subtle: #77746a;
+  --accent: #ffdc4a;
+  --accent-hover: #ffe600;
+  --accent-ink: #111110;
+  --ring: #ffe600;
+  --danger: #ff7a66;
+  --success: #b9e769;
+  --shadow-color: 0 0 0;
+  --mark-cut: var(--bg);
 }
 
 @theme inline {
@@ -64,7 +48,7 @@
 }
 
 html {
-  color-scheme: light dark;
+  color-scheme: dark;
 }
 
 body {
@@ -76,6 +60,55 @@ body {
 ::selection {
   background: var(--accent);
   color: var(--accent-ink);
+}
+
+/* ── Halftone: the brand texture. Decorative only; never behind text that must be read. ── */
+
+/* A band of dots that shrink downward, used as a divider. */
+.halftone-band {
+  height: 63px;
+  background: url("/brand/band.svg") repeat-x top left / 14px 63px;
+}
+.halftone-band.flip {
+  transform: scaleY(-1);
+}
+
+/* A fine dot screen fading out from one corner of a card. */
+.dots-corner {
+  position: relative;
+  isolation: isolate;
+}
+.dots-corner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background-image: radial-gradient(var(--accent) 1.1px, transparent 1.5px);
+  background-size: 9px 9px;
+  opacity: 0.28;
+  mask-image: radial-gradient(circle at 100% 0%, #000 0%, transparent 62%);
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+a.dots-corner:hover::after {
+  opacity: 0.6;
+}
+
+/* The hero sunburst glows very slightly, and holds still for people who prefer no motion. */
+@keyframes sun-breathe {
+  50% {
+    opacity: 0.78;
+    transform: scale(1.025);
+  }
+}
+.sun-breathe {
+  animation: sun-breathe 9s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sun-breathe {
+    animation: none;
+  }
 }
 
 /* ── Blog articles: HTML compiled from Markdown, styled with the same tokens ── */

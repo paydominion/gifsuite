@@ -6,7 +6,7 @@ type Size = "sm" | "md" | "lg";
 const BASE =
   "inline-flex items-center justify-center gap-2 rounded-xl font-semibold whitespace-nowrap transition-colors " +
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 " +
-  "focus-visible:ring-offset-bg disabled:pointer-events-none disabled:opacity-50";
+  "focus-visible:ring-offset-bg disabled:pointer-events-none disabled:opacity-50 pointer-coarse:min-h-11";
 
 const VARIANTS: Record<Variant, string> = {
   primary: "bg-accent text-accent-ink hover:bg-accent-hover",

@@ -57,6 +57,8 @@ export function processorFailure(err: unknown, tool: string): NextResponse {
   const status = (err as { status?: number })?.status;
   if (status === 413) return uploadError(413, `That clip is longer than ${maxDurationMs() / 1000}s. Trim it first.`);
   if (status === 422) return uploadError(422, "That file looks damaged or empty.");
+  // The processor doesn't know this command: a deploy is still rolling out its new version.
+  if (status === 404) return uploadError(503, "The converter is updating. Try again in a minute.");
   console.error(`[${tool}] failed:`, err);
   return uploadError(500, "Something went wrong with that file.");
 }

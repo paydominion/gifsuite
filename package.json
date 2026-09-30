@@ -21,7 +21,8 @@
     "deploy:production": "opennextjs-cloudflare build && wrangler d1 migrations apply DB --remote && wrangler deploy",
     "build:cloudflare": "opennextjs-cloudflare build",
     "deploy:status": "sh scripts/deploy-status.sh",
-    "content": "node scripts/build-content.mjs"
+    "content": "node scripts/build-content.mjs",
+    "brand": "node scripts/build-brand.mjs"
   },
   "dependencies": {
     "@cloudflare/containers": "^0.3.7",

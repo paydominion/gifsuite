@@ -46,7 +46,7 @@
 ## Human test checklists
 
 ### 0.1 Test system
-- [ ] Run `npm run check:all` in `~/gifsuite`. It should end with `97 passed` (unit), `88 passed` (API + browser) and "client files clean", with no failures.
+- [ ] Run `npm run check:all` in `~/gifsuite`. It should end with `103 passed` (unit), `93 passed` (API + browser) and "client files clean", with no failures.
 - [ ] Run `npx playwright test --project=e2e --headed` and watch Chrome grab a GIF, download it, and open the X post box.
 - [ ] Optional: in `processor/presets.mjs`, change `maxWidth: 320` to `300` and run `npm run check`. It should **fail**. Then change it back.
 - [ ] `npm run dev` on port 3217 still works normally while tests run.
@@ -63,9 +63,15 @@
 - [ ] Stop and restart `npm run dev`: the GIF is still on the timeline (local D1 and R2 keep data in `.wrangler/`).
 - [ ] Staging: open https://staging.gifsuite.com on your phone and your Mac, grab a real X link, download it, and try **Post on X**.
 
+### Design and phones
+- [ ] On your phone, open every page (home, a GIF page, Tools, Convert, Compress, Blog, a post). Nothing scrolls sideways and nothing is cut off.
+- [ ] The phone header shows the logo and a menu button; the menu opens every tool and page, and every item is easy to tap.
+- [ ] The headline on the home page is easy to read on top of the yellow sunburst.
+- [ ] Open `/brand` and pick a logo. Tell Claude the number, or download the SVG.
+
 ### 0.4 UI foundation
 - [ ] Every page uses the Satoshi font (compare with the fontshare.com sample).
-- [ ] Switch your Mac between Light and Dark appearance: both look right, with no unreadable text.
+- [ ] The site is dark on both Light and Dark system settings (one theme by design).
 - [ ] **Tools** menu: opens on click, closes with Escape or by clicking elsewhere, and "See all tools" goes to `/tools`.
 - [ ] Click **Grab GIF** with the box empty: it says "Paste an X post link first."
 - [ ] On your phone, the home page and a GIF page fit the screen with no sideways scrolling.

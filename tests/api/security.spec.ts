@@ -31,6 +31,15 @@ test.describe("security headers", () => {
     }
   });
 
+  test("the tab icon and brand artwork are served from our own site", async ({ request }) => {
+    for (const path of ["/icon.svg", "/brand/burst.svg", "/brand/band.svg"]) {
+      const res = await request.get(path);
+      expect(res.status(), path).toBe(200);
+      expect(res.headers()["content-type"], path).toContain("image/svg+xml");
+    }
+    expect(await (await request.get("/")).text()).toContain('rel="icon"');
+  });
+
   test("error responses don't leak internals", async ({ request }) => {
     const res = await request.post("/api/grab", { data: { url: "https://x.com/down/status/500" } });
     const text = await res.text();

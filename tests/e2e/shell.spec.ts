@@ -65,10 +65,64 @@ test("an empty grab explains what to do", async ({ page }) => {
   await expect(page.getByRole("alert").filter({ hasText: "Paste an X post link first." })).toBeVisible();
 });
 
-test("works at phone width", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+// Every page must fit these phone widths with nothing sticking out sideways.
+const PHONE_WIDTHS = [320, 360, 390];
+const PAGES = ["/", "/tools", "/tools/convert", "/tools/compress", "/blog", "/blog/gif-vs-mp4-vs-webm-vs-webp", "/brand"];
+
+for (const width of PHONE_WIDTHS) {
+  test(`every page fits a ${width}px phone`, async ({ browser, request }) => {
+    const { grabId } = await import("../helpers");
+    const id = await grabId(request, "115", "uiuser");
+    const context = await browser.newContext({ viewport: { width, height: 700 }, isMobile: true, hasTouch: true });
+    const page = await context.newPage();
+    for (const path of [...PAGES, `/g/${id}`]) {
+      await page.goto(path);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow, `${path} is ${overflow}px wider than a ${width}px screen`).toBeLessThanOrEqual(0);
+    }
+    await context.close();
+  });
+}
+
+test("the phone menu reaches every destination, with tap targets big enough for a thumb", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+  const page = await context.newPage();
   await page.goto("/");
-  await expect(page.getByLabel("X post link")).toBeVisible();
-  // Nothing sticks out sideways.
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+
+  // The desktop links and the header button are gone; one menu button replaces them.
+  await expect(page.getByRole("button", { name: "Tools", exact: true })).toBeHidden();
+  await expect(page.getByRole("navigation").getByRole("link", { name: "Grab a GIF" })).toBeHidden();
+  const menu = page.getByRole("button", { name: "Open menu" });
+  expect((await menu.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+
+  await menu.click();
+  for (const name of ["Grab from X", "Upload & convert", "Compress & resize", "Blog", "Latest GIFs", "All tools"]) {
+    const link = page.getByRole("navigation").getByRole("link", { name, exact: true });
+    await expect(link).toBeVisible();
+    expect((await link.boundingBox())!.height, name).toBeGreaterThanOrEqual(44);
+  }
+
+  await page.getByRole("navigation").getByRole("link", { name: "Compress & resize", exact: true }).click();
+  await expect(page).toHaveURL("/tools/compress");
+  await expect(page.getByRole("button", { name: "Open menu" })).toBeVisible(); // it closed itself
+
+  // Primary actions are thumb-sized on a touch screen.
+  expect((await page.getByRole("button", { name: "Compress & download" }).boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await context.close();
+});
+
+test("the brand page shows six logo options and downloads one as an SVG", async ({ page }) => {
+  await page.goto("/brand");
+  await expect(page.getByRole("img", { name: /logo$/ })).toHaveCount(6);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download SVG" }).first().click();
+  const file = await download;
+  expect(file.suggestedFilename()).toBe("gifsuite-burst-loop.svg");
+  const svg = await (await import("node:fs/promises")).readFile((await file.path())!, "utf8");
+  expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
+  expect(svg).toContain("#ffdc4a");
+  expect(svg).not.toContain("currentColor");
+  expect(svg).not.toContain("var(");
 });

@@ -52,7 +52,7 @@ export function GrabForm() {
       }}
       className="w-full"
     >
-      <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-2 shadow-card sm:flex-row">
+      <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-2 text-left shadow-pop sm:flex-row">
         <Input
           type="url"
           inputMode="url"
@@ -71,7 +71,11 @@ export function GrabForm() {
           </Button>
         </div>
       </div>
-      {error && <p role="alert" className="mt-3 text-sm font-medium text-danger">{error}</p>}
+      {error && (
+        <p role="alert" className="mx-auto mt-3 w-fit rounded-lg bg-bg px-3 py-1.5 text-sm font-semibold text-danger">
+          {error}
+        </p>
+      )}
     </form>
   );
 }

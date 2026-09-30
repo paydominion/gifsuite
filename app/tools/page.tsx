@@ -29,7 +29,7 @@ export default function ToolsPage() {
           return (
             <li key={tool.slug}>
               {tool.status === "live" ? (
-                <Link href={tool.href} className={`${cardClass} block h-full p-5 transition-colors hover:border-line-strong`}>
+                <Link href={tool.href} className={`${cardClass} dots-corner block h-full p-5 transition-colors hover:border-accent`}>
                   {body}
                 </Link>
               ) : (

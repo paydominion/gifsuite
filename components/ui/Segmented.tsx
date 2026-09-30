@@ -24,7 +24,7 @@ export function Segmented<T extends string>({
           aria-checked={value === o.value}
           disabled={disabled}
           onClick={() => onChange(o.value)}
-          className={`flex-1 rounded-lg px-3 py-1.5 font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+          className={`min-w-0 flex-1 rounded-lg px-1.5 py-1.5 font-semibold whitespace-nowrap min-[400px]:px-3 transition-colors pointer-coarse:py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             value === o.value ? "bg-surface text-fg shadow-card" : "text-muted hover:text-fg"
           }`}
         >
