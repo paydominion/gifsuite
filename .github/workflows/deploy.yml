@@ -35,6 +35,10 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      # npm versions disagree about optional packages in the lock file, so use the one
+      # recorded in package.json ("packageManager") everywhere.
+      - name: Use the project's npm version
+        run: npm install -g "$(node -p "require('./package.json').packageManager")"
       - name: Install ffmpeg and WebP tools (used by the media processor in tests)
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg webp
       - run: npm ci
@@ -70,6 +74,10 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      # npm versions disagree about optional packages in the lock file, so use the one
+      # recorded in package.json ("packageManager") everywhere.
+      - name: Use the project's npm version
+        run: npm install -g "$(node -p "require('./package.json').packageManager")"
       - run: npm ci
       - name: Build for Cloudflare
         run: npx opennextjs-cloudflare build
