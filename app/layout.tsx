@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 import localFont from "next/font/local";
 import { Logo } from "@/components/shell/Logo";
 import { MobileMenu } from "@/components/shell/MobileMenu";
@@ -25,9 +26,14 @@ export const metadata: Metadata = {
 // Colours the phone browser's own bars to match the page.
 export const viewport: Viewport = { themeColor: "#111110", colorScheme: "dark" };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Render every page per request. The CSP nonce changes on each request and is stamped into the
+  // HTML, so a page that Next.js prerendered or cached would carry a stale nonce and the browser
+  // would block all of its scripts.
+  await connection();
   return (
-    <html lang="en" className={`${satoshi.variable} h-full antialiased`}>
+    // Browser extensions add their own attributes to <html> before React loads; don't report those.
+    <html lang="en" className={`${satoshi.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="flex min-h-full flex-col font-sans">
         <header className="sticky top-0 z-40 border-b border-line bg-bg/85 backdrop-blur-md">
           <nav className="relative mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">

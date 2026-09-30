@@ -19,6 +19,21 @@ test.describe("security headers", () => {
     expect(await nonceOf()).not.toBe(await nonceOf());
   });
 
+  test("no page is static: each one is rendered with the nonce of its own request", async ({ request }) => {
+    // A prerendered or cached page would reuse HTML stamped with an old nonce, and browsers would
+    // block every script on it. This bit /tools on the live site.
+    for (const path of ["/", "/tools", "/tools/convert", "/tools/compress", "/blog", "/brand", "/this-page-does-not-exist"]) {
+      for (let i = 0; i < 3; i++) {
+        const res = await request.get(path);
+        const headerNonce = res.headers()["content-security-policy"].match(/'nonce-([^']+)'/)![1];
+        const html = await res.text();
+        const htmlNonces = [...new Set([...html.matchAll(/nonce="([^"]+)"/g)].map((m) => m[1]))];
+        expect(htmlNonces, `${path} request ${i + 1}`).toEqual([headerNonce]);
+        expect(res.headers()["cache-control"] ?? "", path).not.toContain("s-maxage");
+      }
+    }
+  });
+
   test("every response gets the basic hardening headers", async ({ request }) => {
     const id = await grabId(request, "111", "gifmaker");
     for (const path of ["/", `/g/${id}`, "/api/gifs", `/media/${id}/poster.jpg`]) {
