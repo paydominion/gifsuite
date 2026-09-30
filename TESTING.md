@@ -46,7 +46,7 @@
 ## Human test checklists
 
 ### 0.1 Test system
-- [ ] Run `npm run check:all` in `~/gifsuite`. It should end with `103 passed` (unit), `94 passed` (API + browser) and "client files clean", with no failures.
+- [ ] Run `npm run check:all` in `~/gifsuite`. It should end with `103 passed` (unit), `95 passed` (API + browser) and "client files clean", with no failures.
 - [ ] Run `npx playwright test --project=e2e --headed` and watch Chrome grab a GIF, download it, and open the X post box.
 - [ ] Optional: in `processor/presets.mjs`, change `maxWidth: 320` to `300` and run `npm run check`. It should **fail**. Then change it back.
 - [ ] `npm run dev` on port 3217 still works normally while tests run.

@@ -59,6 +59,15 @@ test("the tools page shows which tools are live", async ({ page }) => {
   await expect(page).toHaveURL("/");
 });
 
+test("a missing page shows our own 404, styled and without CSP errors", async ({ page }) => {
+  for (const path of ["/no-such-page", "/blog/no-such-post", "/g/nope123456"]) {
+    const res = await page.goto(path);
+    expect(res!.status(), path).toBe(404);
+    await expect(page.getByRole("heading", { name: "This page didn't loop back." }), path).toBeVisible();
+    await expect(page.getByRole("link", { name: "Grab a GIF" }).last()).toBeVisible();
+  }
+});
+
 test("an empty grab explains what to do", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Grab GIF" }).click();
