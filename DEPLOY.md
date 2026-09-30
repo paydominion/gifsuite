@@ -1,60 +1,60 @@
-# Deploying GifSuite to Cloudflare
+# Deploying GifSuite
 
-GifSuite runs entirely on Cloudflare:
+GifSuite runs entirely on Cloudflare and deploys from **GitHub Actions**, not from your Mac. Your Mac never needs Docker.
 
-| Piece | Cloudflare product | Name |
-|---|---|---|
-| Pages and API | Workers (Next.js via OpenNext) | `gifsuite` / `gifsuite-staging` |
-| Database | D1 | `gifsuite` / `gifsuite-staging` |
-| GIF and video files | R2 | `gifsuite-media` / `gifsuite-media-staging` |
-| ffmpeg, gif2webp, yt-dlp | Containers (`processor/Dockerfile`) | `MediaProcessor` |
-| Grab rate limit | Rate Limiting binding | `GRAB_LIMITER` |
+| Piece | Cloudflare product | Staging | Production |
+|---|---|---|---|
+| Pages and API | Workers (Next.js via OpenNext) | `gifsuite-staging` | `gifsuite` |
+| Database | D1 | `gifsuite-staging` | `gifsuite` (not created yet) |
+| GIF and video files | R2 | `gifsuite-media-staging` | `gifsuite-media` (not created yet) |
+| ffmpeg, gif2webp, yt-dlp | Containers (`processor/Dockerfile`) | `MediaProcessor` | `MediaProcessor` |
+| Address | Custom domain | https://staging.gifsuite.com | https://gifsuite.com |
 
-Containers need the **Workers Paid** plan ($5/month). D1, R2 and Container time are billed on top by usage.
+Containers need the **Workers Paid** plan ($5/month), which is active. D1, R2 and Container time are billed on top by usage.
 
-## One-time setup (you run these)
+## How a deploy happens
 
-1. **Your domain on Cloudflare.** Cloudflare dashboard → *Add a domain*, then change the nameservers at your registrar to the two Cloudflare gives you. Skip if it's already there.
-2. **Workers Paid plan.** Dashboard → *Workers & Pages* → *Plans*.
-3. **Sign in from this Mac:**
-   ```
-   ! npx wrangler login
-   ```
-4. **Docker Desktop running**, because deploying builds the processor's container image.
+1. Push to `main` on GitHub (`git push`).
+2. GitHub runs the full test suite (`npm run check:all`).
+3. If everything passes, GitHub builds the site, applies database migrations, builds the processor container and deploys to **staging**.
 
-## Create the resources (Claude can run these once you're signed in)
+Watch it live at https://github.com/dominusmaster/gifsuite/actions, or run `gh run watch` in the terminal.
+
+**Production** is manual: Actions → *Test and deploy* → *Run workflow* → choose `production`.
+
+## What's already set up
+
+- GitHub repo `dominusmaster/gifsuite` (**private**; it must stay private because of the Satoshi font license).
+- GitHub secret `CLOUDFLARE_API_TOKEN`: a Cloudflare API token with Workers, D1, Containers and DNS edit rights. If it leaks, roll it at https://dash.cloudflare.com/profile/api-tokens and update the secret.
+- Staging D1 database, R2 bucket and custom domain.
+- Staging secrets `ADMIN_TOKEN` and `VISITOR_SALT`. They're random values stored only at Cloudflare.
+
+## Before the first production deploy
+
+Run these once from this Mac (`npx wrangler login` is already done):
 
 ```
-npx wrangler d1 create gifsuite-staging
-npx wrangler d1 create gifsuite
-npx wrangler r2 bucket create gifsuite-media-staging
+npx wrangler d1 create gifsuite            # put the printed database_id in wrangler.jsonc (top level)
 npx wrangler r2 bucket create gifsuite-media
 ```
 
-Paste each `database_id` printed by `d1 create` into `wrangler.jsonc` in place of `00000000-…`. These IDs aren't secrets.
+Add to the top level of `wrangler.jsonc`:
 
-## Secrets (never in files)
-
-Generate each value with `openssl rand -hex 32`, then store it at Cloudflare:
-
-```
-npx wrangler secret put ADMIN_TOKEN --env staging
-npx wrangler secret put VISITOR_SALT --env staging
-npx wrangler secret put ADMIN_TOKEN
-npx wrangler secret put VISITOR_SALT
+```jsonc
+"routes": [{ "pattern": "gifsuite.com", "custom_domain": true }],
+// and in "vars":
+"PUBLIC_BASE_URL": "https://gifsuite.com",
 ```
 
-## Deploy
+Deploy production once from GitHub, then set its secrets (each value is generated and sent straight to Cloudflare, never shown):
 
 ```
-npm run deploy:staging     # build, apply D1 migrations, deploy to staging
-npm run deploy:production  # same, for production
+openssl rand -hex 32 | npx wrangler secret put ADMIN_TOKEN
+openssl rand -hex 32 | npx wrangler secret put VISITOR_SALT
 ```
 
-Then attach the domains: dashboard → *Workers & Pages* → the worker → *Settings* → *Domains & Routes* → *Add custom domain*. Use `staging.yourdomain.com` for staging and `yourdomain.com` for production. Also set `PUBLIC_BASE_URL` for each environment in `wrangler.jsonc` `vars`.
+## Notes
 
-## After each deploy
-
-- Run the human checklist in `TESTING.md` against the live site.
-- The first conversion after the processor has been idle may take a few extra seconds while its container starts.
-- Staging hits the **real X**. Check a grab works from Cloudflare's network, since X may treat Cloudflare's addresses differently from your Mac's.
+- `npm` is pinned (`packageManager` in `package.json`), and the workflow installs that exact version. Different npm versions disagree about the lock file.
+- The first request after the processor has been idle takes a few extra seconds while its container starts.
+- To deploy from this Mac in an emergency: start Docker Desktop, then run `npm run deploy:staging`. It's slow on a slow connection; `npm run deploy:status` shows progress.

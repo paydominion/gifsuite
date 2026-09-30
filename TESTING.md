@@ -61,8 +61,7 @@
 - [ ] `npm run dev` starts **both** the processor and the site, and http://localhost:3217 loads.
 - [ ] Grab a real X GIF link, then download it as Low GIF and High WebP. Both files open.
 - [ ] Stop and restart `npm run dev`: the GIF is still on the timeline (local D1 and R2 keep data in `.wrangler/`).
-- [ ] Docker Desktop running: `docker build -t gifsuite-processor processor/` succeeds (this is the image Cloudflare runs).
-- [ ] Staging (after your `npx wrangler login` and the steps in `DEPLOY.md`): grab a real X link on `staging.yourdomain.com`.
+- [ ] Staging: open https://staging.gifsuite.com on your phone and your Mac, grab a real X link, download it, and try **Post on X**.
 
 ### 0.4 UI foundation
 - [ ] Every page uses the Satoshi font (compare with the fontshare.com sample).
