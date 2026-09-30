@@ -33,14 +33,16 @@
   "env": {
     // ── Staging: same setup, separate data, on a staging subdomain ─────────────
     "staging": {
+      "routes": [{ "pattern": "staging.gifsuite.com", "custom_domain": true }],
       "vars": {
+        "PUBLIC_BASE_URL": "https://staging.gifsuite.com",
         "MAX_SOURCE_MB": "50",
         "MAX_DURATION_S": "60",
         "MAX_UPLOAD_MB": "25",
         "AUTO_HIDE_REPORTS": "5"
       },
       "d1_databases": [
-        { "binding": "DB", "database_name": "gifsuite-staging", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+        { "binding": "DB", "database_name": "gifsuite-staging", "database_id": "8bb26c05-abd0-4a74-a022-cfb0560fe946", "migrations_dir": "migrations" }
       ],
       "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "gifsuite-media-staging" }],
       "containers": [
