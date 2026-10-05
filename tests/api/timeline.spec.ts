@@ -30,7 +30,7 @@ test.describe("timeline", () => {
     const html = await (await request.get(`/g/${id}`)).text();
     expect(html).toContain(`property="og:video" content="http://localhost:3299/media/${id}/source.mp4"`);
     expect(html).toContain('name="twitter:card" content="summary_large_image"');
-    expect(html).toContain("@<!-- -->gifmaker");
+    expect(html).toMatch(/<span[^>]*>@gifmaker<\/span>/); // the author line
 
     expect((await request.get("/g/nope123456")).status()).toBe(404);
   });
