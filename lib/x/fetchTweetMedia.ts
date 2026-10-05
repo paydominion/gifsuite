@@ -24,20 +24,43 @@ export type TweetMedia = {
   width: number;
   height: number;
   durationMs: number;
+  /** X marked the post as possibly sensitive (the author's or X's own label). */
+  sensitive: boolean;
 };
 
 const X_HOSTS = /^(?:www\.|mobile\.)?(?:x|twitter|fxtwitter|vxtwitter|fixupx|fixvx)\.com$/i;
+
+// An X post link inside other pasted text: quotes, "@", <angle brackets>, or words around it.
+// The host must start the match (not "evilx.com") and be followed by "/" (not "x.com.evil.com").
+const EMBEDDED_POST_LINK =
+  /(?<![\w.-])(?:https?:\/\/)?(?:www\.|mobile\.)?(?:x|twitter|fxtwitter|vxtwitter|fixupx|fixvx)\.com\/[^\s"'<>]*?\/status(?:es)?\/\d{1,25}[^\s"'<>]*/i;
+
+/** True if the pasted text is meant for X: an X post link anywhere in it, or a link to an X host or t.co. */
+export function isXLink(input: string): boolean {
+  const text = input.trim();
+  if (EMBEDDED_POST_LINK.test(text)) return true;
+  const first = text.match(/(?:https?:\/\/)?((?:[a-z0-9-]+\.)+[a-z]{2,})(?=[/:?#\s"'>)]|$)/i)?.[1] ?? "";
+  return X_HOSTS.test(first) || /^t\.co$/i.test(first);
+}
 
 /**
  * Accepts any X/Twitter post link, e.g.
  *   https://x.com/user/status/123/video/1?s=46
  *   https://mobile.twitter.com/user/status/123
+ * even with other text pasted around it ("look: https://x.com/…", "\"https://x.com/…\"").
  * Returns the post id and the 0-based media slot the link points at (if any).
  */
 export function parseTweetUrl(input: string): { tweetId: string; mediaSlot: number | null } {
+  const text = input.trim();
+  // The X post link if there is one; otherwise the first link of any kind, so a non-X link still
+  // gets the "only X" message rather than "not a link".
+  const candidate = text.match(EMBEDDED_POST_LINK)?.[0] ?? text.match(/https?:\/\/[^\s"'<>]+/i)?.[0] ?? text;
+  if (/(?:^|[\s"'<@(])(?:https?:\/\/)?t\.co\//i.test(` ${text}`) && candidate === text) {
+    throw new GrabError("That's a shortened t.co link. Open it, then copy the post's own x.com link.");
+  }
   let url: URL;
   try {
-    url = new URL(input.trim().startsWith("http") ? input.trim() : `https://${input.trim()}`);
+    url = new URL(candidate.startsWith("http") ? candidate : `https://${candidate}`);
   } catch {
     throw new GrabError("That doesn't look like a link. Paste an X (Twitter) post URL.");
   }
@@ -71,6 +94,7 @@ type SyndicationTweet = {
   text?: string;
   favorite_count?: number;
   retweet_count?: number;
+  possibly_sensitive?: boolean;
   user?: { screen_name: string; name: string };
   mediaDetails?: MediaDetail[];
 };
@@ -119,6 +143,7 @@ async function fromSyndication(tweetId: string, mediaSlot: number | null): Promi
     width: detail.original_info?.width ?? 0,
     height: detail.original_info?.height ?? 0,
     durationMs: detail.video_info?.duration_millis ?? 0,
+    sensitive: tweet.possibly_sensitive === true,
   };
 }
 
@@ -132,6 +157,7 @@ type YtDlpInfo = {
   width?: number;
   height?: number;
   duration?: number;
+  age_limit?: number;
 };
 
 async function fromYtDlp(tweetId: string, mediaSlot: number | null): Promise<TweetMedia> {
@@ -154,6 +180,7 @@ async function fromYtDlp(tweetId: string, mediaSlot: number | null): Promise<Twe
     width: info.width ?? 0,
     height: info.height ?? 0,
     durationMs: Math.round((info.duration ?? 0) * 1000),
+    sensitive: (info.age_limit ?? 0) >= 18,
   };
 }
 

@@ -19,6 +19,17 @@ test.describe("security headers", () => {
     expect(await nonceOf()).not.toBe(await nonceOf());
   });
 
+  test("the Cloudflare Web Analytics beacon carries the page's nonce", async ({ request }) => {
+    const res = await request.get("/blog");
+    const csp = res.headers()["content-security-policy"];
+    const nonce = csp.match(/'nonce-([^']+)'/)![1];
+    expect(csp).toContain("connect-src 'self' https://cloudflareinsights.com");
+    const html = await res.text();
+    const tag = html.match(/<script[^>]*beacon\.min\.js[^>]*>/)?.[0] ?? "";
+    expect(tag).toContain(`nonce="${nonce}"`);
+    expect(tag).toContain("&quot;token&quot;:&quot;0123456789abcdef0123456789abcdef&quot;");
+  });
+
   test("no page is static: each one is rendered with the nonce of its own request", async ({ request }) => {
     // A prerendered or cached page would reuse HTML stamped with an old nonce, and browsers would
     // block every script on it. This bit /tools on the live site.

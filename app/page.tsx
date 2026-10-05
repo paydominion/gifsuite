@@ -30,13 +30,13 @@ export default async function Home() {
         </div>
         <div className="mx-auto max-w-2xl space-y-6">
           <p className="inline-flex items-center rounded-full bg-bg px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-accent ring-1 ring-accent/40">
-            The GIF suite for X
+            The all-in-one GIF suite
           </p>
           <h1 className="text-[2.6rem] font-black leading-[1.02] tracking-tight text-balance text-bg sm:text-7xl">
-            Grab any GIF from X.
+            Grab, convert and make GIFs.
           </h1>
           <p className="mx-auto max-w-md text-lg font-semibold text-balance text-bg/80">
-            Paste a post link. Download it in any format and quality, or post it straight back.
+            Paste a link from X, Giphy, Reddit or anywhere to grab its GIF in any format and quality, or upload your own.
           </p>
           <GrabForm />
         </div>

@@ -174,3 +174,118 @@ export function growAttempt(prev, size, target, maxWidth) {
   const width = Math.min(maxWidth, Math.floor(prev.width * Math.sqrt((target * 0.92) / size)));
   return width >= prev.width * 1.05 ? { ...prev, width } : null;
 }
+
+// ── NSFW scan ───────────────────────────────────────────────────────────────────
+
+/** The model looks at square 224px frames; a handful spread across the clip catches most content. */
+export const NSFW = { size: 224, frames: 6 };
+
+/**
+ * ffmpeg args that sample NSFW.frames frames evenly across the clip, as raw 224×224 RGB, so the
+ * scanner needs no image decoder. The model resizes to a square anyway, so stretching is fine.
+ */
+export function nsfwFrameArgs(src, out, durationMs) {
+  const seconds = Math.max(durationMs / 1000, 0.1);
+  const fps = (NSFW.frames / seconds).toFixed(4);
+  return [...inputArgs("mov", src), "-an", "-vf", `fps=${fps},scale=${NSFW.size}:${NSFW.size}`, "-frames:v", String(NSFW.frames),
+    "-pix_fmt", "rgb24", "-f", "rawvideo", out];
+}
+
+/**
+ * The highest score each class reached on any frame: one explicit frame is enough to flag a clip.
+ * @param {{ className: string, probability: number }[][]} perFrame
+ */
+export function worstFrame(perFrame) {
+  const best = { porn: 0, hentai: 0, sexy: 0, frames: perFrame.length };
+  for (const predictions of perFrame) {
+    for (const { className, probability } of predictions) {
+      const key = className.toLowerCase();
+      if (key === "porn" || key === "hentai" || key === "sexy") best[key] = Math.max(best[key], probability);
+    }
+  }
+  return best;
+}
+
+// ── Grab from any link ──────────────────────────────────────────────────────────
+
+/** What a downloaded file is, from its first bytes. "webp" is refused: ffmpeg can't decode animated WebP. */
+export function sniffMedia(bytes) {
+  const ascii = (start, end) => String.fromCharCode(...bytes.subarray(start, end));
+  if (ascii(0, 4) === "GIF8") return "gif";
+  if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "webp";
+  if (ascii(4, 8) === "ftyp") return "mov";
+  if (bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) return "matroska";
+  return null;
+}
+
+/**
+ * Every grabbed file is stored as one kind of MP4 (H.264, even dimensions, fast start, audio kept
+ * when there is any), so the poster, preview and downloads work the same whatever the source was.
+ */
+export function normalizeArgs(input, src, out) {
+  return [...inputArgs(input, src), "-map", "0:v:0", "-map", "0:a:0?", "-vf", "scale='trunc(iw/2)*2':'trunc(ih/2)*2'",
+    "-c:v", "libx264", "-crf", "20", "-preset", "veryfast", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k",
+    "-movflags", "+faststart", "-f", "mp4", out];
+}
+
+/** yt-dlp arguments: one item, a direct (non-streaming) download where possible, merged to MP4. */
+export function ytdlpDownloadArgs(url, outTemplate, maxBytes) {
+  return ["--no-playlist", "--no-warnings", "--no-progress", "--socket-timeout", "20", "--max-filesize", String(maxBytes),
+    "-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b", "--merge-output-format", "mp4",
+    "-o", outTemplate, "--print-json", "--no-simulate", "--", url];
+}
+
+/** Turns yt-dlp's complaint into a status and a message a person can act on. */
+export function ytdlpFailure(stderr) {
+  if (/Unsupported URL|no video formats found|No media found|Unable to extract|is not a valid URL/i.test(stderr)) {
+    return { status: 422, message: "no media" };
+  }
+  if (/larger than max-filesize|File is larger/i.test(stderr)) return { status: 413, message: "too large" };
+  if (/HTTP Error 404|HTTP Error 410|\bnot found\b|\bremoved\b|\bdeleted\b/i.test(stderr)) return { status: 404, message: "gone" };
+  if (/\b(private|log ?in|sign in|members[- ]only|age[- ]restricted|confirm your age|age verification|cookies)\b/i.test(stderr)) {
+    return { status: 403, message: "needs login" };
+  }
+  return { status: 502, message: "source failed" };
+}
+
+/**
+ * The GIF or video a web page advertises in its link-preview tags (Open Graph, Twitter cards).
+ * Giphy, Tenor, Imgur, Tumblr and most GIF sites publish their media there, which is more reliable
+ * than scraping. Returns candidate links, best first (MP4 over GIF; WebP is skipped), and the title.
+ */
+export function mediaFromHtml(html, baseUrl) {
+  const metas = [];
+  for (const tag of html.slice(0, 2_000_000).match(/<meta\b[^>]*>/gi) ?? []) {
+    const attr = (name) => tag.match(new RegExp(`\\b${name}\\s*=\\s*("([^"]*)"|'([^']*)')`, "i"));
+    const key = (attr("property") ?? attr("name"))?.slice(2).find((v) => v !== undefined)?.toLowerCase();
+    const value = attr("content")?.slice(2).find((v) => v !== undefined);
+    if (key && value) metas.push([key, value.replace(/&amp;/g, "&").trim()]);
+  }
+  const absolute = (v) => {
+    try {
+      const u = new URL(v, baseUrl);
+      return u.protocol === "https:" || u.protocol === "http:" ? u.href : null;
+    } catch {
+      return null;
+    }
+  };
+  const rank = (key, url) => {
+    const path = new URL(url).pathname.toLowerCase();
+    if (path.endsWith(".webp")) return -1;
+    if (/^(og:video(:secure_url|:url)?|twitter:player:stream)$/.test(key)) return path.endsWith(".mp4") ? 4 : 3;
+    if (/^(og:image(:secure_url|:url)?|twitter:image)$/.test(key) && path.endsWith(".gif")) return 2;
+    return -1;
+  };
+  const seen = new Set();
+  const candidates = metas
+    .map(([key, value]) => ({ key, url: absolute(value) }))
+    .filter((m) => m.url && rank(m.key, m.url) >= 0 && !seen.has(m.url) && seen.add(m.url))
+    .sort((a, b) => rank(b.key, b.url) - rank(a.key, a.url))
+    .map((m) => m.url);
+  const title = metas.find(([k]) => k === "og:title" || k === "twitter:title")?.[1] ?? "";
+  const siteName = metas.find(([k]) => k === "og:site_name")?.[1] ?? "";
+  // <meta http-equiv="refresh" content="0;url=…">: the page is only a pointer to the real one.
+  const refreshTag = (html.slice(0, 200_000).match(/<meta\b[^>]*http-equiv\s*=\s*["']?refresh[^>]*>/i) ?? [])[0];
+  const refresh = refreshTag ? absolute((refreshTag.match(/url\s*=\s*([^"'>\s]+)/i) ?? [])[1] ?? "") : null;
+  return { candidates, title, siteName, refresh };
+}

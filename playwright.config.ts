@@ -20,7 +20,19 @@ export default defineConfig({
   projects: [
     { name: "api", testDir: "tests/api" },
     // Uses the Chrome already installed on this Mac, so Playwright needs no browser download.
-    { name: "e2e", testDir: "tests/e2e", use: { channel: "chrome", headless: true } },
+    // Cloudflare's analytics hosts resolve to nowhere, so the Web Analytics beacon is checked
+    // against the CSP without ever loading it or sending test page views.
+    {
+      name: "e2e",
+      testDir: "tests/e2e",
+      use: {
+        channel: "chrome",
+        headless: true,
+        launchOptions: {
+          args: ["--host-resolver-rules=MAP static.cloudflareinsights.com ~NOTFOUND, MAP cloudflareinsights.com ~NOTFOUND"],
+        },
+      },
+    },
   ],
   webServer: [
     {
@@ -32,8 +44,9 @@ export default defineConfig({
     {
       command: "node processor/server.mjs",
       url: `http://127.0.0.1:${PROCESSOR_PORT}/health`,
-      // The yt-dlp fallback always fails in tests, so "X is down" is predictable.
-      env: { PORT: String(PROCESSOR_PORT), HOST: "127.0.0.1", YTDLP_PATH: "false" },
+      // A fake yt-dlp that knows the fake sites and always fails for X, so "X is down" is predictable.
+      // The fake sites live on 127.0.0.1, which the grabber otherwise refuses to fetch.
+      env: { PORT: String(PROCESSOR_PORT), HOST: "127.0.0.1", YTDLP_PATH: "tests/fake-ytdlp.mjs", ALLOW_PRIVATE_HOSTS: `127.0.0.1:${FAKE_X_PORT}` },
     },
     {
       // A production build, so tests check exactly what gets deployed (including the strict CSP).

@@ -29,6 +29,10 @@
   | 405 | an unavailable post |
   | 500 | X being down |
   | 600 | a video that's too long |
+  | 118, 122, 123 | a GIF post X marks "possibly sensitive" |
+  | 119, 120, 121, 124, 125 | normal GIF posts used by the public/private and NSFW scan tests |
+
+  It also plays **other sites**: direct files under `/files/` (`odd.gif`, `clip.webm`, `dog.mp4`, `anim.webp`, a `huge.mp4` that claims 60 MB, `notes.txt`), pages under `/page/` (`clip`, `ui`, an 18+ `adult`, a sign-in-only `login`), and redirects (`/redirect-ok`, `/redirect-private`). `tests/fake-ytdlp.mjs` stands in for yt-dlp for those pages and always fails for X, so "X is down" stays predictable. The test processor may fetch `127.0.0.1:3298` (`ALLOW_PRIVATE_HOSTS`); every other private address is refused, as in production.
 
   It also generates upload files for the convert tests: `odd.gif` (301×201), `clip.webm`, `long.mp4` (70s), and `evil.gif`, a playlist pretending to be a GIF. Any request that playlist manages to trigger is counted at `/__leaks`, which must stay 0.
   | any other ID | a post that doesn't exist |
@@ -95,6 +99,34 @@
 - [ ] On your phone, the comparison table in "GIF vs MP4 vs WebM vs WebP" scrolls inside the post without the page scrolling sideways.
 - [ ] Add `status: draft` to a post, run `npm run dev`, and check it shows a red DRAFT label locally. Then remove the line.
 - [ ] Read `content/BLOG_PLAYBOOK.md` and run the loop prompt once on a history topic to see stage 1 (research) produce a research file.
+
+### Public/private and NSFW filter
+
+1. On the home page, the "Show on the public timeline" switch under the link box is **on**. Grab a post: its page opens as fast as before (no extra wait), and download and share work straight away. Go home: it appears under Latest GIFs (after a second or so; refresh if needed).
+2. Turn the switch **off** and grab a different post. You land on its page, and it is **not** under Latest GIFs on the home page.
+3. On that GIF's page, the "Who sees it" card shows the switch off. Turn it on (the hint says it joins after a quick safety check), go home: the GIF is now in Latest GIFs. Turn it off again: it's gone.
+4. Open the same GIF page in a private window (or another browser): there's no "Who sees it" card, and the GIF still plays.
+5. Grab a post that X marks sensitive (one that shows X's "this post may contain sensitive content" warning). Its page shows a blurred cover with **Sensitive content / Show anyway**; the GIF isn't in Latest GIFs; download still works. Pasting its link into Discord or iMessage shows no preview image.
+6. Grab a few ordinary GIFs (animals, sports, memes): none of them get blurred. If one does, note it: that's a false positive to tune `NSFW_THRESHOLD`.
+7. On a phone (320–390px wide), the switch and its hint fit under the link box without sideways scrolling.
+
+### Grab from any link
+
+1. Paste a **Giphy** page link (e.g. from giphy.com, "Copy link"). You land on its page with the title, "on giphy.com", and "View on giphy.com ↗". Downloads work in every format.
+2. Do the same with a **Tenor** link and a **direct .gif link** (right-click a GIF on any site → Copy image address).
+3. Paste the same Giphy link again with `?utm_source=test` on the end: you land on the **same** page, not a new one.
+4. Try a **Reddit** post with a GIF, and a **TikTok** link. Note which work: these sites sometimes block servers.
+5. Try a link with no GIF (a news article): a clear "Couldn't find a GIF or video at that link."
+6. On a non-X GIF's page, "Post on X" opens X with a link to the GifSuite page and your caption.
+7. An adult-site link is blurred, off the timeline, and has no link preview.
+
+### Cloudflare analytics (after deploying to staging)
+
+1. Follow DEPLOY.md → Analytics to create the Web Analytics site and add its token, then push.
+2. On staging, open a few pages, grab a GIF, download it, run a conversion and a compression, and try a non-X link.
+3. After a few minutes, `npm run analytics` shows those events: the grab with its site, the failed non-X grab with its reason, downloads by format, tool use and an NSFW check.
+4. Cloudflare dashboard → Web Analytics shows the page views (they can take a few minutes to appear).
+5. Browser dev tools → Console on any staging page shows no "Content Security Policy" errors.
 
 ### Current app (regression, check before each launch)
 - [ ] Paste an X GIF link → the GIF page opens, the video plays, and the author is shown.

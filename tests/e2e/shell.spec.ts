@@ -34,7 +34,7 @@ test("the Tools menu opens, lists every tool, and closes with Escape", async ({ 
 
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
-  await expect(page.getByRole("link", { name: /Grab from X/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Grab from any link/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /Screenshots to GIF/ })).toBeVisible();
 
   await page.keyboard.press("Escape");
@@ -55,7 +55,7 @@ test("the tools page shows which tools are live", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "All tools" })).toBeVisible();
   await expect(page.getByText("Live", { exact: true })).toHaveCount(3);
   await expect(page.getByText("Coming soon", { exact: true })).toHaveCount(6);
-  await page.getByRole("link", { name: /Grab from X/ }).click();
+  await page.getByRole("link", { name: /Grab from any link/ }).click();
   await expect(page).toHaveURL("/");
 });
 
@@ -68,10 +68,16 @@ test("a missing page shows our own 404, styled and without CSP errors", async ({
   }
 });
 
+test("the analytics beacon is allowed to load: requested, and no CSP errors", async ({ page }) => {
+  const beacon = page.waitForRequest(/static\.cloudflareinsights\.com\/beacon\.min\.js/);
+  await page.goto("/tools");
+  await beacon; // the browser tried it (it resolves to nowhere in tests); afterEach checks no CSP error
+});
+
 test("an empty grab explains what to do", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Grab GIF" }).click();
-  await expect(page.getByRole("alert").filter({ hasText: "Paste an X post link first." })).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "Paste a link first." })).toBeVisible();
 });
 
 // Every page must fit these phone widths with nothing sticking out sideways.
@@ -105,7 +111,7 @@ test("the phone menu reaches every destination, with tap targets big enough for 
   expect((await menu.boundingBox())!.height).toBeGreaterThanOrEqual(44);
 
   await menu.click();
-  for (const name of ["Grab from X", "Upload & convert", "Compress & resize", "Blog", "Latest GIFs", "All tools"]) {
+  for (const name of ["Grab from any link", "Upload & convert", "Compress & resize", "Blog", "Latest GIFs", "All tools"]) {
     const link = page.getByRole("navigation").getByRole("link", { name, exact: true });
     await expect(link).toBeVisible();
     expect((await link.boundingBox())!.height, name).toBeGreaterThanOrEqual(44);

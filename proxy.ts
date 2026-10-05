@@ -17,7 +17,8 @@ export function proxy(request: NextRequest) {
     "img-src 'self' blob: data:",
     "media-src 'self' blob:",
     "font-src 'self'",
-    "connect-src 'self'",
+    // Cloudflare Web Analytics reports page views here (components/shell/WebAnalytics.tsx).
+    "connect-src 'self' https://cloudflareinsights.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

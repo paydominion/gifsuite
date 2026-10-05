@@ -8,6 +8,15 @@ import { default as handler } from "./.open-next/worker.js";
 
 export default {
   fetch: handler.fetch,
+  // Cron trigger (wrangler.jsonc "triggers"): retry NSFW checks that didn't finish after a grab,
+  // so no public GIF stays off the timeline for long. Goes through the app's own admin route.
+  async scheduled(_controller, env, ctx) {
+    const token = (env as unknown as { ADMIN_TOKEN?: string }).ADMIN_TOKEN;
+    if (!token) return console.warn("[nsfw] sweep skipped: ADMIN_TOKEN is not set");
+    const req = new Request("https://worker.internal/api/admin/scan-pending", { method: "POST", headers: { "x-admin-token": token } });
+    const res: Response = await handler.fetch(req, env, ctx);
+    if (!res.ok) console.error(`[nsfw] sweep failed: HTTP ${res.status}`);
+  },
 } satisfies ExportedHandler<CloudflareEnv>;
 
 export { MediaProcessor } from "./processor/container";

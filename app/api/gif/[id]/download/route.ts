@@ -1,9 +1,17 @@
 import { getGif, recordEvent } from "@/db/gifs";
+import { tracked } from "@/lib/analytics";
 import { ensureFormat, FORMATS, isFormat, isQuality } from "@/lib/media/convert";
 import { visitorHash } from "@/lib/request";
 import { getMedia } from "@/lib/storage";
 
-export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+type Params = { params: Promise<{ id: string }> };
+
+export const GET = tracked("download", async (req: Request, { params }: Params) => {
+  const search = new URL(req.url).searchParams;
+  return { gifId: (await params).id, detail: `${search.get("format") ?? "gif"}:${search.get("quality") ?? "medium"}`, source: "x" };
+}, download);
+
+async function download(req: Request, { params }: Params) {
   const { id } = await params;
   const search = new URL(req.url).searchParams;
   const format = search.get("format") ?? "gif";

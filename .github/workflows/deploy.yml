@@ -42,6 +42,8 @@ jobs:
       - name: Install ffmpeg and WebP tools (used by the media processor in tests)
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg webp
       - run: npm ci
+      - name: Install the media processor's packages (the NSFW model)
+        run: npm ci --prefix processor
       - name: Secret scan, types, lint, unit, API and browser tests, bundle leak check
         run: npm run check:all
       - name: Keep test reports if something failed

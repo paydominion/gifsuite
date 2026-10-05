@@ -1,0 +1,11 @@
+{
+  "name": "gifsuite-processor",
+  "private": true,
+  "type": "module",
+  "description": "Media processor for GifSuite: ffmpeg, gif2webp, yt-dlp and the NSFW scanner. Runs as a Cloudflare Container.",
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.22.0",
+    "nsfwjs": "^4.4.0"
+  }
+}

@@ -5,6 +5,7 @@ import localFont from "next/font/local";
 import { Logo } from "@/components/shell/Logo";
 import { MobileMenu } from "@/components/shell/MobileMenu";
 import { ToolsMenu } from "@/components/shell/ToolsMenu";
+import { WebAnalytics } from "@/components/shell/WebAnalytics";
 import { buttonClass } from "@/components/ui/Button";
 import "./globals.css";
 
@@ -20,7 +21,7 @@ const satoshi = localFont({
 
 export const metadata: Metadata = {
   title: { default: "GifSuite: grab, convert and make GIFs", template: "%s · GifSuite" },
-  description: "Grab any GIF from X, download it in any format and quality, and post it back. A growing suite of GIF tools.",
+  description: "Grab, convert, compress and make GIFs: download any GIF in any format and quality. An all-in-one suite of GIF tools.",
 };
 
 // Colours the phone browser's own bars to match the page.
@@ -35,6 +36,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     // Browser extensions add their own attributes to <html> before React loads; don't report those.
     <html lang="en" className={`${satoshi.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="flex min-h-full flex-col font-sans">
+        <WebAnalytics />
         <header className="sticky top-0 z-40 border-b border-line bg-bg/85 backdrop-blur-md">
           <nav className="relative mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">
             <Logo />

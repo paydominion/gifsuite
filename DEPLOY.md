@@ -8,6 +8,8 @@ GifSuite runs entirely on Cloudflare and deploys from **GitHub Actions**, not fr
 | Database | D1 | `gifsuite-staging` | `gifsuite` (not created yet) |
 | GIF and video files | R2 | `gifsuite-media-staging` | `gifsuite-media` (not created yet) |
 | ffmpeg, gif2webp, yt-dlp | Containers (`processor/Dockerfile`) | `MediaProcessor` | `MediaProcessor` |
+| Event analytics | Workers Analytics Engine | dataset `gifsuite_events_staging` | dataset `gifsuite_events` |
+| Page views | Web Analytics | needs a site token (below) | needs a site token (below) |
 | Address | Custom domain | https://staging.gifsuite.com | https://gifsuite.com |
 
 Containers need the **Workers Paid** plan ($5/month), which is active. D1, R2 and Container time are billed on top by usage.
@@ -28,6 +30,22 @@ Watch it live at https://github.com/dominusmaster/gifsuite/actions, or run `gh r
 - GitHub secret `CLOUDFLARE_API_TOKEN`: a Cloudflare API token with Workers, D1, Containers and DNS edit rights. If it leaks, roll it at https://dash.cloudflare.com/profile/api-tokens and update the secret.
 - Staging D1 database, R2 bucket and custom domain.
 - Staging secrets `ADMIN_TOKEN` and `VISITOR_SALT`. They're random values stored only at Cloudflare.
+
+## Analytics
+
+**Server events** (grabs, downloads, conversions, shares, reports, visibility changes, NSFW checks, errors) go to Workers Analytics Engine. The dataset is created automatically on the first event; nothing to set up. To read them:
+
+1. Create an API token at https://dash.cloudflare.com/profile/api-tokens with **Account → Account Analytics → Read** only.
+2. Put it in `.env.local` as `CF_ANALYTICS_TOKEN=…` (git-ignored).
+3. Run `npm run analytics` (staging, last 7 days) or `npm run analytics -- production 30`.
+
+**Page views and visitors** use Cloudflare Web Analytics (cookie-free):
+
+1. Cloudflare dashboard → **Analytics & Logs → Web Analytics → Add a site** → enter `staging.gifsuite.com`, and choose the manual JavaScript snippet (not automatic setup: our security policy would block an injected script).
+2. Copy the `token` value from the snippet. It's a public site ID, not a secret.
+3. Add it to the staging `vars` in `wrangler.jsonc` as `"CF_WEB_ANALYTICS_TOKEN": "…"` and push. Do the same with a second site for `gifsuite.com` at launch.
+
+Without the token the site simply doesn't load the beacon.
 
 ## Before the first production deploy
 

@@ -11,7 +11,10 @@
 //        (result settings come back in x-gifsuite-* headers; x-gifsuite-target-met says if it fit)
 //
 // input is the container: gif, mov (MP4/MOV) or matroska (WebM). Defaults to mov.
+//   POST /nsfw                                    body: MP4 → { porn, hentai, sexy, frames } (worst frame's scores, 0–1)
 //   GET  /ytdlp?tweetId=…&slot=…         → yt-dlp's JSON for an X post (fallback fetcher)
+//   GET  /fetch?url=…&maxBytes=…&maxDurationMs=…  → the GIF/video behind any link, as MP4
+//        (what the source says about it comes back base64url JSON in x-gifsuite-info)
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import http from "node:http";
@@ -20,8 +23,10 @@ import path from "node:path";
 import { pipeline } from "node:stream/promises";
 import {
   COMPRESS, FORMATS, QUALITIES, RENDERS, ffmpegArgs, firstAttempt, gifArgs, growAttempt, inputArgs, isFormat, isInput, isQuality,
-  nextAttempt,
+  nextAttempt, normalizeArgs, nsfwFrameArgs,
 } from "./presets.mjs";
+import { FetchError, fetchMedia } from "./fetch.mjs";
+import { scanFrames } from "./nsfw.mjs";
 
 const PORT = Number(process.env.PORT ?? 8080);
 const HOST = process.env.HOST ?? "0.0.0.0";
@@ -144,6 +149,34 @@ async function handle(req, res, url) {
     return res.end(out.trim().split("\n")[0]);
   }
 
+  if (req.method === "GET" && url.pathname === "/fetch") {
+    const link = url.searchParams.get("url") ?? "";
+    const maxBytes = Number(url.searchParams.get("maxBytes") ?? 50 * 1024 * 1024);
+    const maxDurationMs = Number(url.searchParams.get("maxDurationMs") ?? 60_000);
+    if (!/^https?:\/\//i.test(link) || link.length > 2048) throw new HttpError(400, "bad link");
+    if (!Number.isInteger(maxBytes) || maxBytes < 1 || maxBytes > MAX_BODY) throw new HttpError(400, "bad size limit");
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gifsuite-fetch-"));
+    try {
+      const { file, input, info } = await fetchMedia(link, dir, { maxBytes, ytdlp: BIN.ytdlp, spawn });
+      return await withSlot(async () => {
+        const media = await probe(file, input);
+        if (maxDurationMs && media.durationMs > maxDurationMs) throw new HttpError(413, "too long");
+        const out = path.join(dir, "out.mp4");
+        try {
+          await ffmpeg(normalizeArgs(input, file, out));
+        } catch (err) {
+          console.warn(`[processor] could not normalise ${input} from a link:`, String(err).slice(0, 300));
+          throw new HttpError(422, "could not decode input");
+        }
+        const final = await probe(out, "mov");
+        const header = Buffer.from(JSON.stringify({ ...info, ...final, hasAudio: final.hasAudio })).toString("base64url");
+        return sendFile(res, out, "video/mp4", { "x-gifsuite-info": header });
+      });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  }
+
   if (req.method !== "POST") throw new HttpError(404, "not found");
 
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gifsuite-"));
@@ -166,6 +199,15 @@ async function handle(req, res, url) {
         const out = path.join(dir, "out");
         await ffmpeg(render.args(src, out));
         return sendFile(res, out, render.mime);
+      }
+
+      if (url.pathname === "/nsfw") {
+        const { durationMs } = await probe(src, "mov");
+        const frames = path.join(dir, "frames.rgb");
+        await ffmpeg(nsfwFrameArgs(src, frames, durationMs));
+        const scores = await scanFrames(frames);
+        res.writeHead(200, { "content-type": "application/json" });
+        return res.end(JSON.stringify(scores));
       }
 
       if (url.pathname === "/convert") {
@@ -250,10 +292,11 @@ http
     try {
       await handle(req, res, url);
     } catch (err) {
-      const status = err instanceof HttpError ? err.status : 500;
+      const known = err instanceof HttpError || err instanceof FetchError;
+      const status = known ? err.status : 500;
       if (status === 500) console.error(`[processor] ${req.method} ${url.pathname} failed:`, err);
       if (!res.headersSent) res.writeHead(status, { "content-type": "application/json" });
-      res.end(JSON.stringify({ error: err instanceof HttpError ? err.message : "processing failed" }));
+      res.end(JSON.stringify({ error: known ? err.message : "processing failed" }));
     }
   })
   .listen(PORT, HOST, () => console.log(`processor listening on ${HOST}:${PORT}`));

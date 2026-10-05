@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { tracked } from "@/lib/analytics";
 import { compress } from "@/lib/media/processor";
 import { maxDurationMs, processorFailure, readUpload, uploadError } from "@/lib/upload";
 
@@ -11,7 +12,12 @@ const WIDTHS = new Set([0, 320, 480, 640]);
  * `width` pixels wide. The body is the raw file; nothing is stored. The settings that were needed
  * come back in the X-GifSuite-* headers.
  */
-export async function POST(req: Request) {
+export const POST = tracked("compress", (req) => {
+  const search = new URL(req.url).searchParams;
+  return { detail: `${search.get("target")}:${search.get("width") ?? 0}` };
+}, compressUpload);
+
+async function compressUpload(req: Request) {
   const search = new URL(req.url).searchParams;
   const target = Number(search.get("target"));
   const width = Number(search.get("width") ?? 0);

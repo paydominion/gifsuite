@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { countDistinctReporters, getGif, recordEvent, setHidden } from "@/db/gifs";
+import { logEvent } from "@/lib/analytics";
 import { clientIp, rateLimit, visitorHash } from "@/lib/request";
 import { setting } from "@/lib/cloudflare";
 
@@ -22,9 +23,11 @@ export async function POST(req: Request) {
 
   const detail = body.detail?.slice(0, 40);
   await recordEvent(body.gifId, body.type as "view" | "share" | "report", detail, visitorHash(req));
+  logEvent(req, body.type as "view" | "share" | "report", { gifId: body.gifId, detail });
 
   if (body.type === "report" && (await countDistinctReporters(body.gifId)) >= AUTO_HIDE_REPORTS()) {
     await setHidden(body.gifId, true);
+    logEvent(null, "hide", { gifId: body.gifId, outcome: "auto", detail: "reports" });
   }
   return new NextResponse(null, { status: 204 });
 }

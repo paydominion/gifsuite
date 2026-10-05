@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { tracked } from "@/lib/analytics";
 import { FORMATS, isFormat, isQuality } from "@/lib/media/convert";
 import { convert } from "@/lib/media/processor";
 import { maxDurationMs, processorFailure, readUpload, uploadError } from "@/lib/upload";
@@ -7,7 +8,12 @@ import { maxDurationMs, processorFailure, readUpload, uploadError } from "@/lib/
  * Converts an uploaded GIF or video to another format and quality and returns the file.
  * The body is the raw file. Nothing is stored: the upload and the result exist only for this request.
  */
-export async function POST(req: Request) {
+export const POST = tracked("convert", (req) => {
+  const search = new URL(req.url).searchParams;
+  return { detail: `${search.get("format") ?? "gif"}:${search.get("quality") ?? "medium"}` };
+}, convertUpload);
+
+async function convertUpload(req: Request) {
   const search = new URL(req.url).searchParams;
   const format = search.get("format") ?? "gif";
   const quality = search.get("quality") ?? "medium";

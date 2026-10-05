@@ -1,5 +1,6 @@
 import "server-only";
 import { bindings, setting } from "@/lib/cloudflare";
+import type { NsfwScores } from "@/lib/nsfw";
 
 export type Probe = { width: number; height: number; durationMs: number; fps: number; hasAudio: boolean };
 
@@ -92,4 +93,34 @@ export async function compress(
 /** yt-dlp's metadata for a post's media slot (1-based), used when X's embed endpoint fails. */
 export async function ytdlpInfo(tweetId: string, slot: number): Promise<Record<string, unknown>> {
   return (await call(`/ytdlp?tweetId=${tweetId}&slot=${slot}`)).json() as Promise<Record<string, unknown>>;
+}
+
+/** Runs the NSFW model on frames sampled across the video; see processor/nsfw.mjs. */
+export async function scanNsfw(video: ArrayBuffer): Promise<NsfwScores> {
+  return (await call(`/nsfw`, post(video))).json() as Promise<NsfwScores>;
+}
+
+/** What the processor learned about a link's media (see processor/fetch.mjs). */
+export type LinkInfo = Probe & {
+  kind: "direct" | "page";
+  webpageUrl: string;
+  mediaUrl: string;
+  title?: string;
+  uploader?: string;
+  uploaderId?: string;
+  likes?: number;
+  /** 18 when the site labels it adults-only. */
+  ageLimit?: number;
+};
+
+/** Downloads the GIF or video behind any link, normalised to MP4. */
+export async function fetchLink(
+  link: string,
+  { maxBytes, maxDurationMs }: { maxBytes: number; maxDurationMs: number },
+): Promise<{ video: ArrayBuffer; info: LinkInfo }> {
+  const params = new URLSearchParams({ url: link, maxBytes: String(maxBytes), maxDurationMs: String(maxDurationMs) });
+  const res = await call(`/fetch?${params}`);
+  const header = res.headers.get("x-gifsuite-info") ?? "";
+  const info = JSON.parse(Buffer.from(header, "base64url").toString("utf8") || "{}") as LinkInfo;
+  return { video: await res.arrayBuffer(), info };
 }

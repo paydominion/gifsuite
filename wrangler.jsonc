@@ -31,6 +31,10 @@
   ],
   "durable_objects": { "bindings": [{ "name": "PROCESSOR", "class_name": "MediaProcessor" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["MediaProcessor"] }],
+  // Server-side event analytics (lib/analytics.ts); query with `npm run analytics`.
+  "analytics_engine_datasets": [{ "binding": "ANALYTICS", "dataset": "gifsuite_events" }],
+  // Every 5 minutes: retry NSFW checks that didn't finish after a grab (worker.ts `scheduled`).
+  "triggers": { "crons": ["*/5 * * * *"] },
   "ratelimits": [
     { "name": "GRAB_LIMITER", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } },
     { "name": "UPLOAD_LIMITER", "namespace_id": "1003", "simple": { "limit": 20, "period": 60 } }
@@ -40,6 +44,8 @@
     // ── Staging: same setup, separate data, on a staging subdomain ─────────────
     "staging": {
       "routes": [{ "pattern": "staging.gifsuite.com", "custom_domain": true }],
+      "triggers": { "crons": ["*/5 * * * *"] },
+      "analytics_engine_datasets": [{ "binding": "ANALYTICS", "dataset": "gifsuite_events_staging" }],
       "vars": {
         "PUBLIC_BASE_URL": "https://staging.gifsuite.com",
         "MAX_SOURCE_MB": "50",
@@ -75,7 +81,8 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "gifsuite-dev", "database_id": "dev", "migrations_dir": "migrations" }
       ],
-      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "gifsuite-media-dev" }]
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "gifsuite-media-dev" }],
+      "analytics_engine_datasets": [{ "binding": "ANALYTICS", "dataset": "gifsuite_events_dev" }]
     },
 
     // ── Test: local only (`npm run check`). Fake X, local processor, no Docker. ──
@@ -88,6 +95,8 @@
         "PROCESSOR_URL": "http://127.0.0.1:3296",
         "ADMIN_TOKEN": "test-admin-token-not-a-real-secret",
         "TRUST_FORWARDED_FOR": "1",
+        // A dummy Web Analytics site token, so tests check the beacon is allowed by the CSP.
+        "CF_WEB_ANALYTICS_TOKEN": "0123456789abcdef0123456789abcdef",
         "AUTO_HIDE_REPORTS": "3",
         "MAX_SOURCE_MB": "50",
         "MAX_DURATION_S": "60",
@@ -96,7 +105,8 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "gifsuite-test", "database_id": "test", "migrations_dir": "migrations" }
       ],
-      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "gifsuite-media-test" }]
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "gifsuite-media-test" }],
+      "analytics_engine_datasets": [{ "binding": "ANALYTICS", "dataset": "gifsuite_events_test" }]
     }
   }
 }

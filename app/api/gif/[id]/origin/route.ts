@@ -7,6 +7,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const gif = await getGif(id);
   if (!gif || gif.hidden) return NextResponse.json({ error: "not found" }, { status: 404 });
+  // Only X posts have original media that X can embed.
+  if (gif.source !== "x") return NextResponse.json({ available: false, mediaUrl: null, reason: "not-from-x" });
 
   const available = await isOriginalAvailable(gif.tweetId, gif.mediaIndex);
   return NextResponse.json({

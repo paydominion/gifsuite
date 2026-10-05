@@ -62,7 +62,7 @@ A feature is not done until a human has tested it.
 
 | # | Feature | Size |
 |---|---|---|
-| 14 | **Grab from more sites** through yt-dlp: Reddit, Tumblr, Imgur, Giphy, Tenor, TikTok (Instagram and Facebook are unreliable) | M |
+| 14 | ⏳ **Grab from any link** (built 2026-10-03, awaiting human test): direct GIF/MP4/WebM links on any site, pages that publish their GIF in link-preview tags (Giphy, Tenor, Imgur, Tumblr…), and everything else yt-dlp knows (Reddit, TikTok…). Adult sites are allowed by choice; the NSFW filter keeps them blurred and off the timeline. Animated WebP links aren't supported yet (ffmpeg can't read them). | M |
 | 15 | **Video → GIF** from a long uploaded video, with a segment picker | M |
 | 16 | **Screen recording → GIF** in the browser | M/L |
 | 17 | **Search & tags** | M |
@@ -126,6 +126,13 @@ Setup, done in 0.3:
 - ✅ `/blog` with SEO tags, structured data, sitemap and robots rules. Staging is hidden from search engines; only production (`ALLOW_INDEXING=1`) is indexed.
 - ✅ Four tips posts published.
 - The **history of the GIF** series is written through `content/BLOG_PLAYBOOK.md`: an AI loop does research, drafting and fact-checking, and a human approves twice. The queue is `content/TOPICS.md`.
+
+## Safety and visibility (added 2026-10-02)
+
+- ⏳ **Public/private toggle:** GIFs are public by default. A switch on the grab form, and for the grabber on the GIF page, takes a GIF off the timeline (the link keeps working, search engines skip it). Without accounts, "the grabber" is the browser that grabbed it, via an owner cookie. Built and auto-tested; awaiting your human test.
+- ⏳ **NSFW filter:** gates the public timeline only, so grabbing, downloading and sharing never wait for it. X's "possibly sensitive" mark is applied straight away; otherwise an open-source model (nsfwjs) scans frames in our converter container after the grab, and the GIF joins the timeline once it passes (usually within a second; a sweep every 5 minutes retries anything unfinished). Sensitive GIFs are kept off the timeline, blurred until "Show anyway", and get no link preview. Admins can overrule with `POST /api/admin/nsfw`. Built and auto-tested; awaiting your human test.
+- ⏳ **Cloudflare analytics:** every server event goes to Workers Analytics Engine (grab attempts record which site the link came from, to decide which sites to add next); page views through Cloudflare Web Analytics. `npm run analytics` prints a summary. Built and auto-tested; awaiting your human test and the Web Analytics site token (DEPLOY.md).
+- Later: once accounts exist (#20), "private" can become truly private (only you), and the visibility switch moves to your account.
 
 ## Done
 - ✅ X grabber (link → GIF), dedup per post, public timeline

@@ -18,10 +18,21 @@ export async function grab(request: APIRequestContext, url: string, headers = vi
   return { status: res.status(), body: await res.json() };
 }
 
+/** Grabs a post publicly and waits for its background NSFW check, so it's settled for the timeline. */
 export async function grabId(request: APIRequestContext, tweetId: string, handle = "someone"): Promise<string> {
   const { status, body } = await grab(request, `https://x.com/${handle}/status/${tweetId}`);
   if (status !== 200) throw new Error(`grab ${tweetId} failed: ${status} ${JSON.stringify(body)}`);
+  if (body.public) await waitForCheck(body.id);
   return body.id;
+}
+
+/** Waits until the GIF's NSFW check (run after the grab response) has stored a verdict. */
+export async function waitForCheck(gifId: string, timeoutMs = 20_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (gifRow(gifId)?.nsfw === null) {
+    if (Date.now() > deadline) throw new Error(`NSFW check of ${gifId} didn't finish in ${timeoutMs}ms`);
+    await new Promise((r) => setTimeout(r, 200));
+  }
 }
 
 export async function deleteOnFakeX(request: APIRequestContext, tweetId: string) {
@@ -51,4 +62,21 @@ export function countEvents(gifId: string, type: string, detail?: string): numbe
   } finally {
     db.close();
   }
+}
+
+/** The stored visibility, owner and NSFW columns for one GIF. */
+export function gifRow(gifId: string) {
+  const db = testDb();
+  try {
+    return db
+      .prepare("SELECT is_public, owner_key_hash, nsfw, nsfw_score, nsfw_source FROM gifs WHERE id = ?")
+      .get(gifId) as { is_public: number; owner_key_hash: string | null; nsfw: number | null; nsfw_score: number | null; nsfw_source: string | null };
+  } finally {
+    db.close();
+  }
+}
+
+export async function timelineIds(request: APIRequestContext): Promise<string[]> {
+  const { items } = await (await request.get("/api/gifs?limit=60")).json();
+  return items.map((g: { id: string }) => g.id);
 }

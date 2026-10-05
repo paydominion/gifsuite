@@ -19,7 +19,7 @@ test.afterEach(() => {
 
 test("paste a link, grab the GIF, land on its page", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("X post link").fill("https://x.com/uiuser/status/115");
+  await page.getByLabel("GIF or post link").fill("https://x.com/uiuser/status/115");
   await page.getByRole("button", { name: "Grab GIF" }).click();
 
   await expect(page).toHaveURL(/\/g\/[A-Za-z0-9]{10}$/);
@@ -27,12 +27,12 @@ test("paste a link, grab the GIF, land on its page", async ({ page }) => {
   await expect(page.locator("video")).toBeVisible();
 });
 
-test("shows a clear error for a non-X link", async ({ page }) => {
+test("shows a clear error for a link with no GIF", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("X post link").fill("https://youtube.com/watch?v=1");
+  await page.getByLabel("GIF or post link").fill("http://127.0.0.1:3298/page/nothing-here");
   await page.getByRole("button", { name: "Grab GIF" }).click();
   // Next.js has its own (empty) role="alert" route announcer, so match on the text too.
-  await expect(page.getByRole("alert").filter({ hasText: "Only X (Twitter) post links" })).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "Couldn't find a GIF or video at that link." })).toBeVisible();
   await expect(page).toHaveURL("/");
 });
 
@@ -91,4 +91,21 @@ test("timeline shows grabbed GIFs and opens them", async ({ page, request }) => 
   await expect(tile).toContainText("@uiuser");
   await tile.click();
   await expect(page).toHaveURL(`/g/${id}`);
+});
+
+test("grab from another site, then share its page on X", async ({ page, context }) => {
+  await page.goto("/");
+  await page.getByLabel("GIF or post link").fill("http://127.0.0.1:3298/page/ui");
+  await page.getByRole("button", { name: "Grab GIF" }).click();
+  await expect(page).toHaveURL(/\/g\/[A-Za-z0-9]{10}$/);
+  await expect(page.getByRole("link", { name: /Fake Reddit on 127\.0\.0\.1/ })).toBeVisible();
+  await expect(page.locator("video")).toBeVisible();
+
+  await page.getByPlaceholder("Write your caption…").fill("found this");
+  const popup = context.waitForEvent("page");
+  await page.getByRole("button", { name: "Post on X" }).click();
+  const intent = new URL((await popup).url());
+  expect(intent.pathname).toBe("/intent/post");
+  expect(intent.searchParams.get("url")).toBe(page.url());
+  expect(intent.searchParams.get("text")).toBe("found this");
 });

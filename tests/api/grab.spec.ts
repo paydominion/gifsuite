@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { grab, visitor } from "../helpers";
+import { grab, visitor, waitForCheck } from "../helpers";
 
 test.describe("POST /api/grab", () => {
   test("grabs the GIF from an X post and saves its details", async ({ request }) => {
@@ -9,6 +9,7 @@ test.describe("POST /api/grab", () => {
     expect(body.created).toBe(true);
     expect(body.id).toMatch(/^[A-Za-z0-9]{10}$/);
 
+    await waitForCheck(body.id); // it joins the timeline once its background NSFW check passes
     const { items } = await (await request.get("/api/gifs")).json();
     const gif = items.find((g: { id: string }) => g.id === body.id);
     expect(gif).toMatchObject({
@@ -36,7 +37,7 @@ test.describe("POST /api/grab", () => {
       "https://x.com/gifmaker/status/111/video/1",
     ]) {
       const again = await grab(request, link);
-      expect(again).toEqual({ status: 200, body: { id: first.body.id, created: false } });
+      expect(again).toEqual({ status: 200, body: { id: first.body.id, created: false, public: true } });
     }
   });
 
@@ -49,9 +50,9 @@ test.describe("POST /api/grab", () => {
   });
 
   const failures: [string, number, RegExp][] = [
-    ["", 400, /Paste an X post link/],
+    ["", 400, /Paste a link first/],
     ["not a link", 400, /doesn't look like a link/],
-    ["https://youtube.com/watch?v=1", 400, /Only X/],
+    ["http://127.0.0.1:3298/page/nothing-here", 422, /Couldn't find a GIF or video/],
     ["https://x.com/someone", 400, /Couldn't find a post/],
     ["https://x.com/talker/status/200", 422, /no GIF or video/],
     ["https://x.com/ghost/status/999", 404, /doesn't exist/],
