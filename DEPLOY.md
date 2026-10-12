@@ -31,6 +31,19 @@ Watch it live at https://github.com/dominusmaster/gifsuite/actions, or run `gh r
 - Staging D1 database, R2 bucket and custom domain.
 - Staging secrets `ADMIN_TOKEN` and `VISITOR_SALT`. They're random values stored only at Cloudflare.
 
+## Adding gifsuite.app
+
+`worker.ts` already redirects gifsuite.app and www.gifsuite.app to gifsuite.com, but the production
+routes leave them out because the GitHub secret `CLOUDFLARE_API_TOKEN` only covers the gifsuite.com
+zone. To add them: edit that token at https://dash.cloudflare.com/profile/api-tokens, add the
+gifsuite.app zone to its **Zone Resources** (same permissions), save, then add these two lines to the
+top-level `routes` in `wrangler.jsonc` and run the production deploy:
+
+```jsonc
+{ "pattern": "gifsuite.app", "custom_domain": true },
+{ "pattern": "www.gifsuite.app", "custom_domain": true }
+```
+
 ## Analytics
 
 **Server events** (grabs, downloads, conversions, shares, reports, visibility changes, NSFW checks, errors) go to Workers Analytics Engine. The dataset is created automatically on the first event; nothing to set up. To read them:

@@ -27,7 +27,8 @@ An AI may act on `idea`, `outline-approved` and `drafted`. Everything else waits
 - leads to verify: what the 87a and 89a versions each contain, read from the specification itself; which features arrived in 89a; whether animation was an intended use.
 
 ### how-gifs-learned-to-loop
-- status: idea
+- status: needs-research-review
+- research: content/research/how-gifs-learned-to-loop.md (2026-10-12)
 - type: history
 - key phrase: why do gifs loop
 - angle: Endless looping wasn't in the original format. A browser added it, and everyone else copied it.
@@ -158,11 +159,12 @@ An AI may act on `idea`, `outline-approved` and `drafted`. Everything else waits
 - tool: grab
 
 ### gif-to-mp4
-- status: idea
+- status: needs-final-review
 - type: tip
 - key phrase: convert gif to mp4
 - angle: Why MP4 is often 5–10× smaller than the same GIF, with real numbers from Upload & convert.
 - tool: convert
+- checked (2026-10-12): converted https://media1.tenor.com/m/aGj-frNYMFEAAAAC/cat-cat-dance.gif (2,174,247 bytes, 498×476, 1.6 s, 10 fps) with GifSuite's converter: MP4 high 140,319 B, medium 50,337 B, low 14,495 B. Quality settings from processor/presets.mjs. The "X and WhatsApp play short clips like GIFs" line is general; no third-party limits stated.
 
 ### mp4-to-gif
 - status: idea

@@ -22,7 +22,8 @@ All sources accessed 2026-10-12.
 | 10 | He never made an animated GIF himself. | Spectrum/AP (#6) | Reported once. | low | ☐ |
 | 11 | The 1989 version of the format (89a) says GIF "is not intended as a platform for animation, even though it can be done in a limited way." | GIF89a specification, W3C archive — https://www.w3.org/Graphics/GIF/spec-gif89a.txt | Exact sentence in the spec. | high (primary) | ☐ |
 | 12 | Wilhite received a Lifetime Achievement award at the 2013 Webby Awards. | NBC News (#5); AP via PBS (#5); DPReview, 22 May 2013 — https://www.dpreview.com/articles/2362129333/webby-gif-inventor-pronounce/ | All three report the 2013 Webby lifetime achievement award. | high | ☐ |
-| 13 | His acceptance "speech" was a GIF. | DPReview (#12) | Says the acceptance was a GIF, introduced by Tumblr founder David Karp. | low | ☐ |
+| 13 | His acceptance "speech" was a GIF. | DPReview (#12); Slate, Aaron Mak, 29 Mar 2022 — https://slate.com/technology/2022/03/the-history-of-gifs.html | DPReview: the acceptance was a GIF, introduced by Tumblr founder David Karp. Slate: he accepted by playing a GIF instead of giving a speech. | high | ☐ |
+| 17 | He said he never received any money for creating the GIF ("never got 1 cent"). | Slate (#13) | Slate reports this claim. Single source. | low | ☐ |
 | 14 | He said it's pronounced with a soft G, "jif". | DPReview (#12) citing The New York Times; Spectrum/AP (#6); NBC (#5) | Several outlets report his soft-G position and the "End of story." line. | high | ☐ |
 | 15 | He died on March 14, 2022, aged 74, of COVID-19. | NBC News (#5); AP via PBS (#5) | Both give the date, age and cause. | high | ☐ |
 | 16 | He retired in 2001, after a stroke in 2000. | Spectrum/AP (#6); AP via PBS (#5) mentions the 2001 retirement | Retirement year in two AP-based reports; the stroke in one. | medium | ☐ |

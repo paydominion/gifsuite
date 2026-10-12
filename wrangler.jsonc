@@ -11,13 +11,12 @@
   "send_metrics": false,
 
   // ── Production ────────────────────────────────────────────────────────────────
-  // www.gifsuite.com and gifsuite.app answer too, but worker.ts redirects them to gifsuite.com
-  // (one address for search engines).
+  // www.gifsuite.com answers too, but worker.ts redirects it to gifsuite.com (one address for search
+  // engines). worker.ts also redirects gifsuite.app; add its two routes here once the GitHub deploy
+  // token has access to the gifsuite.app zone (see DEPLOY.md).
   "routes": [
     { "pattern": "gifsuite.com", "custom_domain": true },
-    { "pattern": "www.gifsuite.com", "custom_domain": true },
-    { "pattern": "gifsuite.app", "custom_domain": true },
-    { "pattern": "www.gifsuite.app", "custom_domain": true }
+    { "pattern": "www.gifsuite.com", "custom_domain": true }
   ],
   "vars": {
     "PUBLIC_BASE_URL": "https://gifsuite.com",
