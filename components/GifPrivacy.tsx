@@ -16,7 +16,7 @@ export function SensitiveGate({ sensitive, poster, children }: { sensitive: bool
       <img src={poster} alt="" aria-hidden className="absolute inset-0 size-full scale-110 object-cover blur-2xl brightness-50" />
       <div className="relative max-w-xs space-y-3 p-6 text-center">
         <p className="text-lg font-bold">Sensitive content</p>
-        <p className="text-sm text-muted">This GIF may contain nudity or other adult content.</p>
+        <p className="text-sm text-muted">This GIF may contain nudity or other adult content. Only continue if you are 18 or older.</p>
         <button
           type="button"
           onClick={() => setRevealed(true)}

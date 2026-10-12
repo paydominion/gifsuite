@@ -47,7 +47,7 @@ test.describe("blog", () => {
     const res = await request.get("/sitemap.xml");
     expect(res.status()).toBe(200);
     const xml = await res.text();
-    for (const path of ["/", "/tools", "/blog", "/tools/convert", "/tools/compress", "/blog/save-a-gif-from-x"]) {
+    for (const path of ["/", "/tools", "/blog", "/tools/convert", "/tools/compress", "/blog/save-a-gif-from-x", "/terms", "/privacy", "/copyright"]) {
       expect(xml).toContain(`<loc>${BASE}${path}</loc>`);
     }
     expect(xml).not.toContain("_template");

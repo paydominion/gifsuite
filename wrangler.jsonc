@@ -11,7 +11,16 @@
   "send_metrics": false,
 
   // ── Production ────────────────────────────────────────────────────────────────
+  // www.gifsuite.com and gifsuite.app answer too, but worker.ts redirects them to gifsuite.com
+  // (one address for search engines).
+  "routes": [
+    { "pattern": "gifsuite.com", "custom_domain": true },
+    { "pattern": "www.gifsuite.com", "custom_domain": true },
+    { "pattern": "gifsuite.app", "custom_domain": true },
+    { "pattern": "www.gifsuite.app", "custom_domain": true }
+  ],
   "vars": {
+    "PUBLIC_BASE_URL": "https://gifsuite.com",
     // Only production is allowed into search engines. Staging, dev and test leave this unset.
     "ALLOW_INDEXING": "1",
     "MAX_SOURCE_MB": "50",
@@ -20,8 +29,7 @@
     "AUTO_HIDE_REPORTS": "5"
   },
   "d1_databases": [
-    // database_id is filled in by `wrangler d1 create gifsuite` (see DEPLOY.md).
-    { "binding": "DB", "database_name": "gifsuite", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+    { "binding": "DB", "database_name": "gifsuite", "database_id": "bcc11ed9-6478-49ed-80c6-dc6d52fc7980", "migrations_dir": "migrations" }
   ],
   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "gifsuite-media" }],
   "containers": [
@@ -69,6 +77,8 @@
 
     // ── Dev: `npm run dev` on your Mac. Real X, local processor, local D1/R2, no Docker. ──
     "dev": {
+      // Local only: no routes, so `wrangler dev` doesn't pretend requests come from gifsuite.com.
+      "routes": [],
       // The local processor lives on 127.0.0.1, so the public-only fetch flag is off here.
       "compatibility_flags": ["nodejs_compat"],
       "vars": {
@@ -87,6 +97,8 @@
 
     // ── Test: local only (`npm run check`). Fake X, local processor, no Docker. ──
     "test": {
+      // Local only: no routes, so `wrangler dev` doesn't pretend requests come from gifsuite.com.
+      "routes": [],
       // Tests fetch from the fake X on 127.0.0.1, so the public-only fetch flag is off here.
       "compatibility_flags": ["nodejs_compat"],
       "vars": {

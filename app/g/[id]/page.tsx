@@ -115,6 +115,10 @@ export default async function GifPage({ params }: PageProps<"/g/[id]">) {
 
         <div className="px-1">
           <ReportButton gifId={id} />
+          <span aria-hidden className="mx-2 text-xs text-subtle">·</span>
+          <a href="/copyright" className="text-xs font-medium text-subtle underline-offset-2 hover:text-fg hover:underline">
+            Copyright takedown
+          </a>
         </div>
       </aside>
     </div>

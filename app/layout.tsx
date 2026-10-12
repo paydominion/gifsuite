@@ -69,9 +69,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <div className="border-t border-accent bg-accent text-accent-ink">
             <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-4 text-sm font-medium">
               <span>© {new Date().getFullYear()} GifSuite · Not affiliated with X Corp.</span>
-              <span className="flex gap-1">
+              <span className="flex flex-wrap gap-x-1">
                 <Link href="/blog" className="inline-flex min-h-11 items-center px-2 font-bold hover:underline">Blog</Link>
                 <Link href="/tools" className="inline-flex min-h-11 items-center px-2 font-bold hover:underline">All tools</Link>
+                <Link href="/terms" className="inline-flex min-h-11 items-center px-2 font-bold hover:underline">Terms</Link>
+                <Link href="/privacy" className="inline-flex min-h-11 items-center px-2 font-bold hover:underline">Privacy</Link>
+                <Link href="/copyright" className="inline-flex min-h-11 items-center px-2 font-bold hover:underline">Copyright</Link>
               </span>
             </div>
           </div>

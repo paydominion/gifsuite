@@ -6,8 +6,20 @@
 // @ts-ignore
 import { default as handler } from "./.open-next/worker.js";
 
+// Other addresses for the production site. Each redirects permanently to gifsuite.com, keeping the
+// path, so search engines see one site rather than several copies.
+const REDIRECT_TO_MAIN = new Set(["www.gifsuite.com", "gifsuite.app", "www.gifsuite.app"]);
+
 export default {
-  fetch: handler.fetch,
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    if (REDIRECT_TO_MAIN.has(url.hostname)) {
+      url.hostname = "gifsuite.com";
+      url.protocol = "https:";
+      return Response.redirect(url.href, 301);
+    }
+    return handler.fetch(request, env, ctx);
+  },
   // Cron trigger (wrangler.jsonc "triggers"): retry NSFW checks that didn't finish after a grab,
   // so no public GIF stays off the timeline for long. Goes through the app's own admin route.
   async scheduled(_controller, env, ctx) {

@@ -89,3 +89,8 @@ jobs:
       - name: Deploy (builds and uploads the media processor container)
         timeout-minutes: 20
         run: npx wrangler deploy $ENV_FLAG
+      - name: Tell search engines about new pages (IndexNow; production only)
+        if: (github.event.inputs.target || 'staging') == 'production'
+        continue-on-error: true
+        timeout-minutes: 2
+        run: node scripts/indexnow.mjs https://gifsuite.com
