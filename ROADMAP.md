@@ -28,6 +28,21 @@ A feature is not done until a human has tested it.
 | 0.3 | ✅ **Move to Cloudflare** (staging is live at https://staging.gifsuite.com; deploys run from GitHub Actions, see DEPLOY.md) | L | Rebuild the plumbing, keeping every feature working (see *Deployment*): Next.js on **Workers** (OpenNext adapter), **D1** in place of the local SQLite file, **R2** in place of the local media folder, and a **Container** running ffmpeg, gif2webp and yt-dlp. Then deploy to a **staging** subdomain, so the real setup is proven long before launch. |
 | 0.4 | ✅ **UI foundation** | M | **Satoshi** (downloaded from Fontshare, self-hosted). Design tokens for colors, spacing and type sizes. Shared buttons, inputs, cards and toasts. An app shell with a **Tools** menu, so each new tool slots in. |
 
+## Waiting on you (owner to-do, 2026-10-12)
+
+Things only you can do; Claude has done everything around them.
+
+- [ ] **Google Search Console:** https://search.google.com/search-console → Add property → **Domain** → `gifsuite.com` → it offers Cloudflare automatic verification; accept. Then Sitemaps → submit `https://gifsuite.com/sitemap.xml`.
+- [ ] **Bing Webmaster Tools:** https://www.bing.com/webmasters → "Import from Google Search Console" (after the step above). IndexNow already pings Bing on every deploy.
+- [ ] **legal@gifsuite.com:** Cloudflare dashboard → gifsuite.com → Email → Email Routing → enable → route `legal@` to your Gmail. The legal pages already show this address.
+- [ ] **Read the legal pages** (/terms, /privacy, /copyright). Written from what the site actually does, but not by a lawyer.
+- [ ] **DMCA agent (US safe harbor, optional but recommended):** register a designated agent with the US Copyright Office ($6, https://www.copyright.gov/dmca-directory/), using legal@gifsuite.com.
+- [ ] **Web Analytics token:** Cloudflare → Analytics & Logs → Web Analytics → Add site `gifsuite.com` (manual JS snippet) → send Claude the token. Same for staging if wanted.
+- [ ] **gifsuite.app:** edit the GitHub deploy token to include the gifsuite.app zone (DEPLOY.md → "Adding gifsuite.app"); Claude then adds its redirect routes. It currently shows nothing.
+- [ ] **OpenSEO:** DataForSEO account + Base64 key → send to Claude; run `cd ~/open-seo && pnpm alchemy login` (yes to custom scopes, enable `access:write`) then `pnpm alchemy cloudflare bootstrap`. Claude deploys and connects it.
+- [ ] **Blog reviews:** research for who-invented-the-gif, the-gif-patent-fight, how-gifs-learned-to-loop (tick claims, answer questions in `content/research/`); final read of three tip drafts (download-gif-from-giphy-and-tenor, gif-size-limits-by-platform — check the Discord and WhatsApp rows, gif-to-mp4). See `content/TOPICS.md`.
+- [ ] **Staging checklists** in TESTING.md (any-link grab, public/private/NSFW, analytics), logo choice on /brand, and whether to commit `ios_app/` + the AGENTS.md change.
+
 ## Phase 1: Easy tools (reuse the existing ffmpeg converter)
 
 | # | Feature | Size | Notes |
@@ -53,8 +68,8 @@ A feature is not done until a human has tested it.
 | 9 | **Harden the X fetcher** | M | Request queue, retry with increasing waits, automatic pause when X errors, and a health check. |
 | 10 | **Bot protection** | S | Cloudflare Turnstile (invisible CAPTCHA) on grab and upload, plus Cloudflare rate limiting. |
 | 11 | **Professional UI pass** | M | Landing page that shows off the suite, polished tool pages, mobile, empty and error states, favicon and link-preview image. |
-| 12 | **Legal pages** | S | Terms, privacy, and a **takedown/DMCA contact and process**. This is required, because the site publicly hosts other people's GIFs. |
-| 13 | **Launch v1** | S | Point the main domain at production, then run the smoke tests against it. |
+| 12 | ✅ **Legal pages** (2026-10-12: /terms, /privacy, /copyright; contact legal@gifsuite.com) | S | Terms, privacy, and a **takedown/DMCA contact and process**. This is required, because the site publicly hosts other people's GIFs. |
+| 13 | ✅ **Launch v1** (2026-10-12: gifsuite.com live and indexable, own database and bucket, www redirects, IndexNow on every deploy) | S | Point the main domain at production, then run the smoke tests against it. |
 
 **Launch on your main domain when Phases 0–3 are done.** That's a real suite: grab + 8 tools + a polished UI + security. Staging has been live on Cloudflare since 0.3, so launch is mostly a DNS switch.
 

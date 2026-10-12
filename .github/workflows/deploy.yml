@@ -92,5 +92,5 @@ jobs:
       - name: Tell search engines about new pages (IndexNow; production only)
         if: (github.event.inputs.target || 'staging') == 'production'
         continue-on-error: true
-        timeout-minutes: 2
+        timeout-minutes: 4
         run: node scripts/indexnow.mjs https://gifsuite.com
