@@ -23,7 +23,8 @@
     "deploy:status": "sh scripts/deploy-status.sh",
     "content": "node scripts/build-content.mjs",
     "brand": "node scripts/build-brand.mjs",
-    "analytics": "node scripts/analytics.mjs"
+    "analytics": "node scripts/analytics.mjs",
+    "keywords": "node scripts/keywords.mjs"
   },
   "dependencies": {
     "@cloudflare/containers": "^0.3.7",

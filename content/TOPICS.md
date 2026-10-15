@@ -7,9 +7,18 @@ An AI may act on `idea`, `outline-approved` and `drafted`. Everything else waits
 
 **Leads are unverified.** They're starting points for research, written from memory. Nothing under "leads to verify" may appear in a post until a source confirms it.
 
+**Priorities by search demand** (see `content/KEYWORDS.md`, 2026-10-15): gif-or-jif and what-does-gif-stand-for first (~16k and ~33k searches a month), then who-invented-the-gif. Patent, looping and 256-colour posts get almost no searches; they're for depth and links.
+
 ---
 
 ## History of the GIF
+
+### what-does-gif-stand-for
+- status: idea
+- type: history
+- key phrase: what does gif stand for
+- angle: Graphics Interchange Format, what each word meant in 1987, and why the name stuck. Short and direct; answers the question in the first line, then links to who-invented-the-gif and gif-or-jif.
+- leads to verify: the name and abbreviation in the 1987 specification itself; CompuServe as author.
 
 ### who-invented-the-gif
 - status: needs-research-review
@@ -53,6 +62,7 @@ An AI may act on `idea`, `outline-approved` and `drafted`. Everything else waits
 - status: idea
 - type: history
 - key phrase: how to pronounce gif
+- priority: high (how to pronounce gif 8.1k, gif pronunciation 5.4k, is it gif or jif 2.9k per month)
 - angle: The format's creator had a firm answer. Most people ignored it.
 - leads to verify: what Steve Wilhite said about pronunciation and where he said it; an award acceptance in 2013 that made the question news; how dictionaries list the pronunciation.
 - note: This is a disputed topic. Present both sides with sources; don't pick a winner without one.
