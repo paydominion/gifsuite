@@ -28,6 +28,10 @@ A feature is not done until a human has tested it.
 | 0.3 | ✅ **Move to Cloudflare** (staging is live at https://staging.gifsuite.com; deploys run from GitHub Actions, see DEPLOY.md) | L | Rebuild the plumbing, keeping every feature working (see *Deployment*): Next.js on **Workers** (OpenNext adapter), **D1** in place of the local SQLite file, **R2** in place of the local media folder, and a **Container** running ffmpeg, gif2webp and yt-dlp. Then deploy to a **staging** subdomain, so the real setup is proven long before launch. |
 | 0.4 | ✅ **UI foundation** | M | **Satoshi** (downloaded from Fontshare, self-hosted). Design tokens for colors, spacing and type sizes. Shared buttons, inputs, cards and toasts. An app shell with a **Tools** menu, so each new tool slots in. |
 
+## SEO landing pages (2026-10-15)
+
+- ✅ Eight keyword landing pages live on gifsuite.com, one shared design (lib/landing.ts → components/marketing/LandingPage.tsx): twitter-gif-downloader, twitter-video-downloader, mp4-to-gif, video-to-gif, gif-to-mp4, gif-compressor, gif-resizer, giphy-downloader. Volumes in content/KEYWORDS.md. Next candidates: gif-maker (368k/mo, needs roadmap #5–8), reddit-video-downloader (after confirming Reddit works), gif-to-png, webp-to-gif (needs a WebP decoder).
+
 ## Waiting on you (owner to-do, 2026-10-12)
 
 Things only you can do; Claude has done everything around them.
