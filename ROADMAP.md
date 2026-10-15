@@ -39,7 +39,7 @@ Things only you can do; Claude has done everything around them.
 - [ ] **DMCA agent (US safe harbor, optional but recommended):** register a designated agent with the US Copyright Office ($6, https://www.copyright.gov/dmca-directory/), using legal@gifsuite.com.
 - [ ] **Web Analytics token:** Cloudflare → Analytics & Logs → Web Analytics → Add site `gifsuite.com` (manual JS snippet) → send Claude the token. Same for staging if wanted.
 - [ ] **gifsuite.app:** edit the GitHub deploy token to include the gifsuite.app zone (DEPLOY.md → "Adding gifsuite.app"); Claude then adds its redirect routes. It currently shows nothing.
-- [ ] **OpenSEO:** DataForSEO account + Base64 key → send to Claude; run `cd ~/open-seo && pnpm alchemy login` (yes to custom scopes, enable `access:write`) then `pnpm alchemy cloudflare bootstrap`. Claude deploys and connects it.
+- [ ] **Keyword research (free):** after Search Console, open Bing Webmaster Tools → Keyword Research to check search volumes for blog topics. (OpenSEO was set aside on 2026-10-15: it needs a paid DataForSEO top-up, $50 minimum. It's still downloaded in ~/open-seo if that changes.)
 - [ ] **Blog reviews:** research for who-invented-the-gif, the-gif-patent-fight, how-gifs-learned-to-loop (tick claims, answer questions in `content/research/`); final read of three tip drafts (download-gif-from-giphy-and-tenor, gif-size-limits-by-platform — check the Discord and WhatsApp rows, gif-to-mp4). See `content/TOPICS.md`.
 - [ ] **Staging checklists** in TESTING.md (any-link grab, public/private/NSFW, analytics), logo choice on /brand, and whether to commit `ios_app/` + the AGENTS.md change.
 
