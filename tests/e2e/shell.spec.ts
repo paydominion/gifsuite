@@ -94,7 +94,7 @@ test("an empty grab explains what to do", async ({ page }) => {
 
 // Every page must fit these phone widths with nothing sticking out sideways.
 const PHONE_WIDTHS = [320, 360, 390];
-const PAGES = ["/", "/tools", "/tools/convert", "/tools/compress", "/blog", "/blog/gif-vs-mp4-vs-webm-vs-webp", "/brand", "/terms", "/privacy", "/copyright"];
+const PAGES = ["/", "/tools", "/tools/convert", "/tools/compress", "/blog", "/blog/gif-vs-mp4-vs-webm-vs-webp", "/brand", "/terms", "/privacy", "/copyright", "/mp4-to-gif", "/gif-compressor", "/twitter-gif-downloader"];
 
 for (const width of PHONE_WIDTHS) {
   test(`every page fits a ${width}px phone`, async ({ browser, request }) => {

@@ -39,11 +39,11 @@ type Result = {
   target: number;
 };
 
-export function CompressTool({ maxUploadMb }: { maxUploadMb: number }) {
+export function CompressTool({ maxUploadMb, initialWidth = "0" }: { maxUploadMb: number; initialWidth?: "0" | "640" | "480" | "320" }) {
   const [file, setFile] = useState<{ file: File; url: string } | null>(null);
   const [targetId, setTargetId] = useState<TargetId>("x");
   const [customMb, setCustomMb] = useState("2");
-  const [width, setWidth] = useState("0");
+  const [width, setWidth] = useState<string>(initialWidth);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);

@@ -7,6 +7,7 @@ import { MobileMenu } from "@/components/shell/MobileMenu";
 import { ToolsMenu } from "@/components/shell/ToolsMenu";
 import { WebAnalytics } from "@/components/shell/WebAnalytics";
 import { buttonClass } from "@/components/ui/Button";
+import { LANDINGS } from "@/lib/landing";
 import "./globals.css";
 
 // Self-hosted, unmodified (see app/fonts/LICENSE.md). One variable file covers weights 300–900.
@@ -67,6 +68,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <footer className="mt-10">
           <div aria-hidden className="halftone-band flip opacity-70" />
           <div className="border-t border-accent bg-accent text-accent-ink">
+            {/* Popular tools: one link per landing page, so every page links to them all. */}
+            <nav aria-label="Popular tools" className="mx-auto flex max-w-6xl flex-wrap gap-x-1 border-b border-accent-ink/15 px-2 py-2 text-sm font-semibold">
+              {LANDINGS.map((l) => (
+                <Link key={l.slug} href={`/${l.slug}`} className="inline-flex min-h-11 items-center px-2 hover:underline">
+                  {l.eyebrow}
+                </Link>
+              ))}
+            </nav>
             <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-4 text-sm font-medium">
               <span>© {new Date().getFullYear()} GifSuite · Not affiliated with X Corp.</span>
               <span className="flex flex-wrap gap-x-1">

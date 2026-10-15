@@ -29,9 +29,9 @@ const QUALITY_HINT: Record<Quality, string> = {
 
 type Result = { url: string; name: string; size: number; format: Format };
 
-export function ConvertTool({ maxUploadMb }: { maxUploadMb: number }) {
+export function ConvertTool({ maxUploadMb, initialFormat = "mp4" }: { maxUploadMb: number; initialFormat?: Format }) {
   const [file, setFile] = useState<{ file: File; url: string } | null>(null);
-  const [format, setFormat] = useState<Format>("mp4");
+  const [format, setFormat] = useState<Format>(initialFormat);
   const [quality, setQuality] = useState<Quality>("medium");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
