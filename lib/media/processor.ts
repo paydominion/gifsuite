@@ -36,27 +36,31 @@ async function call(path: string, init?: RequestInit): Promise<Response> {
 
 /**
  * The converter instance for this deploy. Each deploy uses instances named after its commit, and the
- * converter says which image answered (x-processor-version). Cloudflare publishes the Worker a little
- * before the new container image, so an instance woken in that gap starts on the old image and keeps
- * it while busy. When the answer comes from an older image, retry on a fresh instance.
+ * converter says which image answered (x-processor-version). Cloudflare publishes the Worker before the
+ * new image and then rolls the image out gradually, so for a few minutes an instance may still run the
+ * previous image. That's fine for anything the previous image can do. Only when it answers 404 (a route
+ * it doesn't have yet) do we try one fresh instance, at most once a minute, so instances never pile up.
  */
 let instanceSuffix = 0;
+let lastFreshTry = 0;
 export async function fromCurrentImage(
   container: NonNullable<CloudflareEnv["PROCESSOR"]>,
   getContainer: typeof import("@cloudflare/containers").getContainer,
   path: string,
   init?: RequestInit,
+  now = Date.now(),
 ): Promise<Response> {
   const version = setting("PROCESSOR_VERSION");
-  for (let attempt = 0; ; attempt++) {
-    const name = `processor-${version ?? "default"}${instanceSuffix ? `-${instanceSuffix}` : ""}`;
-    const res = await getContainer(container, name).fetch(new Request(`http://processor${path}`, init));
-    const answered = res.headers.get("x-processor-version");
-    if (!version || !answered || answered === "dev" || version.startsWith(answered) || answered.startsWith(version) || attempt >= 3) return res;
-    console.warn(`[processor] ${name} runs image ${answered}, not ${version}; trying a fresh instance`);
-    await res.body?.cancel();
-    instanceSuffix++;
-  }
+  const name = () => `processor-${version ?? "default"}${instanceSuffix ? `-${instanceSuffix}` : ""}`;
+  const res = await getContainer(container, name()).fetch(new Request(`http://processor${path}`, init));
+  const answered = res.headers.get("x-processor-version");
+  const older = !!version && !!answered && answered !== "dev" && !version.startsWith(answered) && !answered.startsWith(version);
+  if (!older || res.status !== 404 || now - lastFreshTry < 60_000) return res;
+  console.warn(`[processor] ${name()} runs image ${answered} and lacks ${path.split("?")[0]}; trying a fresh instance`);
+  await res.body?.cancel();
+  lastFreshTry = now;
+  instanceSuffix++;
+  return getContainer(container, name()).fetch(new Request(`http://processor${path}`, init));
 }
 
 const post = (body: ArrayBuffer): RequestInit => ({
