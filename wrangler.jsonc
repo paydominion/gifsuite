@@ -34,7 +34,9 @@
   "containers": [
     // rollout_step_percentage 100: update every instance at once on deploy. The default (10% first)
     // leaves a small app's container on the old image, so new processor features 404.
-    { "class_name": "MediaProcessor", "image": "./processor/Dockerfile", "max_instances": 5, "instance_type": "standard-1", "rollout_step_percentage": 100 }
+    // max_instances 10: room for the previous deploy's instances to wind down (they stop after 5 idle
+    // minutes) while the new deploy's start. Instances only cost money while they run.
+    { "class_name": "MediaProcessor", "image": "./processor/Dockerfile", "max_instances": 10, "instance_type": "standard-1", "rollout_step_percentage": 100 }
   ],
   "durable_objects": { "bindings": [{ "name": "PROCESSOR", "class_name": "MediaProcessor" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["MediaProcessor"] }],
