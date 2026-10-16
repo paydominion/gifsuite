@@ -53,8 +53,8 @@ Things only you can do; Claude has done everything around them.
 |---|---|---|---|
 | 1 | ✅ **Upload & convert** | S/M | Upload a GIF, MP4, WebM or WebP and download it in any format and quality. Adds **secure uploads**: file type checked from the file's actual contents, size limits, ffprobe validation, and random file names. Every later tool uses this. |
 | 2 | ✅ **Compress / resize** | S | Presets such as "Under 15 MB (X)", "Under 8 MB (Discord)" and "Under 1 MB", or a custom width. |
-| 3 | **Speed, reverse, boomerang** | S | 0.25×–4× speed, play backwards, or forward-then-back loop. |
-| 4 | **Trim** | M | Pick a start and end on a live preview. The backend is easy; the slider UI is the work. |
+| 3 | ⏳ **Speed, reverse, boomerang** (built 2026-10-16: /tools/speed, /reverse-video, /reverse-gif, /gif-speed-changer; awaiting human test) | S | 0.25×–4× speed, play backwards, or forward-then-back loop. |
+| 4 | ⏳ **Trim** (built 2026-10-16: /tools/trim, /trim-video, /gif-cutter; awaiting human test) | M | Pick a start and end on a live preview. The backend is easy; the slider UI is the work. |
 
 ## Phase 2: GIF maker
 
@@ -63,7 +63,7 @@ Things only you can do; Claude has done everything around them.
 | 5 | ⏳ **Photo → GIF** (built 2026-10-15 as part of the GIF maker, /tools/maker; awaiting human test) | M | One photo with an effect: zoom-in (Ken Burns), pan, pulse or shake. |
 | 6 | ⏳ **Screenshots → GIF** (built 2026-10-15 as part of the GIF maker; awaiting human test) | M | Several images as a slideshow. Drag to reorder, set time per frame, optional crossfade. |
 | 7 | ⏳ **Crop** (built 2026-10-16: /tools/crop, /gif-cropper, /video-cropper; awaiting human test) | M | Aspect presets (1:1, 16:9, 9:16) plus a drag box. |
-| 8 | **Text captions** | M/L | Meme-style top/bottom text or free text, with a font, color and outline. **Caption fonts must be openly licensed (e.g. SIL OFL): the Satoshi license forbids offering it to users for their own content** (see `app/fonts/LICENSE.md`). |
+| 8 | ⏳ **Text captions** (built 2026-10-16: /tools/captions, /add-text-to-gif, /gif-meme-maker; Anton and Comic Neue, both SIL OFL, in public/fonts/captions; awaiting human test) | M/L | Meme-style top/bottom text or free text, with a font, color and outline. **Caption fonts must be openly licensed (e.g. SIL OFL): the Satoshi license forbids offering it to users for their own content** (see `app/fonts/LICENSE.md`). |
 
 ## Phase 3: Launch prep → deploy v1
 

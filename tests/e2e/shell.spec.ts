@@ -53,8 +53,8 @@ test("the tools page shows which tools are live", async ({ page }) => {
   await page.getByRole("link", { name: "See all tools →" }).click();
   await expect(page).toHaveURL("/tools");
   await expect(page.getByRole("heading", { name: "All tools" })).toBeVisible();
-  await expect(page.getByText("Live", { exact: true })).toHaveCount(5);
-  await expect(page.getByText("Coming soon", { exact: true })).toHaveCount(3);
+  await expect(page.getByText("Live", { exact: true })).toHaveCount(8);
+  await expect(page.getByText("Coming soon", { exact: true })).toHaveCount(0);
   await page.getByRole("link", { name: /Grab from any link/ }).click();
   await expect(page).toHaveURL("/");
 });
@@ -94,7 +94,7 @@ test("an empty grab explains what to do", async ({ page }) => {
 
 // Every page must fit these phone widths with nothing sticking out sideways.
 const PHONE_WIDTHS = [320, 360, 390];
-const PAGES = ["/", "/tools", "/tools/convert", "/tools/compress", "/blog", "/blog/gif-vs-mp4-vs-webm-vs-webp", "/brand", "/terms", "/privacy", "/copyright", "/mp4-to-gif", "/gif-compressor", "/twitter-gif-downloader", "/tools/maker", "/gif-maker", "/tools/crop", "/gif-cropper"];
+const PAGES = ["/", "/tools", "/tools/convert", "/tools/compress", "/blog", "/blog/gif-vs-mp4-vs-webm-vs-webp", "/brand", "/terms", "/privacy", "/copyright", "/mp4-to-gif", "/gif-compressor", "/twitter-gif-downloader", "/tools/maker", "/gif-maker", "/tools/crop", "/gif-cropper", "/tools/trim", "/tools/speed", "/tools/captions", "/add-text-to-gif"];
 
 for (const width of PHONE_WIDTHS) {
   test(`every page fits a ${width}px phone`, async ({ browser, request }) => {

@@ -6,7 +6,10 @@ import { siteUrl } from "@/lib/site";
 import { GrabForm } from "@/components/GrabForm";
 import { Hero } from "@/components/marketing/Hero";
 import { CompressTool } from "@/components/tools/CompressTool";
+import { CaptionTool } from "@/components/tools/CaptionTool";
 import { CropTool } from "@/components/tools/CropTool";
+import { SpeedTool } from "@/components/tools/SpeedTool";
+import { TrimTool } from "@/components/tools/TrimTool";
 import { MakerTool } from "@/components/tools/MakerTool";
 import { ConvertTool } from "@/components/tools/ConvertTool";
 import { Card, SectionLabel, cardClass } from "@/components/ui/Card";
@@ -37,6 +40,12 @@ function Tool({ page }: { page: Landing }) {
       return <MakerTool maxUploadMb={maxUploadMb} />;
     case "crop":
       return <CropTool maxUploadMb={maxUploadMb} initialFormat={page.tool.initialFormat} />;
+    case "trim":
+      return <TrimTool maxUploadMb={maxUploadMb} initialFormat={page.tool.initialFormat} />;
+    case "speed":
+      return <SpeedTool maxUploadMb={maxUploadMb} initialFormat={page.tool.initialFormat} initialDirection={page.tool.initialDirection} />;
+    case "captions":
+      return <CaptionTool maxUploadMb={maxUploadMb} initialFormat={page.tool.initialFormat} />;
   }
 }
 

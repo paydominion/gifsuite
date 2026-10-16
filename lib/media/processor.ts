@@ -143,3 +143,9 @@ export async function crop(
   const q = new URLSearchParams({ input, format, maxDurationMs: String(maxDurationMs), x: String(box.x), y: String(box.y), w: String(box.w), h: String(box.h) });
   return (await call(`/crop?${q}`, post(video))).arrayBuffer();
 }
+
+/** Trim, speed, direction and captions in one go (processor/edit.mjs). `form` holds file, overlay? and settings. */
+export async function edit(form: FormData, { input, maxDurationMs }: { input: Input; maxDurationMs: number }): Promise<{ data: ArrayBuffer; type: string }> {
+  const res = await call(`/edit?input=${input}&maxDurationMs=${maxDurationMs}`, { method: "POST", body: form });
+  return { data: await res.arrayBuffer(), type: res.headers.get("content-type") ?? "image/gif" };
+}

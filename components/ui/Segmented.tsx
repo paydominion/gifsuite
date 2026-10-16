@@ -7,15 +7,19 @@ export function Segmented<T extends string>({
   value,
   onChange,
   disabled,
+  columns,
 }: {
   label: string;
   options: Option<T>[];
   value: T;
   onChange: (value: T) => void;
   disabled?: boolean;
+  /** Wrap into a grid of this many columns (for long lists, e.g. 8 speeds on a phone). */
+  columns?: 2 | 3 | 4;
 }) {
+  const layout = columns ? `grid gap-1 ${{ 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-4" }[columns]}` : "flex";
   return (
-    <div role="radiogroup" aria-label={label} className="flex rounded-xl border border-line bg-panel p-1 text-sm">
+    <div role="radiogroup" aria-label={label} className={`${layout} rounded-xl border border-line bg-panel p-1 text-sm`}>
       {options.map((o) => (
         <button
           key={o.value}

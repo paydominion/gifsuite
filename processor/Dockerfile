@@ -6,7 +6,7 @@ WORKDIR /app
 # the layer stays cached across code-only changes.
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
-COPY presets.mjs server.mjs nsfw.mjs fetch.mjs maker.mjs ./
+COPY presets.mjs server.mjs nsfw.mjs fetch.mjs maker.mjs edit.mjs ./
 USER node
 ENV PORT=8080 HOST=0.0.0.0 NODE_ENV=production
 EXPOSE 8080

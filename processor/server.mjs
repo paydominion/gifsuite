@@ -12,6 +12,8 @@
 //
 // input is the container: gif, mov (MP4/MOV) or matroska (WebM). Defaults to mov.
 //   POST /crop?input=…&format=gif|mp4&x=…&y=…&w=…&h=…   body: video → the cropped clip (box in source pixels)
+//   POST /edit                                    multipart: file (GIF/MP4/MOV/WebM), overlay? (PNG, the clip's size),
+//        settings (JSON: start, end, speed, direction, format) → the edited GIF or MP4 (see edit.mjs)
 //   POST /make                                    multipart: image (1–30, in order) + settings (JSON) → GIF or MP4
 //        (see maker.mjs; the Worker has already checked counts, sizes and types)
 //   POST /nsfw                                    body: MP4 → { porn, hentai, sexy, frames } (worst frame's scores, 0–1)
@@ -31,6 +33,7 @@ import {
 } from "./presets.mjs";
 import { FetchError, fetchMedia } from "./fetch.mjs";
 import { imageDemuxer, makeArgs, outputHeight, parseSettings } from "./maker.mjs";
+import { EDIT, editArgs, parseEdit } from "./edit.mjs";
 import { scanFrames } from "./nsfw.mjs";
 
 const PORT = Number(process.env.PORT ?? 8080);
@@ -176,6 +179,59 @@ async function handle(req, res, url) {
         const final = await probe(out, "mov");
         const header = Buffer.from(JSON.stringify({ ...info, ...final, hasAudio: final.hasAudio })).toString("base64url");
         return sendFile(res, out, "video/mp4", { "x-gifsuite-info": header });
+      });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  }
+
+  if (req.method === "POST" && url.pathname === "/edit") {
+    if (Number(req.headers["content-length"] ?? 0) > MAX_BODY) throw new HttpError(413, "input too large");
+    const web = new Request("http://processor/edit", {
+      method: "POST",
+      headers: { "content-type": req.headers["content-type"] ?? "" },
+      body: Readable.toWeb(req),
+      duplex: "half",
+    });
+    const form = await web.formData().catch(() => {
+      throw new HttpError(400, "expected a multipart form");
+    });
+    const file = form.get("file");
+    const overlay = form.get("overlay");
+    const input = url.searchParams.get("input") ?? "mov";
+    if (!file || typeof file === "string") throw new HttpError(400, "no file");
+    if (!isInput(input)) throw new HttpError(400, "unknown input type");
+    let raw;
+    try {
+      raw = JSON.parse(String(form.get("settings") ?? "{}"));
+    } catch {
+      throw new HttpError(400, "bad settings");
+    }
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gifsuite-edit-"));
+    try {
+      const src = path.join(dir, "in");
+      fs.writeFileSync(src, new Uint8Array(await file.arrayBuffer()));
+      let overlayPath = null;
+      if (overlay && typeof overlay !== "string") {
+        const bytes = new Uint8Array(await overlay.arrayBuffer());
+        if (imageDemuxer(bytes.subarray(0, 16)) !== "png_pipe") throw new HttpError(415, "the caption layer must be a PNG");
+        overlayPath = path.join(dir, "overlay.png");
+        fs.writeFileSync(overlayPath, bytes);
+      }
+      return await withSlot(async () => {
+        const info = await probe(src, input);
+        const maxDurationMs = Number(url.searchParams.get("maxDurationMs") ?? 0);
+        if (maxDurationMs && info.durationMs > maxDurationMs) throw new HttpError(413, "too long");
+        const { settings, error } = parseEdit(raw, info);
+        if (error) throw new HttpError(400, error);
+        const out = path.join(dir, `out.${settings.format}`);
+        try {
+          await ffmpeg(editArgs(settings, info, src, input, overlayPath, out));
+        } catch (err) {
+          console.warn(`[processor] could not edit ${input}:`, String(err).slice(0, 300));
+          throw new HttpError(422, "could not decode input");
+        }
+        return sendFile(res, out, EDIT.formats[settings.format]);
       });
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });

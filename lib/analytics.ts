@@ -25,6 +25,7 @@ export type AnalyticsEventName =
   | "compress"
   | "make"
   | "crop"
+  | "edit"
   | "visibility"
   | "nsfw_check"
   | "nsfw_override"

@@ -141,6 +141,15 @@
 6. Upload a short video (with sound) on /video-cropper, pick 9:16, download as MP4: it's cropped and the sound is kept.
 7. On a phone, the corner handles are easy to grab, even at the picture's edges, and nothing scrolls sideways.
 
+### Trim, Speed & reverse, Add text
+
+1. **Trim** (/tools/trim): upload a short phone video. Drag Start and End: the preview loops just that part. Play to a moment and tap **Set start to now**. Download as MP4 (sound kept) and as GIF.
+2. Trim a GIF (/gif-cutter): its length appears after a moment (read by the server). Download the shorter GIF.
+3. **Speed & reverse** (/tools/speed): try 0.5× and 2× on a video (the preview plays at the new speed), then **Reverse** and **Boomerang**. "New length" matches what you download. A forward MP4 keeps sound at the new speed; reversed clips are silent.
+4. Upload a video longer than 20 seconds and pick Reverse: a clear message says to trim it first.
+5. **Add text** (/tools/captions): type top and bottom text; it appears on the GIF as you type. Try Meme / Fun / Clean, Small / Medium / Large, White / Yellow / Black, Outline on/off, ALL CAPS on/off, and a long sentence (it wraps and shrinks). The downloaded GIF looks exactly like the preview.
+6. On a phone, all three tools fit without sideways scrolling; the 8 speed buttons wrap into two rows.
+
 ### Cloudflare analytics (after deploying to staging)
 
 1. Follow DEPLOY.md → Analytics to create the Web Analytics site and add its token, then push.

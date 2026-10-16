@@ -21,6 +21,14 @@ const CLIPS = {
   "odd.gif": lavfi("testsrc=size=301x201:rate=10", 2),
   "clip.webm": lavfi("testsrc=size=320x240:rate=10", 2, "-c:v", "libvpx-vp9"),
   "long.mp4": lavfi("color=c=blue:size=64x64:rate=1", 70, ...h264),
+  // Edit tools: a clip with sound, and one too long to reverse (25 s).
+  "sound.mp4": ["-f", "lavfi", "-i", "testsrc=size=320x240:rate=25", "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=44100",
+    "-t", "4", ...h264, "-c:a", "aac", "-shortest"],
+  "mid.mp4": lavfi("color=c=green:size=64x64:rate=5", 25, ...h264),
+  // A caption layer: transparent, with a solid red square in the top-left corner.
+  // (overlay, not drawbox: drawbox doesn't write the alpha channel, which left the square see-through.)
+  "caption.png": ["-f", "lavfi", "-i", "color=c=black@0:size=320x240,format=rgba", "-f", "lavfi", "-i", "color=c=red:size=40x40,format=rgba",
+    "-filter_complex", "[0][1]overlay=0:0:format=auto,format=rgba", "-frames:v", "1"],
   // Still pictures for the GIF maker.
   "wide.png": ["-f", "lavfi", "-i", "testsrc=size=400x300", "-frames:v", "1"],
   "tall.jpg": ["-f", "lavfi", "-i", "testsrc2=size=300x400", "-frames:v", "1"],

@@ -8,7 +8,10 @@ export type LandingTool =
   | { kind: "convert"; initialFormat: "gif" | "mp4" | "webm" | "webp" }
   | { kind: "compress"; initialWidth: "0" | "640" | "480" | "320" }
   | { kind: "maker" }
-  | { kind: "crop"; initialFormat: "gif" | "mp4" };
+  | { kind: "crop"; initialFormat: "gif" | "mp4" }
+  | { kind: "trim"; initialFormat: "gif" | "mp4" }
+  | { kind: "speed"; initialFormat: "gif" | "mp4"; initialDirection: "forward" | "reverse" | "boomerang" }
+  | { kind: "captions"; initialFormat: "gif" | "mp4" };
 
 export type Landing = {
   slug: string;
@@ -38,7 +41,194 @@ const CROP_STEPS: [string, string][] = [
 
 const LIMITS_MAKER = "Up to 30 pictures, 10 MB each. JPEG, PNG, WebP or GIF.";
 
+const EDIT_LIMITS = "GIF, MP4, MOV or WebM, up to 25 MB and 60 seconds.";
+const NOT_KEPT: [string, string] = ["Your file isn't kept", "Uploads are edited and sent straight back. Nothing is stored."];
+
 export const LANDINGS: Landing[] = [
+  {
+    slug: "trim-video",
+    title: "Video Trimmer: trim a video online, free",
+    description: "Trim a short video online: pick the start and end on a live preview and download it as MP4 or GIF. Free, no sign-up, for clips up to 60 seconds.",
+    eyebrow: "Video trimmer",
+    h1: "Trim a video.",
+    subtitle: "Pick where it starts and ends, watch the preview loop just that part, and download it.",
+    tool: { kind: "trim", initialFormat: "mp4" },
+    steps: [
+      ["Upload your video", `Drop it in above. ${EDIT_LIMITS}`],
+      ["Set the start and end", "Drag the sliders, or play to the moment and tap Set start to now and Set end to now."],
+      ["Trim & download", "Keep MP4 for sound, or choose GIF, then tap Trim & download."],
+    ],
+    why: [
+      ["See exactly what you keep", "The preview loops only the part you've chosen, to a tenth of a second."],
+      ["Sound kept", "MP4s keep the original sound for the part you keep."],
+      NOT_KEPT,
+    ],
+    faq: [
+      ["How do I trim a video?", "Upload it above, set the start and end, and tap Trim & download."],
+      ["How long can the video be?", "Up to 60 seconds and 25 MB. GifSuite is made for short clips."],
+      ["Can I turn the trimmed part into a GIF?", "Yes. Choose GIF before you download."],
+      ["Does it work on iPhone videos?", "Yes. MOV files from iPhones work, as do MP4 and WebM."],
+      ["Is it free?", "Yes, with no sign-up and no watermark."],
+    ],
+    related: ["gif-cutter", "video-to-gif", "video-cropper"],
+  },
+  {
+    slug: "gif-cutter",
+    title: "GIF Cutter: trim a GIF to the best moment",
+    description: "Cut a GIF down to the part you want: pick the start and end, preview it, and download. Free online GIF trimmer, no sign-up, nothing stored.",
+    eyebrow: "GIF cutter",
+    h1: "Cut a GIF down to size.",
+    subtitle: "Keep just the best moment. Pick where it starts and ends, and download the shorter GIF.",
+    tool: { kind: "trim", initialFormat: "gif" },
+    steps: [
+      ["Upload your GIF", `Drop it in above. ${EDIT_LIMITS}`],
+      ["Set the start and end", "Drag the Start and End sliders to the moment you want."],
+      ["Trim & download", "Tap Trim & download to get the shorter GIF."],
+    ],
+    why: [
+      ["Smaller files", "A shorter GIF is a smaller file, often small enough to send without compressing."],
+      ["Stays sharp", "The kept frames get their own color palette, so colors stay accurate."],
+      NOT_KEPT,
+    ],
+    faq: [
+      ["How do I cut a GIF?", "Upload it above, set the start and end, and tap Trim & download."],
+      ["Can I make it smaller too?", "Yes. Run the result through the GIF compressor."],
+      ["Can I cut a video into a GIF?", "Yes. Upload the video and choose GIF before downloading."],
+      ["Is it free?", "Yes, with no sign-up and no watermark."],
+    ],
+    related: ["trim-video", "gif-compressor", "gif-speed-changer"],
+  },
+  {
+    slug: "reverse-video",
+    title: "Reverse Video: play a video backwards online",
+    description: "Reverse a short video online so it plays backwards, or make a boomerang that plays forward and back. Download as MP4 or GIF. Free, nothing stored.",
+    eyebrow: "Reverse video",
+    h1: "Play a video backwards.",
+    subtitle: "Reverse a short clip, or make a boomerang that plays forwards and then backwards, on a loop.",
+    tool: { kind: "speed", initialFormat: "mp4", initialDirection: "reverse" },
+    steps: [
+      ["Upload your video", "Drop it in above. MP4, MOV or WebM, up to 20 seconds for reversing."],
+      ["Choose Reverse or Boomerang", "And a speed, from 0.25× to 4×, if you like."],
+      ["Apply & download", "Tap Apply & download to get your reversed video."],
+    ],
+    why: [
+      ["Reverse or boomerang", "Play it backwards, or forward then back like an Instagram Boomerang."],
+      ["Change the speed too", "Slow motion or fast forward, in the same step."],
+      NOT_KEPT,
+    ],
+    faq: [
+      ["How do I reverse a video?", "Upload it above, choose Reverse, and tap Apply & download."],
+      ["How long can the video be?", "Up to 20 seconds for reverse and boomerang. Trim longer videos first."],
+      ["Is the sound reversed too?", "No. Reversed and boomerang clips are silent; forward playback keeps the sound."],
+      ["Can I make a boomerang?", "Yes. Choose Boomerang: it plays forward, then backward, on a loop."],
+    ],
+    related: ["reverse-gif", "gif-speed-changer", "trim-video"],
+  },
+  {
+    slug: "reverse-gif",
+    title: "Reverse GIF: play a GIF backwards online",
+    description: "Reverse a GIF so it plays backwards, or make a boomerang GIF. Change its speed in the same step. Free online GIF reverser, no sign-up, nothing stored.",
+    eyebrow: "GIF reverser",
+    h1: "Reverse a GIF.",
+    subtitle: "Make it play backwards, or turn it into a boomerang that loops forward and back.",
+    tool: { kind: "speed", initialFormat: "gif", initialDirection: "reverse" },
+    steps: [
+      ["Upload your GIF", "Drop it in above. Up to 20 seconds for reversing."],
+      ["Choose Reverse or Boomerang", "Optionally change the speed too."],
+      ["Apply & download", "Tap Apply & download to get the reversed GIF."],
+    ],
+    why: [
+      ["Reverse or boomerang", "Backwards, or forward-then-back on a loop."],
+      ["Any speed", "From quarter speed to four times faster, in the same step."],
+      FREE,
+    ],
+    faq: [
+      ["How do I reverse a GIF?", "Upload it above, choose Reverse, and tap Apply & download."],
+      ["What's a boomerang GIF?", "One that plays forward and then backward, so it loops smoothly."],
+      ["Can I reverse a video into a GIF?", "Yes. Upload the video and choose GIF."],
+      ["Is it free?", "Yes, with no sign-up and no watermark."],
+    ],
+    related: ["gif-speed-changer", "reverse-video", "gif-cutter"],
+  },
+  {
+    slug: "gif-speed-changer",
+    title: "GIF Speed Changer: speed up or slow down a GIF",
+    description: "Speed up or slow down a GIF from 0.25× to 4×, or reverse it. Preview and download as GIF or MP4. Free online GIF speed changer, nothing stored.",
+    eyebrow: "GIF speed changer",
+    h1: "Speed up or slow down a GIF.",
+    subtitle: "From quarter speed to four times faster. Reverse it or make a boomerang in the same step.",
+    tool: { kind: "speed", initialFormat: "gif", initialDirection: "forward" },
+    steps: [
+      ["Upload your GIF", `Drop it in above. ${EDIT_LIMITS}`],
+      ["Pick a speed", "0.25×, 0.5× and 0.75× slow it down; 1.5×, 2×, 3× and 4× speed it up."],
+      ["Apply & download", "Tap Apply & download to save it."],
+    ],
+    why: [
+      ["Smooth at any speed", "Frame rates are capped sensibly, so fast GIFs stay small and slow ones stay smooth."],
+      ["Videos too", "Speed up a video and keep its sound, matched to the new speed."],
+      NOT_KEPT,
+    ],
+    faq: [
+      ["How do I speed up a GIF?", "Upload it above, pick 1.5× to 4×, and tap Apply & download."],
+      ["How do I slow down a GIF?", "Pick 0.25×, 0.5× or 0.75×. The result can be up to 60 seconds long."],
+      ["Is a video's sound kept?", "Yes, for MP4s playing forward, sped up or slowed down to match."],
+      ["Is it free?", "Yes, with no sign-up and no watermark."],
+    ],
+    related: ["reverse-gif", "gif-cutter", "gif-compressor"],
+  },
+  {
+    slug: "add-text-to-gif",
+    title: "Add Text to GIF: captions with live preview, free",
+    description: "Add text to a GIF online: top and bottom captions in meme style, with outline, colors and a live preview. Download as GIF or MP4. Free, nothing stored.",
+    eyebrow: "Add text to GIF",
+    h1: "Add text to a GIF.",
+    subtitle: "Type your top and bottom text, see it on the GIF as you go, and download.",
+    tool: { kind: "captions", initialFormat: "gif" },
+    steps: [
+      ["Upload your GIF", `Drop it in above. ${EDIT_LIMITS}`],
+      ["Type your text", "Top text, bottom text, or both. Pick a font, size and color."],
+      ["Add text & download", "What you see in the preview is exactly what you get."],
+    ],
+    why: [
+      ["Live preview", "The text is drawn on your GIF as you type, so there are no surprises."],
+      ["Readable anywhere", "A thick outline keeps captions clear on light and dark backgrounds."],
+      NOT_KEPT,
+    ],
+    faq: [
+      ["How do I add text to a GIF?", "Upload it above, type your top and bottom text, and tap Add text & download."],
+      ["Can I change the font and color?", "Yes: Meme, Fun or Clean fonts; white, yellow or black; small, medium or large."],
+      ["Does long text fit?", "Yes. Lines wrap automatically and shrink if needed, up to 120 characters each."],
+      ["Can I add text to a video?", "Yes. Upload the video and choose GIF or MP4."],
+      ["Is it free?", "Yes, with no sign-up and no watermark."],
+    ],
+    related: ["gif-meme-maker", "gif-maker", "gif-cutter"],
+  },
+  {
+    slug: "gif-meme-maker",
+    title: "GIF Meme Maker: make a meme GIF in seconds",
+    description: "Make a meme GIF: add classic top and bottom meme text to any GIF or short video, with a live preview. Free online GIF meme generator, no sign-up.",
+    eyebrow: "GIF meme maker",
+    h1: "Make a meme GIF.",
+    subtitle: "Classic white text with a black outline, top and bottom, on any GIF or short video.",
+    tool: { kind: "captions", initialFormat: "gif" },
+    steps: [
+      ["Upload a GIF or video", `Drop it in above, or grab one from a link first. ${EDIT_LIMITS}`],
+      ["Write the meme", "Top text sets it up, bottom text lands the joke."],
+      ["Download and post", "Tap Add text & download, then share it anywhere."],
+    ],
+    why: [
+      ["The classic meme look", "Bold condensed capitals with a black outline, in an openly licensed font."],
+      ["Live preview", "See the meme on the GIF as you type."],
+      FREE,
+    ],
+    faq: [
+      ["How do I make a meme GIF?", "Upload a GIF, type the top and bottom text, and tap Add text & download."],
+      ["Where can I find a GIF to use?", "Paste a link from X, Giphy, Tenor or Reddit on the home page to grab one first."],
+      ["Can I post it on X or WhatsApp?", "Yes. Download it as GIF, or as MP4 for a smaller file."],
+      ["Is it free?", "Yes, with no sign-up and no watermark."],
+    ],
+    related: ["add-text-to-gif", "gif-maker", "twitter-gif-downloader"],
+  },
   {
     slug: "gif-cropper",
     title: "GIF Cropper: crop a GIF online, keep it animated",
