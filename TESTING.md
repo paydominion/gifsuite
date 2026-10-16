@@ -131,6 +131,16 @@
 7. Try 30 pictures, and a picture over 10 MB: both give a clear message.
 8. On a phone (320–390px wide), the picture grid, buttons and settings fit without sideways scrolling.
 
+### Crop
+
+1. Open **Tools → Crop** (or /gif-cropper). Upload a GIF: a box appears over it with four corner handles.
+2. Drag the box around, and drag a corner to resize it, with the mouse and on a phone with your finger. It never goes outside the picture.
+3. Pick **1:1**, **16:9**, **9:16** and **4:5**: the box changes shape; resizing keeps that shape. **Free** lets you draw any shape.
+4. Click the box and use the arrow keys (Shift for bigger steps).
+5. **Crop & download** as GIF: the result is exactly the area you chose and still animated.
+6. Upload a short video (with sound) on /video-cropper, pick 9:16, download as MP4: it's cropped and the sound is kept.
+7. On a phone, the corner handles are easy to grab, even at the picture's edges, and nothing scrolls sideways.
+
 ### Cloudflare analytics (after deploying to staging)
 
 1. Follow DEPLOY.md → Analytics to create the Web Analytics site and add its token, then push.

@@ -7,7 +7,8 @@ export type LandingTool =
   | { kind: "grab" }
   | { kind: "convert"; initialFormat: "gif" | "mp4" | "webm" | "webp" }
   | { kind: "compress"; initialWidth: "0" | "640" | "480" | "320" }
-  | { kind: "maker" };
+  | { kind: "maker" }
+  | { kind: "crop"; initialFormat: "gif" | "mp4" };
 
 export type Landing = {
   slug: string;
@@ -29,9 +30,61 @@ const FREE = ["Free, no sign-up", "No account, no watermark, no app to install. 
 const PRIVATE_UPLOADS = ["Your file isn't kept", "Uploads are converted and sent straight back. Nothing you upload is stored on our servers."] as [string, string];
 const LIMITS_UPLOAD = "Files up to 25 MB and clips up to 60 seconds.";
 
+const CROP_STEPS: [string, string][] = [
+  ["Upload your file", `Drop it in above. GIF, MP4, MOV or WebM. ${LIMITS_UPLOAD}`],
+  ["Draw the crop", "Drag the box and its corners, or pick a shape: 1:1, 16:9, 9:16 or 4:5."],
+  ["Crop & download", "Choose GIF or MP4 and tap Crop & download."],
+];
+
 const LIMITS_MAKER = "Up to 30 pictures, 10 MB each. JPEG, PNG, WebP or GIF.";
 
 export const LANDINGS: Landing[] = [
+  {
+    slug: "gif-cropper",
+    title: "GIF Cropper: crop a GIF online, keep it animated",
+    description: "Crop a GIF online by dragging a box, or to square, 16:9, 9:16 or 4:5. Every frame is cropped, so it stays animated. Free, nothing stored.",
+    eyebrow: "GIF cropper",
+    h1: "Crop a GIF.",
+    subtitle: "Drag a box over your GIF, or pick a shape. Every frame is cropped, so it keeps moving.",
+    tool: { kind: "crop", initialFormat: "gif" },
+    steps: CROP_STEPS,
+    why: [
+      ["Stays animated", "The whole animation is cropped, frame by frame, with colors kept accurate."],
+      ["Shapes for every app", "Square for profiles and posts, 9:16 for stories, 16:9 for widescreen, 4:5 for feeds."],
+      ["Your file isn't kept", "Uploads are cropped and sent straight back. Nothing is stored."],
+    ],
+    faq: [
+      ["How do I crop a GIF?", "Upload it above, drag the box (or its corners) over the part you want, and tap Crop & download."],
+      ["Will my GIF still move after cropping?", "Yes. Every frame is cropped the same way."],
+      ["Can I crop a GIF to a square?", "Yes. Pick 1:1 and drag the square to the part you want."],
+      ["Can I make the cropped GIF smaller too?", "Yes: run it through the GIF compressor or resizer afterwards."],
+      ["Is it free?", "Yes, with no sign-up and no watermark."],
+    ],
+    related: ["gif-resizer", "gif-compressor", "video-cropper"],
+  },
+  {
+    slug: "video-cropper",
+    title: "Video Cropper: crop a video online, free",
+    description: "Crop a short video online: drag a box or pick square, 9:16 or 16:9, and download it as MP4 or GIF. Free for clips up to 60 seconds, nothing stored.",
+    eyebrow: "Video cropper",
+    h1: "Crop a video.",
+    subtitle: "Cut a short video down to the part you want, or to square, 9:16 or 16:9. Download it as MP4 or GIF.",
+    tool: { kind: "crop", initialFormat: "mp4" },
+    steps: CROP_STEPS,
+    why: [
+      ["Sound kept", "MP4s keep the original sound."],
+      ["Ready for stories and posts", "One tap for 9:16 stories and reels, 1:1 posts or 16:9 widescreen."],
+      ["Your file isn't kept", "Uploads are cropped and sent straight back. Nothing is stored."],
+    ],
+    faq: [
+      ["How do I crop a video?", "Upload it above, drag the box over the part you want, keep MP4 selected, and tap Crop & download."],
+      ["How long can the video be?", "Up to 60 seconds and 25 MB. GifSuite is made for short clips."],
+      ["Which formats can I crop?", "MP4, MOV (from iPhones), WebM and GIF."],
+      ["Can I crop a video for Instagram or TikTok?", "Yes. Pick 9:16 for stories, reels and TikTok, or 1:1 or 4:5 for feed posts."],
+      ["Is it free?", "Yes, with no sign-up and no watermark."],
+    ],
+    related: ["gif-cropper", "video-to-gif", "gif-compressor"],
+  },
   {
     slug: "gif-maker",
     title: "GIF Maker: make a GIF from pictures, free online",

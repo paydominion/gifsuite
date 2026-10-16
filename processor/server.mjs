@@ -11,6 +11,7 @@
 //        (result settings come back in x-gifsuite-* headers; x-gifsuite-target-met says if it fit)
 //
 // input is the container: gif, mov (MP4/MOV) or matroska (WebM). Defaults to mov.
+//   POST /crop?input=…&format=gif|mp4&x=…&y=…&w=…&h=…   body: video → the cropped clip (box in source pixels)
 //   POST /make                                    multipart: image (1–30, in order) + settings (JSON) → GIF or MP4
 //        (see maker.mjs; the Worker has already checked counts, sizes and types)
 //   POST /nsfw                                    body: MP4 → { porn, hentai, sexy, frames } (worst frame's scores, 0–1)
@@ -25,7 +26,7 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import {
-  COMPRESS, FORMATS, QUALITIES, RENDERS, ffmpegArgs, firstAttempt, gifArgs, growAttempt, inputArgs, isFormat, isInput, isQuality,
+  COMPRESS, CROP_FORMATS, FORMATS, checkCrop, cropArgs, QUALITIES, RENDERS, ffmpegArgs, firstAttempt, gifArgs, growAttempt, inputArgs, isFormat, isInput, isQuality,
   nextAttempt, normalizeArgs, nsfwFrameArgs,
 } from "./presets.mjs";
 import { FetchError, fetchMedia } from "./fetch.mjs";
@@ -287,6 +288,25 @@ async function handle(req, res, url) {
           throw new HttpError(422, "could not decode input");
         }
         return sendFile(res, out, FORMATS[format].mime);
+      }
+
+      if (url.pathname === "/crop") {
+        const format = url.searchParams.get("format") ?? "gif";
+        if (!Object.hasOwn(CROP_FORMATS, format)) throw new HttpError(400, "unknown format");
+        const info = await probe(src, input);
+        const maxDurationMs = Number(url.searchParams.get("maxDurationMs") ?? 0);
+        if (maxDurationMs && info.durationMs > maxDurationMs) throw new HttpError(413, "too long");
+        const box = Object.fromEntries(["x", "y", "w", "h"].map((k) => [k, url.searchParams.get(k)]));
+        const { rect, error } = checkCrop(box, info, format);
+        if (error) throw new HttpError(400, error);
+        const out = path.join(dir, `out.${format}`);
+        try {
+          await ffmpeg(cropArgs(format, rect, info.fps, src, out, input));
+        } catch (err) {
+          console.warn(`[processor] could not crop ${input}:`, String(err).slice(0, 300));
+          throw new HttpError(422, "could not decode input");
+        }
+        return sendFile(res, out, CROP_FORMATS[format]);
       }
 
       if (url.pathname === "/compress") {

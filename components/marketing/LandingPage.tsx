@@ -6,6 +6,7 @@ import { siteUrl } from "@/lib/site";
 import { GrabForm } from "@/components/GrabForm";
 import { Hero } from "@/components/marketing/Hero";
 import { CompressTool } from "@/components/tools/CompressTool";
+import { CropTool } from "@/components/tools/CropTool";
 import { MakerTool } from "@/components/tools/MakerTool";
 import { ConvertTool } from "@/components/tools/ConvertTool";
 import { Card, SectionLabel, cardClass } from "@/components/ui/Card";
@@ -34,6 +35,8 @@ function Tool({ page }: { page: Landing }) {
       return <CompressTool maxUploadMb={maxUploadMb} initialWidth={page.tool.initialWidth} />;
     case "maker":
       return <MakerTool maxUploadMb={maxUploadMb} />;
+    case "crop":
+      return <CropTool maxUploadMb={maxUploadMb} initialFormat={page.tool.initialFormat} />;
   }
 }
 

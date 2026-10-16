@@ -289,3 +289,44 @@ export function mediaFromHtml(html, baseUrl) {
   const refresh = refreshTag ? absolute((refreshTag.match(/url\s*=\s*([^"'>\s]+)/i) ?? [])[1] ?? "") : null;
   return { candidates, title, siteName, refresh };
 }
+
+// ── Crop ────────────────────────────────────────────────────────────────────────
+
+/** Formats the crop tool can make. */
+export const CROP_FORMATS = { gif: "image/gif", mp4: "video/mp4" };
+
+/**
+ * Checks a crop box (in source pixels) against the source size. MP4 needs even sizes, so the box is
+ * rounded down to even numbers. Returns { rect } or { error }.
+ */
+export function checkCrop(raw, source, format) {
+  const n = (v) => Number(v);
+  let [x, y, w, h] = [n(raw.x), n(raw.y), n(raw.w), n(raw.h)];
+  if (![x, y, w, h].every(Number.isInteger)) return { error: "bad crop box" };
+  if (x < 0 || y < 0 || w < 16 || h < 16) return { error: "crop box too small" };
+  if (x + w > source.width || y + h > source.height) return { error: "crop box outside the picture" };
+  if (format === "mp4") {
+    w -= w % 2;
+    h -= h % 2;
+  }
+  return { rect: { x, y, w, h } };
+}
+
+/**
+ * ffmpeg arguments to crop a clip. The picture keeps its pixels (no rescaling) unless the crop is
+ * wider than 1080, the biggest output any GifSuite tool makes. GIFs get their own palette and at most
+ * 20 frames a second; MP4 keeps any sound.
+ */
+export function cropArgs(format, rect, sourceFps, src, out, input = "mov") {
+  const crop = `crop=${rect.w}:${rect.h}:${rect.x}:${rect.y}`;
+  const fit = rect.w > 1080 ? ",scale=1080:-2:flags=lanczos" : "";
+  if (format === "gif") {
+    const fps = !sourceFps || sourceFps > 20 ? ",fps=20" : "";
+    return [...inputArgs(input, src), "-vf",
+      `${crop}${fit}${fps},split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle`,
+      "-loop", "0", "-f", "gif", out];
+  }
+  return [...inputArgs(input, src), "-map", "0:v:0", "-map", "0:a:0?", "-vf", `${crop}${fit}`,
+    "-c:v", "libx264", "-crf", "20", "-preset", "veryfast", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k",
+    "-movflags", "+faststart", "-f", "mp4", out];
+}

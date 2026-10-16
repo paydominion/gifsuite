@@ -17,6 +17,6 @@ export const TOOLS: Tool[] = [
   { slug: "speed", name: "Speed & reverse", description: "Speed up, slow down, reverse or boomerang a GIF.", href: "/tools", status: "soon" },
   { slug: "trim", name: "Trim", description: "Cut a GIF down to the best moment.", href: "/tools", status: "soon" },
   { slug: "maker", name: "GIF maker", description: "Turn pictures into a slideshow GIF, or bring one to life with zoom, pan or shake.", href: "/tools/maker", status: "live" },
-  { slug: "crop", name: "Crop", description: "Crop to square, portrait or widescreen.", href: "/tools", status: "soon" },
+  { slug: "crop", name: "Crop", description: "Crop a GIF or video to square, portrait, widescreen or any shape.", href: "/tools/crop", status: "live" },
   { slug: "captions", name: "Text captions", description: "Add meme-style text to any GIF.", href: "/tools", status: "soon" },
 ];

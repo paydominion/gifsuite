@@ -134,3 +134,12 @@ export async function make(form: FormData): Promise<{ data: ArrayBuffer; type: s
   const res = await call("/make", { method: "POST", body: form });
   return { data: await res.arrayBuffer(), type: res.headers.get("content-type") ?? "image/gif" };
 }
+
+/** Crops a clip to a box in source pixels, as GIF or MP4 (processor/presets.mjs cropArgs). */
+export async function crop(
+  video: ArrayBuffer,
+  { input, format, box, maxDurationMs }: { input: Input; format: "gif" | "mp4"; box: { x: number; y: number; w: number; h: number }; maxDurationMs: number },
+): Promise<ArrayBuffer> {
+  const q = new URLSearchParams({ input, format, maxDurationMs: String(maxDurationMs), x: String(box.x), y: String(box.y), w: String(box.w), h: String(box.h) });
+  return (await call(`/crop?${q}`, post(video))).arrayBuffer();
+}
