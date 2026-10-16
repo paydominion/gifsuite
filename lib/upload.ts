@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { setting } from "@/lib/cloudflare";
 import { sniffUpload, type UploadKind } from "@/lib/media/sniff";
 import { limitUpload } from "@/lib/request";
+import { isHuman } from "@/lib/turnstile";
 
 export const maxUploadBytes = () => Number(setting("MAX_UPLOAD_MB") ?? 25) * 1024 * 1024;
 export const maxDurationMs = () => Number(setting("MAX_DURATION_S") ?? 60) * 1000;
@@ -41,6 +42,7 @@ async function readCapped(req: Request, limit: number): Promise<Uint8Array | "to
  */
 export async function readUpload(req: Request): Promise<{ file: ArrayBuffer; kind: UploadKind } | NextResponse> {
   if (!(await limitUpload(req))) return uploadError(429, "Slow down a little. Try again in a minute.");
+  if (!(await isHuman(req))) return uploadError(403, "We couldn't confirm you're a person. Reload the page and try again.");
 
   const limit = maxUploadBytes();
   const body = await readCapped(req, limit);

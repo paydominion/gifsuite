@@ -150,6 +150,20 @@
 5. **Add text** (/tools/captions): type top and bottom text; it appears on the GIF as you type. Try Meme / Fun / Clean, Small / Medium / Large, White / Yellow / Black, Outline on/off, ALL CAPS on/off, and a long sentence (it wraps and shrinks). The downloaded GIF looks exactly like the preview.
 6. On a phone, all three tools fit without sideways scrolling; the 8 speed buttons wrap into two rows.
 
+### Resilience and bot protection
+
+1. Open `/api/health`: every check is `ok: true`, and nothing secret is shown.
+2. Grab a few X posts as usual: nothing feels different (retries and the breaker only act when X fails).
+3. After the Turnstile widget is set up (DEPLOY.md): grab, convert, compress, make, crop, trim, speed and add text all still work, with no visible challenge in a normal browser. In a private window with a VPN, Cloudflare may show a small check at the bottom of the page; passing it lets the action continue.
+4. Try `curl -X POST https://staging.gifsuite.com/api/grab -d '{"url":"https://x.com/a/status/1"}'` (no token): it's refused with 403.
+
+### Professional UI pass
+
+1. Home page: the grabber, then "Every GIF tool, in one place" with an icon per tool, the four promises, and Latest GIFs. Every card opens its tool. Check it on your phone too.
+2. Share https://staging.gifsuite.com (or a tool page like /mp4-to-gif) in WhatsApp, iMessage, Discord or an X draft: a large preview with the GifSuite image appears. (Chats cache previews; a page never shared before shows it best.)
+3. On iPhone: Safari → Share → Add to Home Screen. The sunburst icon is used. On Android Chrome: Add to Home screen / Install.
+4. All tools page shows an icon for each tool.
+
 ### Cloudflare analytics (after deploying to staging)
 
 1. Follow DEPLOY.md → Analytics to create the Web Analytics site and add its token, then push.

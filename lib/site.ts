@@ -12,5 +12,8 @@ export async function siteUrl(): Promise<string> {
   return `${proto}://${host}`;
 }
 
+/** The default link-preview image (1200×630), made by `npm run images`. */
+export const SHARE_IMAGE = { url: "/brand/og.png", width: 1200, height: 630, alt: "GifSuite: grab, convert and make GIFs" };
+
 /** Only the production site should appear in search engines; staging and previews must not. */
 export const indexingAllowed = () => setting("ALLOW_INDEXING") === "1";

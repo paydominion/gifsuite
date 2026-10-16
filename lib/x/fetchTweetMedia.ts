@@ -1,5 +1,6 @@
 import "server-only";
 import { setting } from "@/lib/cloudflare";
+import { deduper, isPaused, limiter, readHealth, recordResult, withRetry } from "@/lib/x/resilience";
 
 export class GrabError extends Error {
   constructor(
@@ -184,14 +185,31 @@ async function fromYtDlp(tweetId: string, mediaSlot: number | null): Promise<Twe
   };
 }
 
+// At most 4 requests to X at once per Worker instance, and one request per post however many
+// people grab it at the same moment.
+const toX = limiter(4);
+const oncePerPost = deduper<TweetMedia>();
+
+/** X's embed endpoint, retried on temporary failures (network errors, 5xx, 429), never on "not found". */
+const syndicationWithRetry = (tweetId: string, mediaSlot: number | null) =>
+  toX(() => withRetry(() => fromSyndication(tweetId, mediaSlot), { retryable: (err) => !(err instanceof GrabError) }));
+
 /** Resolve an X post link to its GIF/video MP4 and post metadata. */
 export async function fetchTweetMedia(input: string): Promise<TweetMedia> {
   const { tweetId, mediaSlot } = parseTweetUrl(input);
+  return oncePerPost(`${tweetId}:${mediaSlot ?? "-"}`, () => resolveTweet(tweetId, mediaSlot));
+}
+
+async function resolveTweet(tweetId: string, mediaSlot: number | null): Promise<TweetMedia> {
   let media: TweetMedia;
   try {
-    media = await fromSyndication(tweetId, mediaSlot);
+    // While X keeps failing, the breaker skips it for a minute and grabs go straight to yt-dlp.
+    if (isPaused(await readHealth("x"), Date.now())) throw new Error("X paused by the circuit breaker");
+    media = await syndicationWithRetry(tweetId, mediaSlot);
+    await recordResult("x", { ok: true });
   } catch (err) {
     if (err instanceof GrabError) throw err;
+    if (!String(err).includes("circuit breaker")) await recordResult("x", { ok: false, error: String(err) });
     console.warn(`[grab] syndication failed for ${tweetId}, trying yt-dlp:`, err);
     try {
       media = await fromYtDlp(tweetId, mediaSlot);

@@ -1,5 +1,6 @@
 "use client";
 
+import { humanFetch } from "@/lib/human";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -22,7 +23,7 @@ export function GrabForm() {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/grab", {
+      const res = await humanFetch("/api/grab", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ url: link, public: isPublic }),

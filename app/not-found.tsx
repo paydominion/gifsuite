@@ -13,7 +13,7 @@ export default function NotFound() {
       <p className="mt-6 text-sm font-bold uppercase tracking-widest text-accent">404</p>
       <h1 className="mt-2 text-3xl font-bold tracking-tight text-balance sm:text-4xl">This page didn&apos;t loop back.</h1>
       <p className="mt-3 text-muted">
-        The link may be old, or the GIF may have been removed. Try grabbing it again from X.
+        The link may be old, or the GIF may have been removed. Try grabbing it again from its original link.
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-2">
         <Link href="/" className={buttonClass({ variant: "primary", size: "lg" })}>Grab a GIF</Link>

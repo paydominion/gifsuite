@@ -4,6 +4,7 @@ import { logEvent, siteOf } from "@/lib/analytics";
 import { ingest } from "@/lib/ingest";
 import { GrabError } from "@/lib/x/fetchTweetMedia";
 import { limitGrab, visitorHash } from "@/lib/request";
+import { isHuman, notHuman } from "@/lib/turnstile";
 import { hashOwnerKey, newOwnerKey, ownerCookie, ownerKeyFromRequest } from "@/lib/owner";
 
 export async function POST(req: Request) {
@@ -15,6 +16,10 @@ export async function POST(req: Request) {
   if (!(await limitGrab(req))) {
     log(429, "rate_limited");
     return NextResponse.json({ error: "Slow down a little — try again in a minute." }, { status: 429 });
+  }
+  if (!(await isHuman(req))) {
+    log(403, "error", undefined, "failed human check");
+    return notHuman();
   }
   const { url, public: isPublic = true } = (await req.json().catch(() => ({}))) as { url?: string; public?: unknown };
   // Which site people paste links from (only the site name, never the link) shows which grab

@@ -23,6 +23,7 @@
     "deploy:status": "sh scripts/deploy-status.sh",
     "content": "node scripts/build-content.mjs",
     "brand": "node scripts/build-brand.mjs",
+    "images": "node scripts/build-images.mjs",
     "analytics": "node scripts/analytics.mjs",
     "keywords": "node scripts/keywords.mjs"
   },

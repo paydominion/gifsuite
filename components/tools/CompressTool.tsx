@@ -1,5 +1,6 @@
 "use client";
 
+import { humanFetch } from "@/lib/human";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, SectionLabel } from "@/components/ui/Card";
@@ -78,7 +79,7 @@ export function CompressTool({ maxUploadMb, initialWidth = "0" }: { maxUploadMb:
     setError(null);
     setResult(null);
     try {
-      const res = await fetch(`/api/compress?target=${targetBytes}&width=${width}`, {
+      const res = await humanFetch(`/api/compress?target=${targetBytes}&width=${width}`, {
         method: "POST",
         body: file.file,
         headers: { "content-type": "application/octet-stream" },

@@ -6,7 +6,10 @@ import { Logo } from "@/components/shell/Logo";
 import { MobileMenu } from "@/components/shell/MobileMenu";
 import { ToolsMenu } from "@/components/shell/ToolsMenu";
 import { WebAnalytics } from "@/components/shell/WebAnalytics";
+import { HumanCheck } from "@/components/shell/HumanCheck";
+import { setting } from "@/lib/cloudflare";
 import { buttonClass } from "@/components/ui/Button";
+import { SHARE_IMAGE, siteUrl } from "@/lib/site";
 import { LANDINGS } from "@/lib/landing";
 import "./globals.css";
 
@@ -20,10 +23,21 @@ const satoshi = localFont({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: { default: "GifSuite: grab, convert and make GIFs", template: "%s · GifSuite" },
-  description: "Grab, convert, compress and make GIFs: download any GIF in any format and quality. An all-in-one suite of GIF tools.",
-};
+const DESCRIPTION = "Grab, convert, compress and make GIFs: download any GIF in any format and quality. An all-in-one suite of GIF tools.";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    // Relative image and page addresses below resolve against the site's own address.
+    metadataBase: new URL(await siteUrl()),
+    title: { default: "GifSuite: grab, convert and make GIFs", template: "%s · GifSuite" },
+    description: DESCRIPTION,
+    applicationName: "GifSuite",
+    openGraph: { type: "website", siteName: "GifSuite", title: "GifSuite: grab, convert and make GIFs", description: DESCRIPTION, images: [SHARE_IMAGE] },
+    twitter: { card: "summary_large_image", images: [SHARE_IMAGE.url] },
+    // Listing icons here replaces Next's automatic tab icon link, so both are named.
+    icons: { icon: { url: "/icon.svg", type: "image/svg+xml" }, apple: "/apple-touch-icon.png" },
+  };
+}
 
 // Colours the phone browser's own bars to match the page.
 export const viewport: Viewport = { themeColor: "#111110", colorScheme: "dark" };
@@ -38,6 +52,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${satoshi.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="flex min-h-full flex-col font-sans">
         <WebAnalytics />
+        <HumanCheck siteKey={setting("TURNSTILE_SITE_KEY") ?? null} />
         <header className="sticky top-0 z-40 border-b border-line bg-bg/85 backdrop-blur-md">
           <nav className="relative mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">
             <Logo />

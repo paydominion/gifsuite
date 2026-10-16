@@ -2,6 +2,7 @@ import { tracked } from "@/lib/analytics";
 import { sniffImage } from "@/lib/media/sniff";
 import { make } from "@/lib/media/processor";
 import { limitUpload } from "@/lib/request";
+import { isHuman } from "@/lib/turnstile";
 import { maxUploadBytes, processorFailure, uploadError } from "@/lib/upload";
 
 const MAX_IMAGES = 30;
@@ -18,6 +19,7 @@ export const POST = tracked("make", async (req) => {
 
 async function makeGif(req: Request) {
   if (!(await limitUpload(req))) return uploadError(429, "Slow down a little. Try again in a minute.");
+  if (!(await isHuman(req))) return uploadError(403, "We couldn't confirm you're a person. Reload the page and try again.");
   const limit = maxUploadBytes();
   if (Number(req.headers.get("content-length") ?? 0) > limit + 1024 * 1024) {
     return uploadError(413, `Those images add up to more than ${limit / 1024 / 1024} MB. Use fewer or smaller ones.`);

@@ -1,5 +1,6 @@
 "use client";
 
+import { humanFetch } from "@/lib/human";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, SectionLabel } from "@/components/ui/Card";
@@ -39,7 +40,7 @@ export function useClip(maxUploadMb: number) {
       setClip({ file: picked, url: URL.createObjectURL(picked), video });
       if (!video) {
         // Browsers can't tell how long a GIF is, so the server reads it.
-        const res = await fetch("/api/probe", { method: "POST", body: picked, headers: { "content-type": "application/octet-stream" } });
+        const res = await humanFetch("/api/probe", { method: "POST", body: picked, headers: { "content-type": "application/octet-stream" } });
         const data = (await res.json().catch(() => ({}))) as Partial<ClipInfo> & { error?: string };
         if (!res.ok || !data.durationMs) setError(data.error ?? "Couldn't read that file. Try another one.");
         else setInfo({ durationMs: data.durationMs, width: data.width ?? 0, height: data.height ?? 0 });
@@ -82,7 +83,7 @@ export function useEditRun(tool: "trim" | "speed" | "captions") {
       form.append("file", clip.file);
       if (overlay) form.append("overlay", overlay, "overlay.png");
       form.append("settings", JSON.stringify(settings));
-      const res = await fetch(`/api/edit?tool=${tool}`, { method: "POST", body: form });
+      const res = await humanFetch(`/api/edit?tool=${tool}`, { method: "POST", body: form });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Something went wrong with that file.");

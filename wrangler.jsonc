@@ -106,6 +106,8 @@
         "PROCESSOR_URL": "http://127.0.0.1:3296",
         "ADMIN_TOKEN": "test-admin-token-not-a-real-secret",
         "TRUST_FORWARDED_FOR": "1",
+        // Tests make X fail on purpose many times; don't let the circuit breaker pause it for later tests.
+        "X_BREAKER_FAILURES": "1000",
         // A dummy Web Analytics site token, so tests check the beacon is allowed by the CSP.
         "CF_WEB_ANALYTICS_TOKEN": "0123456789abcdef0123456789abcdef",
         "AUTO_HIDE_REPORTS": "3",

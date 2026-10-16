@@ -68,3 +68,13 @@ test("every page links to every landing page from the footer, and related tools 
   await page.getByRole("main").getByRole("link", { name: /GIF resizer/ }).click();
   await expect(page).toHaveURL("/gif-resizer");
 });
+
+test("the home page shows every tool, each linking to it", async ({ page }) => {
+  await page.goto("/");
+  const section = page.getByRole("region", { name: "Every GIF tool, in one place" });
+  for (const name of ["Upload & convert", "Compress & resize", "Speed & reverse", "Trim", "GIF maker", "Crop", "Add text"]) {
+    await expect(section.getByRole("link", { name: new RegExp(`^${name.replace(/[&]/g, "&")}`) })).toBeVisible();
+  }
+  await section.getByRole("link", { name: /^Add text/ }).click();
+  await expect(page).toHaveURL("/tools/captions");
+});

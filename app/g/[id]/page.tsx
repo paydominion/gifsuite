@@ -22,7 +22,8 @@ export async function generateMetadata({ params }: PageProps<"/g/[id]">): Promis
   const poster = `${base}/media/${id}/poster.jpg`;
   // Sensitive GIFs get no preview image in chat apps and on X, and stay out of search engines.
   if (gif.nsfw === true) {
-    return { title: `GIF by ${by}`, robots: { index: false, follow: false } };
+    // An explicit openGraph without images, so the site-wide share image isn't inherited either.
+    return { title: `GIF by ${by}`, robots: { index: false, follow: false }, openGraph: { title: `GIF by ${by}` }, twitter: { card: "summary" } };
   }
   return {
     // Search engines only list what the timeline shows: public and checked safe. Private and

@@ -69,9 +69,9 @@ Things only you can do; Claude has done everything around them.
 
 | # | Item | Size | Notes |
 |---|---|---|---|
-| 9 | **Harden the X fetcher** | M | Request queue, retry with increasing waits, automatic pause when X errors, and a health check. |
-| 10 | **Bot protection** | S | Cloudflare Turnstile (invisible CAPTCHA) on grab and upload, plus Cloudflare rate limiting. |
-| 11 | **Professional UI pass** | M | Landing page that shows off the suite, polished tool pages, mobile, empty and error states, favicon and link-preview image. |
+| 9 | ⏳ **Harden the X fetcher** (built 2026-10-16: retries with backoff, a D1-backed circuit breaker that falls back to yt-dlp, de-duplicated and capped requests, `/api/health`; awaiting review) | M | Request queue, retry with increasing waits, automatic pause when X errors, and a health check. |
+| 10 | ⏳ **Bot protection** (built 2026-10-16: Turnstile on grab, uploads and edits, off until keys are set; needs the widget from the Cloudflare dashboard, see DEPLOY.md) | S | Cloudflare Turnstile (invisible CAPTCHA) on grab and upload, plus Cloudflare rate limiting. |
+| 11 | ⏳ **Professional UI pass** (built 2026-10-16: home page with every tool and icons, trust strip, 1200×630 link-preview image on every page, Apple and app icons, web app manifest, branded error page; images via `npm run images`; awaiting review) | M | Landing page that shows off the suite, polished tool pages, mobile, empty and error states, favicon and link-preview image. |
 | 12 | ✅ **Legal pages** (2026-10-12: /terms, /privacy, /copyright; contact legal@gifsuite.com) | S | Terms, privacy, and a **takedown/DMCA contact and process**. This is required, because the site publicly hosts other people's GIFs. |
 | 13 | ✅ **Launch v1** (2026-10-12: gifsuite.com live and indexable, own database and bucket, www redirects, IndexNow on every deploy) | S | Point the main domain at production, then run the smoke tests against it. |
 

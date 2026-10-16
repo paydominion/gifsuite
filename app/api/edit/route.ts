@@ -2,6 +2,7 @@ import { tracked } from "@/lib/analytics";
 import { edit } from "@/lib/media/processor";
 import { sniffImage, sniffUpload } from "@/lib/media/sniff";
 import { limitUpload } from "@/lib/request";
+import { isHuman } from "@/lib/turnstile";
 import { maxDurationMs, maxUploadBytes, processorFailure, uploadError } from "@/lib/upload";
 
 const MAX_OVERLAY_BYTES = 5 * 1024 * 1024;
@@ -19,6 +20,7 @@ export const POST = tracked("edit", (req) => {
 
 async function editUpload(req: Request) {
   if (!(await limitUpload(req))) return uploadError(429, "Slow down a little. Try again in a minute.");
+  if (!(await isHuman(req))) return uploadError(403, "We couldn't confirm you're a person. Reload the page and try again.");
   const limit = maxUploadBytes();
   if (Number(req.headers.get("content-length") ?? 0) > limit + MAX_OVERLAY_BYTES + 64 * 1024) {
     return uploadError(413, `That file is over ${limit / 1024 / 1024} MB. Try a smaller one.`);

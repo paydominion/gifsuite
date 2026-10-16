@@ -82,6 +82,9 @@ const POSTS = {
   "600": post("600", "longvid", "way too long", [gif("cat.mp4", 320, 240, 90_000)]),
 };
 const deleted = new Set();
+// Post 126 is flaky: X fails twice, then answers (the fetcher's retries should recover it).
+POSTS["126"] = post("126", "flaky", "X fails twice before this loads", [gif("cat.mp4", 320, 240, 2000)]);
+let flakyCalls = 0;
 let leaks = 0;
 
 http
@@ -91,6 +94,7 @@ http
     if (url.pathname === "/tweet-result") {
       const id = url.searchParams.get("id");
       if (id === "500") return res.writeHead(500).end("X is having a moment");
+      if (id === "126" && ++flakyCalls % 3 !== 0) return res.writeHead(503).end("X is busy");
       if (id === "405") {
         res.writeHead(200, { "content-type": "application/json" });
         return res.end(JSON.stringify({ __typename: "TweetTombstone" }));

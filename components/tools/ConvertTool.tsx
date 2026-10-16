@@ -1,5 +1,6 @@
 "use client";
 
+import { humanFetch } from "@/lib/human";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, SectionLabel } from "@/components/ui/Card";
@@ -66,7 +67,7 @@ export function ConvertTool({ maxUploadMb, initialFormat = "mp4" }: { maxUploadM
     setError(null);
     setResult(null);
     try {
-      const res = await fetch(`/api/convert?format=${format}&quality=${quality}`, {
+      const res = await humanFetch(`/api/convert?format=${format}&quality=${quality}`, {
         method: "POST",
         body: file.file,
         headers: { "content-type": "application/octet-stream" },

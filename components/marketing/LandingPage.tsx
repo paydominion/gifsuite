@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { setting } from "@/lib/cloudflare";
 import { getLanding, type Landing } from "@/lib/landing";
-import { siteUrl } from "@/lib/site";
+import { SHARE_IMAGE, siteUrl } from "@/lib/site";
 import { GrabForm } from "@/components/GrabForm";
 import { Hero } from "@/components/marketing/Hero";
 import { CompressTool } from "@/components/tools/CompressTool";
@@ -22,8 +22,8 @@ export async function landingMetadata(slug: string) {
     title: { absolute: `${page.title} · GifSuite` },
     description: page.description,
     alternates: { canonical: url },
-    openGraph: { type: "website" as const, url, title: page.title, description: page.description },
-    twitter: { card: "summary" as const, title: page.title, description: page.description },
+    openGraph: { type: "website" as const, url, title: page.title, description: page.description, images: [SHARE_IMAGE] },
+    twitter: { card: "summary_large_image" as const, title: page.title, description: page.description, images: [SHARE_IMAGE.url] },
   };
 }
 

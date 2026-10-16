@@ -27,6 +27,9 @@ Plain settings live in `wrangler.jsonc` under `vars`, per environment (`dev`, `t
 | `PUBLIC_BASE_URL` | var | Absolute site URL for link previews |
 | `ADMIN_TOKEN` | **secret** (24+ chars) | Enables `POST /api/admin/hide`, `/api/admin/nsfw` and `/api/admin/scan-pending` (header `x-admin-token`). The NSFW retry sweep uses it, so set it in every deployed environment. |
 | `CF_WEB_ANALYTICS_TOKEN` | var (public, not secret) | Cloudflare Web Analytics site token for page views; the beacon is left out when unset. See DEPLOY.md. |
+| `TURNSTILE_SITE_KEY` | var (public) | Cloudflare Turnstile site key; turns on the invisible human check in the browser. See DEPLOY.md. |
+| `TURNSTILE_SECRET` | **secret** | Turnstile secret; when set, grab, upload and edit requests must carry a valid token. Off when unset. |
+| `X_BREAKER_FAILURES` | var | X failures within 2 minutes that pause X for a minute (default 5; tests use 1000). |
 | `NSFW_THRESHOLD` | var | Explicit-content score (0–1) at which a scanned GIF is flagged sensitive (default 0.6) |
 | `VISITOR_SALT` | **secret** | Used to count unique visitors without storing IPs |
 | `AUTO_HIDE_REPORTS` | var | Distinct reporters before a GIF is hidden (default 5) |

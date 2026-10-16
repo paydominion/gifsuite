@@ -1,5 +1,6 @@
 "use client";
 
+import { humanFetch } from "@/lib/human";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, SectionLabel } from "@/components/ui/Card";
@@ -164,7 +165,7 @@ export function CropTool({ maxUploadMb, initialFormat }: { maxUploadMb: number; 
     setResult(null);
     try {
       const q = new URLSearchParams({ format, x: String(box.x), y: String(box.y), w: String(box.w), h: String(box.h) });
-      const res = await fetch(`/api/crop?${q}`, { method: "POST", body: file.file, headers: { "content-type": "application/octet-stream" } });
+      const res = await humanFetch(`/api/crop?${q}`, { method: "POST", body: file.file, headers: { "content-type": "application/octet-stream" } });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Something went wrong cropping that file.");

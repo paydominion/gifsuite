@@ -43,6 +43,7 @@ test.describe("POST /api/grab", () => {
 
   test("finds the GIF when the post has a photo first", async ({ request }) => {
     const { body } = await grab(request, "https://x.com/multi/status/114");
+    await waitForCheck(body.id); // it joins the timeline once its background NSFW check passes
     const { items } = await (await request.get("/api/gifs")).json();
     expect(items.find((g: { id: string }) => g.id === body.id)).toMatchObject({ mediaIndex: 1, width: 640 });
     // A link to the second media slot is the same GIF.

@@ -31,6 +31,25 @@ Watch it live at https://github.com/dominusmaster/gifsuite/actions, or run `gh r
 - Staging D1 database, R2 bucket and custom domain.
 - Staging secrets `ADMIN_TOKEN` and `VISITOR_SALT`. They're random values stored only at Cloudflare.
 
+## Bot protection (Cloudflare Turnstile)
+
+The code is in place but switched off until keys exist. To turn it on:
+
+1. Cloudflare dashboard → **Turnstile** → **Add widget**. Name: GifSuite. Hostnames: `gifsuite.com` and `staging.gifsuite.com`. Widget mode: **Invisible**. Create.
+2. Copy the **Site key** (public) and the **Secret key**.
+3. Put the site key in `wrangler.jsonc` as `"TURNSTILE_SITE_KEY": "…"` in the production `vars` and in the staging `vars`, and push.
+4. Set the secret for each environment (it's never in git):
+   ```
+   npx wrangler secret put TURNSTILE_SECRET
+   npx wrangler secret put TURNSTILE_SECRET --env staging
+   ```
+
+From then on every grab, upload and edit carries a one-time token that the server checks with Cloudflare. People normally see nothing; Cloudflare shows a small challenge only when it's unsure. If Cloudflare's check is unreachable, requests are let through rather than breaking the tools. **Note:** native apps (the planned iOS app) need their own way to pass this check before it can stay on for them.
+
+## Health check
+
+`GET /api/health` reports the database, file storage, media processor and whether X is paused by the circuit breaker: 200 when the essentials work, 503 when one doesn't. Point an uptime monitor at `https://gifsuite.com/api/health` (for example Cloudflare's Health Checks, or a free service like UptimeRobot).
+
 ## Adding gifsuite.app
 
 `worker.ts` already redirects gifsuite.app and www.gifsuite.app to gifsuite.com, but the production

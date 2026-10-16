@@ -19,6 +19,8 @@ export function proxy(request: NextRequest) {
     "font-src 'self'",
     // Cloudflare Web Analytics reports page views here (components/shell/WebAnalytics.tsx).
     "connect-src 'self' https://cloudflareinsights.com",
+    // Cloudflare Turnstile (the invisible human check) runs in a frame from here.
+    "frame-src https://challenges.cloudflare.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

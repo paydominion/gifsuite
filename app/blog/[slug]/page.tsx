@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { POSTS, formatDate, getPost } from "@/lib/blog";
-import { siteUrl } from "@/lib/site";
+import { SHARE_IMAGE, siteUrl } from "@/lib/site";
 import { TOOLS } from "@/lib/tools";
 import { buttonClass } from "@/components/ui/Button";
 import { Card, SectionLabel } from "@/components/ui/Card";
@@ -27,8 +27,9 @@ export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): P
       publishedTime: post.date,
       modifiedTime: post.updated ?? post.date,
       tags: post.tags,
+      images: [SHARE_IMAGE],
     },
-    twitter: { card: "summary", title: post.title, description: post.description },
+    twitter: { card: "summary_large_image", title: post.title, description: post.description, images: [SHARE_IMAGE.url] },
     ...(post.draft && { robots: { index: false } }),
   };
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { humanFetch } from "@/lib/human";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, SectionLabel } from "@/components/ui/Card";
@@ -135,7 +136,7 @@ export function MakerTool({ maxUploadMb }: { maxUploadMb: number }) {
     for (const item of items) form.append("image", item.file);
     form.append("settings", JSON.stringify(settings));
     try {
-      const res = await fetch("/api/make", { method: "POST", body: form, headers: { "x-gifsuite-images": String(items.length) } });
+      const res = await humanFetch("/api/make", { method: "POST", body: form, headers: { "x-gifsuite-images": String(items.length) } });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Something went wrong making your GIF.");
