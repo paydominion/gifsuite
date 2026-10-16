@@ -26,7 +26,11 @@ async function call(path: string, init?: RequestInit): Promise<Response> {
   } else if (container) {
     // Loaded only here: it depends on `cloudflare:workers`, which exists on Cloudflare but not in `next dev`.
     const { getContainer } = await import("@cloudflare/containers");
-    res = await getContainer(container).fetch(new Request(`http://processor${path}`, init));
+    // One converter instance per deploy (named after the commit), so new code always reaches a container
+    // started from the new image. A busy instance keeps running its old image until it goes idle, which
+    // made new processor features answer 404 after a deploy.
+    const instance = `processor-${setting("PROCESSOR_VERSION") ?? "default"}`;
+    res = await getContainer(container, instance).fetch(new Request(`http://processor${path}`, init));
   } else {
     throw new Error("No media processor: set PROCESSOR_URL or bind the PROCESSOR container");
   }
