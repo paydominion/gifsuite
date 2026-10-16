@@ -36,6 +36,16 @@ import { imageDemuxer, makeArgs, outputHeight, parseSettings } from "./maker.mjs
 import { EDIT, editArgs, parseEdit } from "./edit.mjs";
 import { scanFrames } from "./nsfw.mjs";
 
+// The commit this image was built from (written into VERSION by the deploy). Every response says it,
+// so the Worker can tell when it reached a container still running an older image.
+const VERSION = (() => {
+  try {
+    return fs.readFileSync(new URL("./VERSION", import.meta.url), "utf8").trim() || "dev";
+  } catch {
+    return "dev";
+  }
+})();
+
 const PORT = Number(process.env.PORT ?? 8080);
 const HOST = process.env.HOST ?? "0.0.0.0";
 const MAX_BODY = Number(process.env.MAX_BODY_MB ?? 60) * 1024 * 1024;
@@ -424,6 +434,7 @@ async function handle(req, res, url) {
 
 http
   .createServer(async (req, res) => {
+    res.setHeader("x-processor-version", VERSION);
     const url = new URL(req.url ?? "/", "http://processor");
     try {
       await handle(req, res, url);

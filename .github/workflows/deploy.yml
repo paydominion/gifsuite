@@ -88,8 +88,11 @@ jobs:
         run: npx wrangler d1 migrations apply DB --remote $ENV_FLAG
       - name: Deploy (builds and uploads the media processor container)
         timeout-minutes: 20
-        # PROCESSOR_VERSION: each deploy talks to its own converter instance (lib/media/processor.ts).
-        run: npx wrangler deploy $ENV_FLAG --var PROCESSOR_VERSION:${{ github.sha }}
+        # PROCESSOR_VERSION and processor/VERSION: each deploy talks to converter instances running its
+        # own image, checked on every response (lib/media/processor.ts).
+        run: |
+          echo "${{ github.sha }}" > processor/VERSION
+          npx wrangler deploy $ENV_FLAG --var PROCESSOR_VERSION:${{ github.sha }}
       - name: Tell search engines about new pages (IndexNow; production only)
         if: (github.event.inputs.target || 'staging') == 'production'
         continue-on-error: true

@@ -26,16 +26,37 @@ async function call(path: string, init?: RequestInit): Promise<Response> {
   } else if (container) {
     // Loaded only here: it depends on `cloudflare:workers`, which exists on Cloudflare but not in `next dev`.
     const { getContainer } = await import("@cloudflare/containers");
-    // One converter instance per deploy (named after the commit), so new code always reaches a container
-    // started from the new image. A busy instance keeps running its old image until it goes idle, which
-    // made new processor features answer 404 after a deploy.
-    const instance = `processor-${setting("PROCESSOR_VERSION") ?? "default"}`;
-    res = await getContainer(container, instance).fetch(new Request(`http://processor${path}`, init));
+    res = await fromCurrentImage(container, getContainer, path, init);
   } else {
     throw new Error("No media processor: set PROCESSOR_URL or bind the PROCESSOR container");
   }
   if (!res.ok) throw new ProcessorError(res.status, await res.text());
   return res;
+}
+
+/**
+ * The converter instance for this deploy. Each deploy uses instances named after its commit, and the
+ * converter says which image answered (x-processor-version). Cloudflare publishes the Worker a little
+ * before the new container image, so an instance woken in that gap starts on the old image and keeps
+ * it while busy. When the answer comes from an older image, retry on a fresh instance.
+ */
+let instanceSuffix = 0;
+export async function fromCurrentImage(
+  container: NonNullable<CloudflareEnv["PROCESSOR"]>,
+  getContainer: typeof import("@cloudflare/containers").getContainer,
+  path: string,
+  init?: RequestInit,
+): Promise<Response> {
+  const version = setting("PROCESSOR_VERSION");
+  for (let attempt = 0; ; attempt++) {
+    const name = `processor-${version ?? "default"}${instanceSuffix ? `-${instanceSuffix}` : ""}`;
+    const res = await getContainer(container, name).fetch(new Request(`http://processor${path}`, init));
+    const answered = res.headers.get("x-processor-version");
+    if (!version || !answered || answered === "dev" || version.startsWith(answered) || answered.startsWith(version) || attempt >= 3) return res;
+    console.warn(`[processor] ${name} runs image ${answered}, not ${version}; trying a fresh instance`);
+    await res.body?.cancel();
+    instanceSuffix++;
+  }
 }
 
 const post = (body: ArrayBuffer): RequestInit => ({
@@ -148,4 +169,13 @@ export async function crop(
 export async function edit(form: FormData, { input, maxDurationMs }: { input: Input; maxDurationMs: number }): Promise<{ data: ArrayBuffer; type: string }> {
   const res = await call(`/edit?input=${input}&maxDurationMs=${maxDurationMs}`, { method: "POST", body: form });
   return { data: await res.arrayBuffer(), type: res.headers.get("content-type") ?? "image/gif" };
+}
+
+/** True if the media processor answers its health check. */
+export async function processorHealthy(): Promise<boolean> {
+  try {
+    return (await (await call("/health")).text()).trim() === "ok";
+  } catch {
+    return false;
+  }
 }
