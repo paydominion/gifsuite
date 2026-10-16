@@ -60,8 +60,8 @@ Things only you can do; Claude has done everything around them.
 
 | # | Feature | Size | Notes |
 |---|---|---|---|
-| 5 | **Photo → GIF** | M | One photo with an effect: zoom-in (Ken Burns), pan, pulse or shake. |
-| 6 | **Screenshots → GIF** | M | Several images as a slideshow. Drag to reorder, set time per frame, optional crossfade. |
+| 5 | ⏳ **Photo → GIF** (built 2026-10-15 as part of the GIF maker, /tools/maker; awaiting human test) | M | One photo with an effect: zoom-in (Ken Burns), pan, pulse or shake. |
+| 6 | ⏳ **Screenshots → GIF** (built 2026-10-15 as part of the GIF maker; awaiting human test) | M | Several images as a slideshow. Drag to reorder, set time per frame, optional crossfade. |
 | 7 | **Crop** | M | Aspect presets (1:1, 16:9, 9:16) plus a drag box. |
 | 8 | **Text captions** | M/L | Meme-style top/bottom text or free text, with a font, color and outline. **Caption fonts must be openly licensed (e.g. SIL OFL): the Satoshi license forbids offering it to users for their own content** (see `app/fonts/LICENSE.md`). |
 

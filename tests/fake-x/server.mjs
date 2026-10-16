@@ -21,12 +21,19 @@ const CLIPS = {
   "odd.gif": lavfi("testsrc=size=301x201:rate=10", 2),
   "clip.webm": lavfi("testsrc=size=320x240:rate=10", 2, "-c:v", "libvpx-vp9"),
   "long.mp4": lavfi("color=c=blue:size=64x64:rate=1", 70, ...h264),
+  // Still pictures for the GIF maker.
+  "wide.png": ["-f", "lavfi", "-i", "testsrc=size=400x300", "-frames:v", "1"],
+  "tall.jpg": ["-f", "lavfi", "-i", "testsrc2=size=300x400", "-frames:v", "1"],
+  "square.png": ["-f", "lavfi", "-i", "mandelbrot=size=320x320", "-frames:v", "1"],
 };
 fs.mkdirSync(FIXTURES, { recursive: true });
 for (const [name, args] of Object.entries(CLIPS)) {
   const file = path.join(FIXTURES, name);
   if (!fs.existsSync(file)) execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", ...args, "-y", file]);
 }
+// A still WebP for the GIF maker (cwebp comes with the webp tools, like gif2webp).
+const stillWebp = path.join(FIXTURES, "still.webp");
+if (!fs.existsSync(stillWebp)) execFileSync("cwebp", ["-quiet", path.join(FIXTURES, "square.png"), "-o", stillWebp]);
 // An animated WebP for the "not supported yet" case (gif2webp comes with the webp tools).
 const webp = path.join(FIXTURES, "anim.webp");
 if (!fs.existsSync(webp)) execFileSync("gif2webp", ["-quiet", path.join(FIXTURES, "odd.gif"), "-o", webp]);

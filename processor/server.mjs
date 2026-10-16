@@ -11,6 +11,8 @@
 //        (result settings come back in x-gifsuite-* headers; x-gifsuite-target-met says if it fit)
 //
 // input is the container: gif, mov (MP4/MOV) or matroska (WebM). Defaults to mov.
+//   POST /make                                    multipart: image (1–30, in order) + settings (JSON) → GIF or MP4
+//        (see maker.mjs; the Worker has already checked counts, sizes and types)
 //   POST /nsfw                                    body: MP4 → { porn, hentai, sexy, frames } (worst frame's scores, 0–1)
 //   GET  /ytdlp?tweetId=…&slot=…         → yt-dlp's JSON for an X post (fallback fetcher)
 //   GET  /fetch?url=…&maxBytes=…&maxDurationMs=…  → the GIF/video behind any link, as MP4
@@ -20,12 +22,14 @@ import fs from "node:fs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
+import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import {
   COMPRESS, FORMATS, QUALITIES, RENDERS, ffmpegArgs, firstAttempt, gifArgs, growAttempt, inputArgs, isFormat, isInput, isQuality,
   nextAttempt, normalizeArgs, nsfwFrameArgs,
 } from "./presets.mjs";
 import { FetchError, fetchMedia } from "./fetch.mjs";
+import { imageDemuxer, makeArgs, outputHeight, parseSettings } from "./maker.mjs";
 import { scanFrames } from "./nsfw.mjs";
 
 const PORT = Number(process.env.PORT ?? 8080);
@@ -171,6 +175,62 @@ async function handle(req, res, url) {
         const final = await probe(out, "mov");
         const header = Buffer.from(JSON.stringify({ ...info, ...final, hasAudio: final.hasAudio })).toString("base64url");
         return sendFile(res, out, "video/mp4", { "x-gifsuite-info": header });
+      });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  }
+
+  if (req.method === "POST" && url.pathname === "/make") {
+    if (Number(req.headers["content-length"] ?? 0) > MAX_BODY) throw new HttpError(413, "input too large");
+    // Node can parse multipart forms itself once the request is a web Request.
+    const web = new Request("http://processor/make", {
+      method: "POST",
+      headers: { "content-type": req.headers["content-type"] ?? "" },
+      body: Readable.toWeb(req),
+      duplex: "half",
+    });
+    const form = await web.formData().catch(() => {
+      throw new HttpError(400, "expected a multipart form");
+    });
+    const files = form.getAll("image").filter((f) => typeof f !== "string");
+    let raw;
+    try {
+      raw = JSON.parse(String(form.get("settings") ?? "{}"));
+    } catch {
+      throw new HttpError(400, "bad settings");
+    }
+    const { settings, error } = parseSettings(raw, files.length);
+    if (error) throw new HttpError(400, error);
+
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gifsuite-make-"));
+    try {
+      const images = [];
+      for (const [i, file] of files.entries()) {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const demuxer = imageDemuxer(bytes.subarray(0, 16));
+        if (!demuxer) throw new HttpError(415, `image ${i + 1} isn't a JPEG, PNG, WebP or GIF`);
+        const name = path.join(dir, `img-${i}`);
+        fs.writeFileSync(name, bytes);
+        images.push({ file: name, demuxer });
+      }
+      return await withSlot(async () => {
+        let first;
+        try {
+          const out = await run(BIN.ffprobe, ["-v", "error", "-protocol_whitelist", "file", "-f", images[0].demuxer,
+            "-show_entries", "stream=width,height", "-of", "json", images[0].file], 20_000);
+          first = JSON.parse(out).streams?.[0] ?? {};
+        } catch {
+          throw new HttpError(422, "could not read image 1");
+        }
+        const out = path.join(dir, `out.${settings.format}`);
+        try {
+          await ffmpeg(makeArgs(images, settings, { width: settings.width, height: outputHeight(settings.width, first) }, out));
+        } catch (err) {
+          console.warn("[processor] could not make a GIF:", String(err).slice(0, 300));
+          throw new HttpError(422, "could not decode an image");
+        }
+        return sendFile(res, out, settings.format === "gif" ? "image/gif" : "video/mp4");
       });
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });

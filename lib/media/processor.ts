@@ -124,3 +124,9 @@ export async function fetchLink(
   const info = JSON.parse(Buffer.from(header, "base64url").toString("utf8") || "{}") as LinkInfo;
   return { video: await res.arrayBuffer(), info };
 }
+
+/** Makes a GIF or MP4 from still images (processor/maker.mjs). `form` holds `image` files in order and `settings`. */
+export async function make(form: FormData): Promise<{ data: ArrayBuffer; type: string }> {
+  const res = await call("/make", { method: "POST", body: form });
+  return { data: await res.arrayBuffer(), type: res.headers.get("content-type") ?? "image/gif" };
+}

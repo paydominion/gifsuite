@@ -19,3 +19,13 @@ export function sniffUpload(bytes: Uint8Array): UploadKind | null {
   }
   return null;
 }
+
+/** Still images the GIF maker accepts, identified by their first bytes. */
+export function sniffImage(bytes: Uint8Array): "JPEG" | "PNG" | "WebP" | "GIF" | null {
+  if (bytes.length < 12) return null;
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "JPEG";
+  if (bytes[0] === 0x89 && ascii(bytes, 1, 4) === "PNG") return "PNG";
+  if (ascii(bytes, 0, 4) === "RIFF" && ascii(bytes, 8, 12) === "WEBP") return "WebP";
+  if (ascii(bytes, 0, 3) === "GIF") return "GIF";
+  return null;
+}

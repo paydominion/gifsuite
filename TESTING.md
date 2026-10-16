@@ -120,6 +120,17 @@
 6. On a non-X GIF's page, "Post on X" opens X with a link to the GifSuite page and your caption.
 7. An adult-site link is blurred, off the timeline, and has no link preview.
 
+### GIF maker
+
+1. Open **Tools → GIF maker** (or /gif-maker). Add 3–5 photos or screenshots from your phone or computer.
+2. Reorder them with the arrows (and by dragging on a computer). Pick 0.5s per picture, tap **Make GIF**: it downloads and plays in the right order, about 0.5 s each.
+3. Turn on **Crossfade** and make it again: pictures blend into each other.
+4. Try **Fill** vs **Fit** with pictures of different shapes, and 320 / 480 / 640 widths.
+5. Remove all but one picture: the panel switches to **Effect**. Try Zoom, Pan, Pulse and Shake, and **MP4** as the format.
+6. Try an iPhone photo straight from the camera roll. If it's HEIC and fails, note it (JPEG/PNG/WebP are supported).
+7. Try 30 pictures, and a picture over 10 MB: both give a clear message.
+8. On a phone (320–390px wide), the picture grid, buttons and settings fit without sideways scrolling.
+
 ### Cloudflare analytics (after deploying to staging)
 
 1. Follow DEPLOY.md → Analytics to create the Web Analytics site and add its token, then push.

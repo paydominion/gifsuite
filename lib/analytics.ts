@@ -23,6 +23,7 @@ export type AnalyticsEventName =
   | "download"
   | "convert"
   | "compress"
+  | "make"
   | "visibility"
   | "nsfw_check"
   | "nsfw_override"

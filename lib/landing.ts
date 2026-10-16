@@ -6,7 +6,8 @@
 export type LandingTool =
   | { kind: "grab" }
   | { kind: "convert"; initialFormat: "gif" | "mp4" | "webm" | "webp" }
-  | { kind: "compress"; initialWidth: "0" | "640" | "480" | "320" };
+  | { kind: "compress"; initialWidth: "0" | "640" | "480" | "320" }
+  | { kind: "maker" };
 
 export type Landing = {
   slug: string;
@@ -28,7 +29,89 @@ const FREE = ["Free, no sign-up", "No account, no watermark, no app to install. 
 const PRIVATE_UPLOADS = ["Your file isn't kept", "Uploads are converted and sent straight back. Nothing you upload is stored on our servers."] as [string, string];
 const LIMITS_UPLOAD = "Files up to 25 MB and clips up to 60 seconds.";
 
+const LIMITS_MAKER = "Up to 30 pictures, 10 MB each. JPEG, PNG, WebP or GIF.";
+
 export const LANDINGS: Landing[] = [
+  {
+    slug: "gif-maker",
+    title: "GIF Maker: make a GIF from pictures, free online",
+    description: "Make a GIF from your pictures in seconds: a slideshow from several, or zoom, pan and shake effects from one. Free, no sign-up, no watermark.",
+    eyebrow: "GIF maker",
+    h1: "Make a GIF from your pictures.",
+    subtitle: "Several pictures make a slideshow. One picture comes to life with zoom, pan, pulse or shake.",
+    tool: { kind: "maker" },
+    steps: [
+      ["Add your pictures", `Drop them in above, or tap to choose. ${LIMITS_MAKER}`],
+      ["Arrange and style", "Drag to reorder, pick the time per picture and a crossfade, or an effect for a single picture."],
+      ["Make your GIF", "Tap Make GIF and it downloads. Choose MP4 instead for a smaller file."],
+    ],
+    why: [
+      ["Slideshows and effects", "Turn a set of photos or screenshots into a looping slideshow, or give one picture a Ken Burns zoom."],
+      ["Looks right everywhere", "Pictures of different shapes are fitted neatly into one frame, or cropped to fill it."],
+      FREE,
+    ],
+    faq: [
+      ["How do I make a GIF from pictures?", "Add your pictures above, arrange them, choose how long each one shows, and tap Make GIF."],
+      ["How many pictures can I use?", "Up to 30, each up to 10 MB."],
+      ["Can I make a GIF from one photo?", "Yes. One picture gets an effect instead: zoom, pan, pulse or shake."],
+      ["Can I make a GIF from a video instead?", "Yes, with the video to GIF converter."],
+      ["Are my pictures kept?", "No. They're used to make your GIF and not stored."],
+      ["Is there a watermark?", "No."],
+    ],
+    related: ["image-to-gif", "video-to-gif", "gif-compressor"],
+  },
+  {
+    slug: "image-to-gif",
+    title: "Image to GIF: turn images into an animated GIF",
+    description: "Turn images into an animated GIF online: combine JPEG, PNG or WebP images into a slideshow, with crossfades. Free, no sign-up, nothing stored.",
+    eyebrow: "Images to GIF",
+    h1: "Turn images into a GIF.",
+    subtitle: "Combine JPEG, PNG or WebP images, or screenshots, into one looping animated GIF.",
+    tool: { kind: "maker" },
+    steps: [
+      ["Add your images", `Drop them in above. ${LIMITS_MAKER}`],
+      ["Set the order and timing", "Drag to reorder and choose how long each image shows, from 0.2 to 2 seconds."],
+      ["Make the GIF", "Tap Make GIF and it downloads."],
+    ],
+    why: [
+      ["Great for screenshots", "Step-by-step screenshots make a clear, looping how-to GIF."],
+      ["Smooth crossfades", "Turn on Crossfade to blend gently from one image to the next."],
+      FREE,
+    ],
+    faq: [
+      ["Which image formats work?", "JPEG, PNG, WebP and GIF (a GIF adds its first frame)."],
+      ["Do the images need to be the same size?", "No. The GIF takes the shape of the first image; the others are fitted into it, or cropped to fill it if you choose Fill."],
+      ["How do I change how fast it plays?", "Choose the time per image: 0.2, 0.5, 1 or 2 seconds."],
+      ["Is it free?", "Yes, with no sign-up and no watermark."],
+    ],
+    related: ["gif-maker", "photo-to-gif", "gif-compressor"],
+  },
+  {
+    slug: "photo-to-gif",
+    title: "Photo to GIF: bring a photo to life with motion",
+    description: "Turn a photo into a moving GIF with a slow zoom, pan, pulse or shake, or combine several photos into a slideshow. Free online, nothing stored.",
+    eyebrow: "Photo to GIF",
+    h1: "Bring a photo to life.",
+    subtitle: "Give one photo a slow zoom, pan, pulse or shake, or add more for a slideshow.",
+    tool: { kind: "maker" },
+    steps: [
+      ["Add a photo", `Drop it in above. ${LIMITS_MAKER}`],
+      ["Pick an effect", "Zoom, Pan, Pulse or Shake, and a length of 2, 3 or 5 seconds."],
+      ["Make the GIF", "Tap Make GIF and it downloads."],
+    ],
+    why: [
+      ["Motion from a still", "A slow zoom (the Ken Burns effect) makes a still photo feel alive."],
+      ["Sharp results", "Effects are worked out at twice the size, so zooming in stays crisp."],
+      FREE,
+    ],
+    faq: [
+      ["How do I turn a photo into a GIF?", "Add the photo above, pick an effect and a length, and tap Make GIF."],
+      ["What effects are there?", "Zoom (a slow push in), Pan (slides across), Pulse (a gentle beat) and Shake (a quick wobble)."],
+      ["Can I use several photos?", "Yes. Add more and it becomes a slideshow, with optional crossfades."],
+      ["Do iPhone photos work?", "JPEG, PNG and WebP work. iPhones usually share photos as JPEG; if one is HEIC, save it as JPEG first."],
+    ],
+    related: ["gif-maker", "image-to-gif", "video-to-gif"],
+  },
   {
     slug: "twitter-gif-downloader",
     title: "Twitter GIF Downloader: save X GIFs as GIF or MP4",
