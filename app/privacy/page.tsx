@@ -5,6 +5,7 @@ import { Email, LegalPage } from "@/components/legal/LegalPage";
 export const metadata: Metadata = {
   title: "Privacy",
   description: "What GifSuite collects when you grab, convert or share a GIF: no accounts, no IP addresses kept, uploads never stored, and no selling of data.",
+  alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {
@@ -42,8 +43,10 @@ export default function PrivacyPage() {
       <h3>Usage counts</h3>
       <p>
         We record what happens on the site so we can see what people use and fix what breaks: grabs (including which
-        website a pasted link came from, but not the link itself), page views, downloads with the chosen format, shares,
-        reports, and uses of each tool, with whether they worked and how long they took. Each record carries the
+        website a pasted link came from, but not the link itself), page views (with the website that sent you, such as a
+        search engine), downloads with the chosen format, shares, reports, uses of each tool, the kind of file you picked
+        (for example &ldquo;mp4&rdquo;, never its name or contents), and error messages the site showed you, with whether
+        things worked and how long they took. Each record carries the
         visitor&rsquo;s country, the kind of device (for example &ldquo;iPhone&rdquo; or &ldquo;desktop&rdquo;), and a
         visitor code made by scrambling your IP address and browser details together with that day&rsquo;s date. The
         code can&rsquo;t be turned back into your IP address, and it changes every day, so it can&rsquo;t follow you

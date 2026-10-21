@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dataPoint, deviceOf, siteOf } from "@/lib/analytics";
+import { crawlerOf, isPageView, visitSource, visitorId } from "@/lib/analytics-core";
 
 describe("dataPoint", () => {
   const ctx = { country: "NG", visitor: "abc123", device: "ios" };
@@ -53,5 +54,56 @@ describe("deviceOf", () => {
     [null, "unknown"],
   ])("%s → %s", (ua, device) => {
     expect(deviceOf(ua)).toBe(device);
+  });
+});
+
+describe("page views", () => {
+  const url = new URL("https://gifsuite.com/tools/convert");
+  const get = (headers: Record<string, string>, u = url) => isPageView(new Request(u, { headers }), u);
+
+  it("counts full page loads, in-site clicks and crawlers", () => {
+    expect(get({ accept: "text/html,application/xhtml+xml" })).toBe(true);
+    expect(get({ rsc: "1" })).toBe(true);
+    expect(get({ "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1)" })).toBe(true);
+    const sitemap = new URL("https://gifsuite.com/sitemap.xml");
+    expect(get({}, sitemap)).toBe(true);
+  });
+
+  it("skips prefetches, API calls, media and files", () => {
+    expect(get({ rsc: "1", "next-router-prefetch": "1" })).toBe(false);
+    expect(get({ accept: "text/html", "sec-purpose": "prefetch" })).toBe(false);
+    for (const path of ["/api/gifs", "/media/abc/source.mp4", "/_next/static/x.js", "/brand/og.png", "/icon.svg"]) {
+      const u = new URL(`https://gifsuite.com${path}`);
+      expect(get({ accept: "text/html" }, u), path).toBe(false);
+    }
+    expect(isPageView(new Request(url, { method: "POST", headers: { accept: "text/html" } }), url)).toBe(false);
+  });
+
+  it.each([
+    [null, "direct"],
+    ["https://www.google.com/", "google.com"],
+    ["https://gifsuite.com/tools", "internal"],
+    ["https://l.facebook.com/l.php?u=x", "facebook.com"],
+    ["not a url", "direct"],
+  ])("referrer %s → %s", (referrer, source) => {
+    expect(visitSource(url, referrer)).toBe(source);
+  });
+
+  it("prefers utm_source", () => {
+    expect(visitSource(new URL("https://gifsuite.com/?utm_source=ProductHunt"), "https://www.producthunt.com/")).toBe("producthunt");
+  });
+
+  it("names crawlers", () => {
+    expect(crawlerOf("Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")).toBe("google");
+    expect(crawlerOf("Mozilla/5.0 (compatible; bingbot/2.0)")).toBe("bing");
+    expect(crawlerOf("SomeBot/1.0")).toBe("other");
+  });
+
+  it("makes a stable, anonymous per-day visitor id", () => {
+    const a = visitorId("1.2.3.4", "ua", "salt");
+    expect(a).toMatch(/^[0-9a-f]{16}$/);
+    expect(visitorId("1.2.3.4", "ua", "salt")).toBe(a);
+    expect(visitorId("1.2.3.5", "ua", "salt")).not.toBe(a);
+    expect(a).not.toContain("1.2.3.4");
   });
 });

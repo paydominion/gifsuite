@@ -7,6 +7,7 @@ import { ToolIcon } from "@/components/ui/ToolIcon";
 export const metadata: Metadata = {
   title: "All tools",
   description: "Every GIF tool in GifSuite: grab GIFs from any link, convert, compress, trim, crop, change speed, add text and make GIFs from photos.",
+  alternates: { canonical: "/tools" },
 };
 
 export default function ToolsPage() {

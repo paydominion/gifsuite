@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Trim a GIF or video",
   description: "Cut a GIF or short video down to the part you want, with a live preview. Download it as GIF or MP4. Free, and your file isn't stored.",
+  alternates: { canonical: "/tools/trim" },
 };
 
 export default function Page() {

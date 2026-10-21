@@ -52,3 +52,13 @@ test("refuses a file over the size limit before uploading it", async ({ page }) 
   });
   await expect(page.getByRole("alert").filter({ hasText: "over 3 MB" })).toBeVisible();
 });
+
+test("a dropped picture is turned away with a pointer to the GIF maker", async ({ page }) => {
+  await page.goto("/tools/convert");
+  // The file picker filters by type; drag-and-drop and paste don't, so the box checks too.
+  await page.locator('input[type="file"]').setInputFiles(fixture("square.png"));
+  const alert = page.getByRole("alert").filter({ hasText: "Pictures (PNG, JPEG, WebP) don't work here" });
+  await expect(alert).toBeVisible();
+  await alert.getByRole("link", { name: "GIF maker" }).click();
+  await expect(page).toHaveURL("/tools/maker");
+});

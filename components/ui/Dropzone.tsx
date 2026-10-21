@@ -1,6 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useId, useState } from "react";
+import { trackUi } from "@/lib/track";
+
+/** True if the file matches an `accept` list of MIME types ("video/mp4", "image/*") and extensions (".gif"). */
+export function accepts(accept: string, file: File): boolean {
+  const ext = file.name.match(/\.[a-z0-9]+$/i)?.[0].toLowerCase();
+  return accept.split(",").some((rule) => {
+    const r = rule.trim().toLowerCase();
+    if (r.startsWith(".")) return r === ext;
+    if (r.endsWith("/*")) return file.type.startsWith(r.slice(0, -1));
+    return r === file.type;
+  });
+}
 
 /**
  * Pick a file by clicking, dragging it in, or pasting it (⌘V). Shared by every upload tool.
@@ -23,9 +36,21 @@ export function Dropzone({
   title?: string;
   disabled?: boolean;
 }) {
+  const [rejected, setRejected] = useState<"picture" | "other" | null>(null);
   const deliver = (list: FileList | null | undefined) => {
     const files = Array.from(list ?? []);
     if (files.length === 0) return;
+    setRejected(null);
+    // The file picker filters by type, but drag-and-drop and paste don't. Several files go to the
+    // tool as they are (the GIF maker explains what it skipped); a single wrong one stops here.
+    if (!onFiles && !accepts(accept, files[0])) {
+      setRejected(/^image\/(?!gif)/.test(files[0].type) ? "picture" : "other");
+      trackUi("ui", `file_rejected:${files[0].name.match(/\.([a-z0-9]{1,5})$/i)?.[1].toLowerCase() ?? (files[0].type || "unknown")}`);
+      return;
+    }
+    // The kinds of file people bring (by extension, never the name), and how many at once.
+    const kinds = [...new Set(files.map((f) => f.name.match(/\.([a-z0-9]{1,5})$/i)?.[1].toLowerCase() ?? (f.type || "unknown")))];
+    trackUi("ui", `file:${kinds.join("+").slice(0, 40)}${files.length > 1 ? `:${files.length}` : ""}`);
     if (onFiles) onFiles(files);
     else onFile?.(files[0]);
   };
@@ -63,6 +88,21 @@ export function Dropzone({
       </svg>
       <span className="font-semibold">{title}</span>
       <span className="text-sm text-muted">{hint}</span>
+      {rejected && (
+        <span role="alert" className="text-sm font-medium text-danger">
+          {rejected === "picture" ? (
+            <>
+              Pictures (PNG, JPEG, WebP) don&apos;t work here. To turn pictures into a GIF, use the{" "}
+              <Link href="/tools/maker" className="underline underline-offset-2">
+                GIF maker
+              </Link>
+              .
+            </>
+          ) : (
+            "That kind of file doesn't work here. Choose one of the types listed above."
+          )}
+        </span>
+      )}
       <input
         id={inputId}
         type="file"

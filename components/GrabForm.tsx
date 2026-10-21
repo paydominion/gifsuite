@@ -57,9 +57,16 @@ export function GrabForm() {
     >
       <div className="rounded-2xl border border-line bg-surface p-2 text-left shadow-pop">
         <div className="flex flex-col gap-2 sm:flex-row">
+          {/* Plain text, not type="url": the browser would silently refuse "x.com/…" without https://, or a
+              link pasted with words around it, both of which the server handles. */}
           <Input
-            type="url"
+            type="text"
             inputMode="url"
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint="go"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Paste a link from X, Giphy, Reddit… or any GIF"

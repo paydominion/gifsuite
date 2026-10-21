@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, SectionLabel } from "@/components/ui/Card";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { Segmented } from "@/components/ui/Segmented";
-import { Preview, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs } from "./shared";
+import { Preview, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs, revealResult } from "./shared";
 
 type Format = "gif" | "mp4" | "webm" | "webp";
 type Quality = "low" | "medium" | "high";
@@ -122,7 +122,7 @@ export function ConvertTool({ maxUploadMb, initialFormat = "mp4" }: { maxUploadM
         )}
 
         {result && (
-          <Card className="space-y-3 p-4">
+          <Card ref={revealResult} className="scroll-mt-20 space-y-3 p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <SectionLabel>Result</SectionLabel>

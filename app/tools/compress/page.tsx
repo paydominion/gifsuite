@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Compress a GIF to fit X, Discord or any size",
   description: "Shrink a GIF or video into a GIF under 15 MB for X, 10 MB for Discord, or any size you choose. Free, and your file isn't stored.",
+  alternates: { canonical: "/tools/compress" },
 };
 
 export default function CompressPage() {

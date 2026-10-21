@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Convert a GIF or video",
   description: "Convert a GIF, MP4, MOV or WebM to GIF, MP4, WebM or WebP in low, medium or high quality. Free, and your file isn't stored.",
+  alternates: { canonical: "/tools/convert" },
 };
 
 export default function ConvertPage() {

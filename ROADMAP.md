@@ -38,10 +38,10 @@ Things only you can do; Claude has done everything around them.
 
 - [ ] **Google Search Console:** https://search.google.com/search-console → Add property → **Domain** → `gifsuite.com` → it offers Cloudflare automatic verification; accept. Then Sitemaps → submit `https://gifsuite.com/sitemap.xml`.
 - [ ] **Bing Webmaster Tools:** https://www.bing.com/webmasters → "Import from Google Search Console" (after the step above). IndexNow already pings Bing on every deploy.
-- [ ] **legal@gifsuite.com:** Cloudflare dashboard → gifsuite.com → Email → Email Routing → enable → route `legal@` to your Gmail. The legal pages already show this address.
+- [x] **legal@gifsuite.com** (done by owner, 2026-10-21): Cloudflare dashboard → gifsuite.com → Email → Email Routing → enable → route `legal@` to your Gmail. The legal pages already show this address.
 - [ ] **Read the legal pages** (/terms, /privacy, /copyright). Written from what the site actually does, but not by a lawyer.
 - [ ] **DMCA agent (US safe harbor, optional but recommended):** register a designated agent with the US Copyright Office ($6, https://www.copyright.gov/dmca-directory/), using legal@gifsuite.com.
-- [ ] **Web Analytics token:** Cloudflare → Analytics & Logs → Web Analytics → Add site `gifsuite.com` (manual JS snippet) → send Claude the token. Same for staging if wanted.
+- [x] **Analytics on every event** (2026-10-21): page views, traffic sources and crawlers are now recorded server-side, plus browser errors and file choices; `npm run analytics`. The Web Analytics token is now optional (only adds Core Web Vitals).
 - [ ] **gifsuite.app:** edit the GitHub deploy token to include the gifsuite.app zone (DEPLOY.md → "Adding gifsuite.app"); Claude then adds its redirect routes. It currently shows nothing.
 - [ ] **Keyword research (free):** after Search Console, open Bing Webmaster Tools → Keyword Research to check search volumes for blog topics. (OpenSEO was set aside on 2026-10-15: it needs a paid DataForSEO top-up, $50 minimum. It's still downloaded in ~/open-seo if that changes.)
 - [ ] **Blog reviews:** research for who-invented-the-gif, the-gif-patent-fight, how-gifs-learned-to-loop (tick claims, answer questions in `content/research/`); final read of three tip drafts (download-gif-from-giphy-and-tenor, gif-size-limits-by-platform — check the Discord and WhatsApp rows, gif-to-mp4). See `content/TOPICS.md`.
@@ -70,7 +70,7 @@ Things only you can do; Claude has done everything around them.
 | # | Item | Size | Notes |
 |---|---|---|---|
 | 9 | ⏳ **Harden the X fetcher** (built 2026-10-16: retries with backoff, a D1-backed circuit breaker that falls back to yt-dlp, de-duplicated and capped requests, `/api/health`; awaiting review) | M | Request queue, retry with increasing waits, automatic pause when X errors, and a health check. |
-| 10 | ⏳ **Bot protection** (built 2026-10-16: Turnstile on grab, uploads and edits, off until keys are set; needs the widget from the Cloudflare dashboard, see DEPLOY.md) | S | Cloudflare Turnstile (invisible CAPTCHA) on grab and upload, plus Cloudflare rate limiting. |
+| 10 | ⏳ **Bot protection** (built 2026-10-16: Turnstile on grab, uploads and edits; widget created and site key configured 2026-10-21; switches on when the secret is set after deploy, see DEPLOY.md) | S | Cloudflare Turnstile (invisible CAPTCHA) on grab and upload, plus Cloudflare rate limiting. |
 | 11 | ⏳ **Professional UI pass** (built 2026-10-16: home page with every tool and icons, trust strip, 1200×630 link-preview image on every page, Apple and app icons, web app manifest, branded error page; images via `npm run images`; awaiting review) | M | Landing page that shows off the suite, polished tool pages, mobile, empty and error states, favicon and link-preview image. |
 | 12 | ✅ **Legal pages** (2026-10-12: /terms, /privacy, /copyright; contact legal@gifsuite.com) | S | Terms, privacy, and a **takedown/DMCA contact and process**. This is required, because the site publicly hosts other people's GIFs. |
 | 13 | ✅ **Launch v1** (2026-10-12: gifsuite.com live and indexable, own database and bucket, www redirects, IndexNow on every deploy) | S | Point the main domain at production, then run the smoke tests against it. |

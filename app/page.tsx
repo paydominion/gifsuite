@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { listGifs } from "@/db/gifs";
 import { GrabForm } from "@/components/GrabForm";
@@ -8,6 +9,8 @@ import { ToolIcon } from "@/components/ui/ToolIcon";
 import { TOOLS } from "@/lib/tools";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 const PAGE = 24;
 

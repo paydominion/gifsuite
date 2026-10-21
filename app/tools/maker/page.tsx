@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "GIF maker",
   description: "Make a GIF from your pictures: a slideshow from several, or zoom, pan, pulse and shake effects from one. Free, and nothing is stored.",
+  alternates: { canonical: "/tools/maker" },
 };
 
 export default function MakerPage() {

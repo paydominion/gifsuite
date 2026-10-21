@@ -25,7 +25,9 @@
     "MAX_SOURCE_MB": "50",
     "MAX_DURATION_S": "60",
     "MAX_UPLOAD_MB": "25",
-    "AUTO_HIDE_REPORTS": "5"
+    "AUTO_HIDE_REPORTS": "5",
+    // Cloudflare Turnstile widget "GifSuite" (invisible; gifsuite.com and staging). Public, not a secret.
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAFevhDmEuoCcn6w0"
   },
   "d1_databases": [
     { "binding": "DB", "database_name": "gifsuite", "database_id": "bcc11ed9-6478-49ed-80c6-dc6d52fc7980", "migrations_dir": "migrations" }
@@ -60,7 +62,8 @@
         "MAX_SOURCE_MB": "50",
         "MAX_DURATION_S": "60",
         "MAX_UPLOAD_MB": "25",
-        "AUTO_HIDE_REPORTS": "5"
+        "AUTO_HIDE_REPORTS": "5",
+        "TURNSTILE_SITE_KEY": "0x4AAAAAAFevhDmEuoCcn6w0"
       },
       "d1_databases": [
         { "binding": "DB", "database_name": "gifsuite-staging", "database_id": "8bb26c05-abd0-4a74-a022-cfb0560fe946", "migrations_dir": "migrations" }

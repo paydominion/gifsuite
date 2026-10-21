@@ -1,6 +1,7 @@
 import "server-only";
 import crypto from "node:crypto";
 import { bindings, setting } from "@/lib/cloudflare";
+import { visitorId } from "@/lib/analytics-core";
 
 /**
  * The visitor's IP. Cloudflare sets `cf-connecting-ip` on every request it forwards, and
@@ -24,12 +25,7 @@ export function safeEqual(a: string, b: string): boolean {
 
 /** Anonymous per-day visitor id: lets us count unique people without storing IPs. */
 export function visitorHash(req: Request): string {
-  const day = new Date().toISOString().slice(0, 10);
-  return crypto
-    .createHash("sha256")
-    .update(`${clientIp(req)}|${req.headers.get("user-agent") ?? ""}|${day}|${setting("VISITOR_SALT") ?? "gifsuite"}`)
-    .digest("hex")
-    .slice(0, 16);
+  return visitorId(clientIp(req), req.headers.get("user-agent"), setting("VISITOR_SALT"));
 }
 
 const hits = new Map<string, number[]>();

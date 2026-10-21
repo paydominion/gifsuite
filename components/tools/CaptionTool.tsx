@@ -115,6 +115,7 @@ export function CaptionTool({ maxUploadMb, initialFormat }: { maxUploadMb: numbe
         <Button variant="primary" size="lg" className="w-full" disabled={!clip || !info || busy || !hasCaption(style)} onClick={make}>
           {busy ? "Adding your text…" : "Add text & download"}
         </Button>
+        {clip && info && !busy && !hasCaption(style) && <p className="text-sm text-muted">Type your top or bottom text above to see it on the GIF.</p>}
         {(error || clipError) && <p role="alert" className="text-sm font-medium text-danger">{error ?? clipError}</p>}
       </Card>
     </div>

@@ -4,6 +4,7 @@ import { Email, LegalPage } from "@/components/legal/LegalPage";
 export const metadata: Metadata = {
   title: "Copyright & takedowns",
   description: "How to ask GifSuite to remove a GIF that uses your copyrighted work without permission, what to include, and how counter-notices work.",
+  alternates: { canonical: "/copyright" },
 };
 
 export default function CopyrightPage() {

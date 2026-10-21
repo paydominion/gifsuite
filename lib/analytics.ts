@@ -4,73 +4,13 @@ import { visitorHash } from "@/lib/request";
 
 /**
  * Every server-side event goes to Cloudflare Workers Analytics Engine (binding ANALYTICS), where it
- * can be queried with SQL (`npm run analytics`). Page views are counted separately by Cloudflare
- * Web Analytics in the browser. Writes never block or fail a request, and no IPs are stored: the
- * visitor column is the same anonymous per-day hash used for unique counts in D1.
- *
- * Column layout (Analytics Engine names columns by position, so never reorder; add to the end):
- *   index1  event
- *   blob1   event            blob2 gif id        blob3 detail (format:quality, preset, verdict…)
- *   blob4   outcome          blob5 source site   blob6 country       blob7 visitor   blob8 device
- *   double1 HTTP status      double2 duration ms double3 bytes in    double4 bytes out
- *   double5 score (NSFW)
+ * can be queried with SQL (`npm run analytics`). Page views are recorded by worker.ts, and browser
+ * actions that never reach the server arrive through /api/events. Writes never block or fail a
+ * request, and no IPs are stored: the visitor column is the same anonymous per-day hash used for
+ * unique counts in D1. The column layout is in lib/analytics-core.ts.
  */
-export type AnalyticsEventName =
-  | "grab"
-  | "view"
-  | "share"
-  | "report"
-  | "download"
-  | "convert"
-  | "compress"
-  | "make"
-  | "crop"
-  | "edit"
-  | "visibility"
-  | "nsfw_check"
-  | "nsfw_override"
-  | "hide"
-  | "scan_sweep";
-
-export type AnalyticsFields = {
-  gifId?: string;
-  detail?: string;
-  /** "ok", or what happened instead: "new", "repeat", "flagged", "error", "rate_limited"… */
-  outcome?: string;
-  source?: string;
-  status?: number;
-  durationMs?: number;
-  bytesIn?: number;
-  bytesOut?: number;
-  score?: number;
-};
-
-type Context = { country: string; visitor: string; device: string };
-
-const clip = (s: string | undefined, max = 96) => (s ?? "").slice(0, max);
-
-/** The Analytics Engine data point for an event, in the column layout above. */
-export function dataPoint(event: AnalyticsEventName, f: AnalyticsFields, ctx: Context): AnalyticsEngineDataPoint {
-  return {
-    indexes: [event],
-    blobs: [event, clip(f.gifId, 16), clip(f.detail), clip(f.outcome ?? "ok", 32), clip(f.source, 32), ctx.country, ctx.visitor, ctx.device],
-    doubles: [f.status ?? 0, Math.round(f.durationMs ?? 0), f.bytesIn ?? 0, f.bytesOut ?? 0, f.score ?? 0],
-  };
-}
-
-export function deviceOf(userAgent: string | null): string {
-  if (!userAgent) return "unknown";
-  if (/bot|crawl|spider|slurp|preview|facebookexternalhit|discordbot|whatsapp|telegram/i.test(userAgent)) return "bot";
-  if (/iphone|ipad|ipod/i.test(userAgent)) return "ios";
-  if (/android/i.test(userAgent)) return "android";
-  return "desktop";
-}
-
-/** The site a pasted link points at ("giphy.com"), without the rest of the link. "none" if there's no link. */
-export function siteOf(text: string): string {
-  const host = text.match(/(?:https?:\/\/)?((?:[a-z0-9-]+\.)+[a-z]{2,})(?=[/:?#\s"'>)]|$)/i)?.[1];
-  return host ? host.toLowerCase().replace(/^(?:www|mobile|m)\./, "") : "none";
-}
+export { dataPoint, deviceOf, siteOf, type AnalyticsEventName, type AnalyticsFields } from "@/lib/analytics-core";
+import { dataPoint, deviceOf, type AnalyticsEventName, type AnalyticsFields, type Context } from "@/lib/analytics-core";
 
 function contextOf(req: Request | null): Context {
   if (!req) return { country: "", visitor: "", device: "server" };

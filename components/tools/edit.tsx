@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, SectionLabel } from "@/components/ui/Card";
 import { Dropzone } from "@/components/ui/Dropzone";
-import { Preview, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs } from "./shared";
+import { Preview, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, revealResult, saveAs } from "./shared";
 
 /** Pieces shared by the Trim, Speed & reverse and Captions tools, which all call POST /api/edit. */
 
@@ -168,7 +168,7 @@ export function ClipCard({
 export function ResultCard({ result }: { result: Result | null }) {
   if (!result) return null;
   return (
-    <Card className="space-y-3 p-4">
+    <Card ref={revealResult} className="scroll-mt-20 space-y-3 p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <SectionLabel>Result</SectionLabel>

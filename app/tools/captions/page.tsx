@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Add text to a GIF",
   description: "Add meme-style top and bottom text to a GIF or video, with a live preview, outline and fonts. Download as GIF or MP4. Free, nothing stored.",
+  alternates: { canonical: "/tools/captions" },
 };
 
 export default function Page() {

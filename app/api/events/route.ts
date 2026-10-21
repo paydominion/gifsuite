@@ -5,6 +5,8 @@ import { clientIp, rateLimit, visitorHash } from "@/lib/request";
 import { setting } from "@/lib/cloudflare";
 
 const CLIENT_EVENTS = new Set(["view", "share", "report"]);
+// Browser-only happenings that aren't about one GIF: what people pick and the errors they see.
+const UI_EVENTS = new Set(["ui", "client_error"]);
 // Read per request: on Cloudflare, settings are available once a request is being handled.
 const AUTO_HIDE_REPORTS = () => Number(setting("AUTO_HIDE_REPORTS") ?? 5);
 
@@ -14,7 +16,9 @@ export async function POST(req: Request) {
     gifId?: string;
     type?: string;
     detail?: string;
+    path?: string;
   };
+  if (body.type && UI_EVENTS.has(body.type)) return uiEvent(req, body.type as "ui" | "client_error", body.detail, body.path);
   if (!body.gifId || !body.type || !CLIENT_EVENTS.has(body.type)) {
     return NextResponse.json({ error: "bad event" }, { status: 400 });
   }
@@ -29,5 +33,15 @@ export async function POST(req: Request) {
     await setHidden(body.gifId, true);
     logEvent(null, "hide", { gifId: body.gifId, outcome: "auto", detail: "reports" });
   }
+  return new NextResponse(null, { status: 204 });
+}
+
+/** Recorded in analytics only (not D1). Text is capped and links are removed, so nothing pasted is kept. */
+function uiEvent(req: Request, type: "ui" | "client_error", detail: unknown, path: unknown) {
+  if (typeof detail !== "string" || !detail.trim()) return NextResponse.json({ error: "bad event" }, { status: 400 });
+  if (!rateLimit(`ui:${clientIp(req)}`, 60, 60_000)) return new NextResponse(null, { status: 429 });
+  const clean = detail.replace(/\S*(?:https?:\/\/|www\.)\S*/gi, "[link]").replace(/\s+/g, " ").trim().slice(0, 96);
+  const page = typeof path === "string" && path.startsWith("/") ? path.split(/[?#]/)[0].slice(0, 64) : "";
+  logEvent(req, type, { detail: clean, source: page });
   return new NextResponse(null, { status: 204 });
 }

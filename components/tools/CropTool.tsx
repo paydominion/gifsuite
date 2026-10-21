@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, SectionLabel } from "@/components/ui/Card";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { Segmented } from "@/components/ui/Segmented";
-import { Preview, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs } from "./shared";
+import { Preview, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs, revealResult } from "./shared";
 
 type Aspect = "free" | "1:1" | "16:9" | "9:16" | "4:5";
 type Format = "gif" | "mp4";
@@ -257,7 +257,7 @@ export function CropTool({ maxUploadMb, initialFormat }: { maxUploadMb: number; 
         )}
 
         {result && (
-          <Card className="space-y-3 p-4">
+          <Card ref={revealResult} className="scroll-mt-20 space-y-3 p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <SectionLabel>Result</SectionLabel>

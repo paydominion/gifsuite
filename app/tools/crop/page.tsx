@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Crop a GIF or video",
   description: "Crop a GIF or short video to square, 16:9, 9:16 or any shape by dragging a box. Download it as GIF or MP4. Free, and your file isn't stored.",
+  alternates: { canonical: "/tools/crop" },
 };
 
 export default function CropPage() {

@@ -7,7 +7,7 @@ import { Card, SectionLabel } from "@/components/ui/Card";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { Input } from "@/components/ui/Field";
 import { Segmented } from "@/components/ui/Segmented";
-import { Preview, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs } from "./shared";
+import { Preview, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs, revealResult } from "./shared";
 
 const MB = 1024 * 1024;
 
@@ -147,7 +147,7 @@ export function CompressTool({ maxUploadMb, initialWidth = "0" }: { maxUploadMb:
         )}
 
         {result && (
-          <Card className="space-y-3 p-4">
+          <Card ref={revealResult} className="scroll-mt-20 space-y-3 p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 space-y-1">
                 <SectionLabel>Result</SectionLabel>

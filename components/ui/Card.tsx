@@ -1,8 +1,8 @@
-import type { HTMLAttributes } from "react";
+import type { ComponentProps } from "react";
 
 export const cardClass = "rounded-2xl border border-line bg-surface shadow-card";
 
-export function Card({ className = "", ...props }: HTMLAttributes<HTMLDivElement>) {
+export function Card({ className = "", ...props }: ComponentProps<"div">) {
   return <div className={`${cardClass} ${className}`} {...props} />;
 }
 

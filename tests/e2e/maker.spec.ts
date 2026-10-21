@@ -54,7 +54,8 @@ test("one picture gets an effect, and can be made as MP4", async ({ page }) => {
 test("only pictures are accepted", async ({ page }) => {
   await page.goto("/tools/maker");
   await page.locator('input[type="file"]').setInputFiles(fixture("dog.mp4"));
-  await expect(page.getByRole("alert").filter({ hasText: "only JPEG, PNG, WebP and GIF" })).toBeVisible();
+  // A video gets pointed to the tool that handles videos.
+  await expect(page.getByRole("alert").filter({ hasText: "To turn a video into a GIF, use Upload & convert." })).toBeVisible();
 });
 
 test("on a phone, picture buttons are big enough for a thumb and nothing overflows", async ({ browser }) => {

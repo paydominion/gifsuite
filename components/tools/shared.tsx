@@ -16,6 +16,20 @@ export function saveAs(url: string, name: string) {
   Object.assign(document.createElement("a"), { href: url, download: name }).click();
 }
 
+/**
+ * Ref for a tool's result card: when the result appears off-screen (on phones the settings sit below
+ * the file, so it lands above the button just tapped), scroll it into view.
+ */
+export function revealResult(el: HTMLElement | null) {
+  if (!el) return;
+  requestAnimationFrame(() => {
+    const { top, bottom } = el.getBoundingClientRect();
+    if (top >= 64 && bottom <= window.innerHeight) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  });
+}
+
 /** Shows a GIF/WebP as an image and MP4/WebM as a looping video. */
 export function Preview({ url, isVideo, label }: { url: string; isVideo: boolean; label: string }) {
   return (

@@ -5,6 +5,7 @@ import { Email, LegalPage } from "@/components/legal/LegalPage";
 export const metadata: Metadata = {
   title: "Terms",
   description: "The rules for using GifSuite: what you may grab and upload, adult content, takedowns, and the limits of what the service promises.",
+  alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {

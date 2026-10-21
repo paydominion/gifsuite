@@ -33,16 +33,14 @@ Watch it live at https://github.com/dominusmaster/gifsuite/actions, or run `gh r
 
 ## Bot protection (Cloudflare Turnstile)
 
-The code is in place but switched off until keys exist. To turn it on:
+The widget exists (Cloudflare → Turnstile → **GifSuite**, invisible mode, hostnames `gifsuite.com` and `staging.gifsuite.com`, created 2026-10-21), and its public site key is in `wrangler.jsonc` for production and staging. The check is enforced only once the secret is set, so set it **after** the deploy that ships the site key (otherwise visitors on the old pages would have no token):
 
-1. Cloudflare dashboard → **Turnstile** → **Add widget**. Name: GifSuite. Hostnames: `gifsuite.com` and `staging.gifsuite.com`. Widget mode: **Invisible**. Create.
-2. Copy the **Site key** (public) and the **Secret key**.
-3. Put the site key in `wrangler.jsonc` as `"TURNSTILE_SITE_KEY": "…"` in the production `vars` and in the staging `vars`, and push.
-4. Set the secret for each environment (it's never in git):
-   ```
-   npx wrangler secret put TURNSTILE_SECRET
-   npx wrangler secret put TURNSTILE_SECRET --env staging
-   ```
+```
+npx wrangler secret put TURNSTILE_SECRET --env staging
+npx wrangler secret put TURNSTILE_SECRET
+```
+
+The secret is never in git. Its value is in the Cloudflare dashboard (Turnstile → GifSuite → Settings); it was also saved at creation to `~/.gifsuite-turnstile-secret` on the owner's Mac (readable only by that user). To switch the check off again: `npx wrangler secret delete TURNSTILE_SECRET`.
 
 From then on every grab, upload and edit carries a one-time token that the server checks with Cloudflare. People normally see nothing; Cloudflare shows a small challenge only when it's unsure. If Cloudflare's check is unreachable, requests are let through rather than breaking the tools. **Note:** native apps (the planned iOS app) need their own way to pass this check before it can stay on for them.
 
@@ -71,7 +69,9 @@ top-level `routes` in `wrangler.jsonc` and run the production deploy:
 2. Put it in `.env.local` as `CF_ANALYTICS_TOKEN=…` (git-ignored).
 3. Run `npm run analytics` (staging, last 7 days) or `npm run analytics -- production 30`.
 
-**Page views and visitors** use Cloudflare Web Analytics (cookie-free):
+**Page views** are recorded by the Worker itself (`worker.ts`) as `page` events in Analytics Engine: path, where the visit came from (referring site or `utm_source`, "internal", "direct"), status and timing, with crawlers named (google, bing…). Browser-only events (file kinds picked, files turned away, every error message shown, JavaScript crashes) arrive through `/api/events` as `ui` and `client_error`. `npm run analytics` reports all of it; with no CF_ANALYTICS_TOKEN set, `CF_ANALYTICS_TOKEN=$(grep '^oauth_token' ~/Library/Preferences/.wrangler/config/default.toml | cut -d'"' -f2) npm run analytics -- production` uses the wrangler login.
+
+**Optional, for Core Web Vitals:** Cloudflare Web Analytics (cookie-free):
 
 1. Cloudflare dashboard → **Analytics & Logs → Web Analytics → Add a site** → enter `staging.gifsuite.com`, and choose the manual JavaScript snippet (not automatic setup: our security policy would block an injected script).
 2. Copy the `token` value from the snippet. It's a public site ID, not a secret.

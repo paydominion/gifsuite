@@ -5,6 +5,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { default as handler } from "./.open-next/worker.js";
+import { crawlerOf, dataPoint, deviceOf, isPageView, visitSource, visitorId } from "./lib/analytics-core";
 
 // Other addresses for the production site. Each redirects permanently to gifsuite.com, keeping the
 // path, so search engines see one site rather than several copies.
@@ -18,7 +19,10 @@ export default {
       url.protocol = "https:";
       return Response.redirect(url.href, 301);
     }
-    return handler.fetch(request, env, ctx);
+    const started = Date.now();
+    const response: Response = await handler.fetch(request, env, ctx);
+    if (isPageView(request, url)) recordPageView(request, url, response.status, Date.now() - started, env);
+    return response;
   },
   // Cron trigger (wrangler.jsonc "triggers"): retry NSFW checks that didn't finish after a grab,
   // so no public GIF stays off the timeline for long. Goes through the app's own admin route.
@@ -30,5 +34,34 @@ export default {
     if (!res.ok) console.error(`[nsfw] sweep failed: HTTP ${res.status}`);
   },
 } satisfies ExportedHandler<CloudflareEnv>;
+
+/**
+ * One "page" event per page someone (or a crawler) opens, in the same Analytics Engine dataset as
+ * every other event: the path, where the visit came from, the status, and how long the page took.
+ * Server-side, so it counts visitors with blockers too. Never lets analytics break a page.
+ */
+function recordPageView(request: Request, url: URL, status: number, durationMs: number, env: CloudflareEnv) {
+  try {
+    const ua = request.headers.get("user-agent");
+    const device = deviceOf(ua);
+    const vars = env as unknown as { VISITOR_SALT?: string; TRUST_FORWARDED_FOR?: string };
+    const ip = (vars.TRUST_FORWARDED_FOR === "1" && request.headers.get("x-forwarded-for")?.split(",")[0].trim()) || request.headers.get("cf-connecting-ip") || "unknown";
+    env.ANALYTICS?.writeDataPoint(
+      dataPoint(
+        "page",
+        {
+          detail: url.pathname,
+          source: device === "bot" ? crawlerOf(ua) : visitSource(url, request.headers.get("referer")),
+          outcome: status < 400 ? "ok" : status === 404 ? "not_found" : "error",
+          status,
+          durationMs,
+        },
+        { country: request.headers.get("cf-ipcountry") ?? "", visitor: visitorId(ip, ua, vars.VISITOR_SALT), device },
+      ),
+    );
+  } catch (err) {
+    console.warn("[analytics] could not record a page view:", err);
+  }
+}
 
 export { MediaProcessor } from "./processor/container";

@@ -15,6 +15,15 @@ test.describe("link previews, icons and the app manifest", () => {
     expect(img.headers()["content-type"]).toBe("image/png");
   });
 
+  test("every indexable page names its own address as canonical", async ({ request }) => {
+    const paths = ["/", "/tools", "/tools/convert", "/tools/compress", "/tools/trim", "/tools/speed", "/tools/crop", "/tools/captions", "/tools/maker", "/terms", "/privacy", "/copyright", "/blog", "/mp4-to-gif"];
+    for (const path of paths) {
+      const html = await (await request.get(path)).text();
+      const href = path === "/" ? BASE : `${BASE}${path}`;
+      expect(html, path).toContain(`<link rel="canonical" href="${href}"/>`);
+    }
+  });
+
   test("phones get a home-screen icon and a web app manifest", async ({ request }) => {
     const html = await (await request.get("/")).text();
     expect(html).toContain('<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>');

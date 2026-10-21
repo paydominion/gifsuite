@@ -6,6 +6,7 @@ import { Logo } from "@/components/shell/Logo";
 import { MobileMenu } from "@/components/shell/MobileMenu";
 import { ToolsMenu } from "@/components/shell/ToolsMenu";
 import { WebAnalytics } from "@/components/shell/WebAnalytics";
+import { ClientEvents } from "@/components/shell/ClientEvents";
 import { HumanCheck } from "@/components/shell/HumanCheck";
 import { setting } from "@/lib/cloudflare";
 import { buttonClass } from "@/components/ui/Button";
@@ -52,6 +53,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${satoshi.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="flex min-h-full flex-col font-sans">
         <WebAnalytics />
+        <ClientEvents />
         <HumanCheck siteKey={setting("TURNSTILE_SITE_KEY") ?? null} />
         <header className="sticky top-0 z-40 border-b border-line bg-bg/85 backdrop-blur-md">
           <nav className="relative mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">

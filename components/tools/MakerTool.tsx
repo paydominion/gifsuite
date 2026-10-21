@@ -7,7 +7,7 @@ import { Card, SectionLabel } from "@/components/ui/Card";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { Segmented } from "@/components/ui/Segmented";
 import { Switch } from "@/components/ui/Switch";
-import { Preview, formatBytes, saveAs } from "./shared";
+import { Preview, formatBytes, saveAs, revealResult } from "./shared";
 
 const MAX_IMAGES = 30;
 const MAX_IMAGE_MB = 10;
@@ -85,6 +85,10 @@ export function MakerTool({ maxUploadMb }: { maxUploadMb: number }) {
     setResult(null);
     const room = MAX_IMAGES - items.length;
     const picked = files.filter((f) => /^image\/(jpeg|png|webp|gif)$/.test(f.type) || /\.(jpe?g|png|webp|gif)$/i.test(f.name));
+    if (picked.length === 0) {
+      const video = files.some((f) => /^video\//.test(f.type) || /\.(mp4|mov|m4v|webm)$/i.test(f.name));
+      return setError(video ? "The GIF maker takes pictures. To turn a video into a GIF, use Upload & convert." : "Only JPEG, PNG, WebP and GIF pictures work here.");
+    }
     if (picked.length < files.length) setError("Some files were skipped: only JPEG, PNG, WebP and GIF pictures work here.");
     const tooBig = picked.find((f) => f.size > MAX_IMAGE_MB * 1024 * 1024);
     if (tooBig) return setError(`${tooBig.name} is over ${MAX_IMAGE_MB} MB.`);
@@ -211,7 +215,7 @@ export function MakerTool({ maxUploadMb }: { maxUploadMb: number }) {
         )}
 
         {result && (
-          <Card className="space-y-3 p-4">
+          <Card ref={revealResult} className="scroll-mt-20 space-y-3 p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <SectionLabel>Result</SectionLabel>

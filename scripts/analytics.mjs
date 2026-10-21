@@ -42,6 +42,18 @@ const since = `timestamp > NOW() - INTERVAL '${days}' DAY`;
 const sections = [
   ["Events", `SELECT blob1 AS event, blob4 AS outcome, SUM(_sample_interval) AS count, ROUND(AVG(double2)) AS avg_ms
     FROM ${dataset} WHERE ${since} GROUP BY event, outcome ORDER BY count DESC`],
+  ["Page views by page (people, not crawlers)", `SELECT blob3 AS page, SUM(_sample_interval) AS views, COUNT(DISTINCT blob7) AS visitor_days
+    FROM ${dataset} WHERE ${since} AND blob1 = 'page' AND blob8 != 'bot' GROUP BY page ORDER BY views DESC LIMIT 25`],
+  ["Where visitors came from", `SELECT blob5 AS source, SUM(_sample_interval) AS views, COUNT(DISTINCT blob7) AS visitor_days
+    FROM ${dataset} WHERE ${since} AND blob1 = 'page' AND blob8 != 'bot' AND blob5 != 'internal' GROUP BY source ORDER BY views DESC LIMIT 20`],
+  ["Crawlers (search engines and link previews)", `SELECT blob5 AS crawler, SUM(_sample_interval) AS pages, COUNT(DISTINCT blob3) AS distinct_pages
+    FROM ${dataset} WHERE ${since} AND blob1 = 'page' AND blob8 = 'bot' GROUP BY crawler ORDER BY pages DESC`],
+  ["Missing and broken pages", `SELECT blob3 AS page, double1 AS status, SUM(_sample_interval) AS count
+    FROM ${dataset} WHERE ${since} AND blob1 = 'page' AND blob4 != 'ok' GROUP BY page, status ORDER BY count DESC LIMIT 15`],
+  ["Files people picked, by page", `SELECT blob5 AS page, blob3 AS picked, SUM(_sample_interval) AS count
+    FROM ${dataset} WHERE ${since} AND blob1 = 'ui' AND startsWith(blob3, 'file:') GROUP BY page, picked ORDER BY count DESC LIMIT 20`],
+  ["Errors people saw, and browser crashes", `SELECT blob1 AS kind, blob5 AS page, blob3 AS message, SUM(_sample_interval) AS count
+    FROM ${dataset} WHERE ${since} AND (blob1 = 'client_error' OR (blob1 = 'ui' AND startsWith(blob3, 'error:'))) GROUP BY kind, page, message ORDER BY count DESC LIMIT 20`],
   ["Grab attempts by site (where pasted links come from)", `SELECT blob5 AS site, blob4 AS outcome, SUM(_sample_interval) AS count
     FROM ${dataset} WHERE ${since} AND blob1 = 'grab' GROUP BY site, outcome ORDER BY count DESC LIMIT 25`],
   ["Why grabs failed", `SELECT blob3 AS reason, SUM(_sample_interval) AS count
@@ -56,7 +68,7 @@ const sections = [
     FROM ${dataset} WHERE ${since} GROUP BY device ORDER BY events DESC`],
 ];
 
-console.log(`GifSuite analytics: ${envName}, last ${days} day(s). Page views are in the Cloudflare dashboard → Web Analytics.\n`);
+console.log(`GifSuite analytics: ${envName}, last ${days} day(s).\n`);
 for (const [title, query] of sections) {
   console.log(`── ${title}`);
   const rows = await sql(`${query} FORMAT JSON`);

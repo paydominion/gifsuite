@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Speed up, slow down or reverse a GIF",
   description: "Change a GIF or video's speed from 0.25× to 4×, play it backwards, or make a boomerang. Download as GIF or MP4. Free, nothing stored.",
+  alternates: { canonical: "/tools/speed" },
 };
 
 export default function Page() {

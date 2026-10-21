@@ -23,6 +23,13 @@ test.describe("events, reports and moderation", () => {
     expect((await request.post("/api/events", { data: "not json", headers: { "content-type": "text/plain" } })).status()).toBe(400);
   });
 
+  test("accepts browser-only events without a GIF, and rejects empty ones", async ({ request }) => {
+    expect((await send(request, { type: "ui", detail: "file:mp4", path: "/tools/convert" })).status()).toBe(204);
+    expect((await send(request, { type: "client_error", detail: "boom https://evil.example/x", path: "/" })).status()).toBe(204);
+    expect((await send(request, { type: "ui" })).status()).toBe(400);
+    expect((await send(request, { type: "ui", detail: "   " })).status()).toBe(400);
+  });
+
   test("hides a GIF after reports from 3 different people, not 3 from one", async ({ request }) => {
     const id = await grabId(request, "112", "reporter");
     const troll = visitor();

@@ -29,6 +29,7 @@ export async function generateMetadata({ params }: PageProps<"/g/[id]">): Promis
     // Search engines only list what the timeline shows: public and checked safe. Private and
     // not-yet-checked GIFs still get link previews, so sharing never waits on the check.
     ...(gif.isPublic && gif.nsfw === false ? {} : { robots: { index: false, follow: false } }),
+    alternates: { canonical: `${base}/g/${id}` },
     title,
     description: `Download this GIF from ${by} as GIF, MP4, WebM or WebP.`,
     openGraph: {
@@ -71,17 +72,11 @@ export default async function GifPage({ params }: PageProps<"/g/[id]">) {
             />
           </SensitiveGate>
         </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-          {gif.source === "x" && (
-            <>
-              <span>{gif.tweetLikes.toLocaleString()} likes on X</span>
-              <span aria-hidden>·</span>
-            </>
-          )}
+        {/* Each dot sits with the item after it, so a wrapped line never ends on a stray dot. */}
+        <div className="flex flex-wrap items-center gap-y-1 text-xs text-muted [&>*:not(:first-child)]:before:mx-2 [&>*:not(:first-child)]:before:content-['·']">
+          {gif.source === "x" && <span>{gif.tweetLikes.toLocaleString()} likes on X</span>}
           <span>{(gif.durationMs / 1000).toFixed(1)}s</span>
-          <span aria-hidden>·</span>
           <span>{gif.width}×{gif.height}</span>
-          <span aria-hidden>·</span>
           <a href={gif.tweetUrl} target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-fg">
             {gif.source === "x" ? "View original post ↗" : `View on ${gif.source} ↗`}
           </a>

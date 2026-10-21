@@ -27,6 +27,18 @@ test("paste a link, grab the GIF, land on its page", async ({ page }) => {
   await expect(page.locator("video")).toBeVisible();
 });
 
+test("takes a link without https:// or with words around it, and explains text that isn't a link", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("GIF or post link").fill("look at this x.com/uiuser/status/115 lol");
+  await page.getByRole("button", { name: "Grab GIF" }).click();
+  await expect(page).toHaveURL(/\/g\/[A-Za-z0-9]{10}$/);
+
+  await page.goto("/");
+  await page.getByLabel("GIF or post link").fill("not a link");
+  await page.getByRole("button", { name: "Grab GIF" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "doesn't look like a link" })).toBeVisible();
+});
+
 test("shows a clear error for a link with no GIF", async ({ page }) => {
   await page.goto("/");
   await page.getByLabel("GIF or post link").fill("http://127.0.0.1:3298/page/nothing-here");
