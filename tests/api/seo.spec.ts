@@ -33,4 +33,10 @@ test.describe("link previews, icons and the app manifest", () => {
     expect(manifest).toMatchObject({ name: "GifSuite", display: "standalone", theme_color: "#111110" });
     for (const icon of manifest.icons) expect((await request.get(icon.src)).status(), icon.src).toBe(200);
   });
+
+  test("browsers and crawlers that ask for /favicon.ico get the icon", async ({ request }) => {
+    const res = await request.get("/favicon.ico");
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toContain("image/");
+  });
 });
