@@ -17,8 +17,7 @@ const INK = "#111110";
 const COLORS = [
   // Swatches use theme classes: the site's CSP doesn't allow inline styles.
   { name: "Ink", value: INK, swatch: "bg-bg", note: "Background" },
-  { name: "Sun", value: YELLOW, swatch: "bg-accent", note: "The only colour: buttons, marks, highlights" },
-  { name: "Flare", value: "#ffe600", swatch: "bg-accent-hover", note: "Hover and focus" },
+  { name: "Sun", value: YELLOW, swatch: "bg-accent", note: "The only colour: the logo, and anything you can press or have selected" },
   { name: "Paper", value: "#f5f2e6", swatch: "bg-fg", note: "Text" },
 ];
 
@@ -50,7 +49,7 @@ export default function BrandPage() {
                 <div className="space-y-3 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <h2 className="font-semibold">
-                      <span className="text-subtle">{i + 1}.</span> {name}
+                      <span className="text-muted">{i + 1}.</span> {name}
                     </h2>
                     <DownloadMark targetId={`mark-${id}`} fileName={`gifsuite-${id}.svg`} color={YELLOW} cut={INK} />
                   </div>
@@ -81,7 +80,7 @@ export default function BrandPage() {
                 <div className={`h-20 border-b border-line ${c.swatch}`} />
                 <div className="p-3">
                   <p className="font-semibold">{c.name} <span className="font-mono text-xs text-muted">{c.value}</span></p>
-                  <p className="text-xs text-muted">{c.note}</p>
+                  <p className="text-sm text-muted">{c.note}</p>
                 </div>
               </Card>
             </li>

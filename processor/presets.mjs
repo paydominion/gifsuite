@@ -229,8 +229,10 @@ export function normalizeArgs(input, src, out) {
 }
 
 /** yt-dlp arguments: one item, a direct (non-streaming) download where possible, merged to MP4. */
-export function ytdlpDownloadArgs(url, outTemplate, maxBytes) {
-  return ["--no-playlist", "--no-warnings", "--no-progress", "--socket-timeout", "20", "--max-filesize", String(maxBytes),
+export function ytdlpDownloadArgs(url, outTemplate, maxBytes, proxy) {
+  // Every connection goes through the processor's public-only proxy (fetch.mjs egressProxy), and
+  // with yt-dlp's own downloader, so no external tool fetches around it.
+  return [...(proxy ? ["--proxy", proxy] : []), "--downloader", "native", "--no-playlist", "--no-warnings", "--no-progress", "--socket-timeout", "20", "--max-filesize", String(maxBytes),
     "-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b", "--merge-output-format", "mp4",
     "-o", outTemplate, "--print-json", "--no-simulate", "--", url];
 }

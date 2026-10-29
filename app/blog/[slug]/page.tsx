@@ -72,10 +72,10 @@ export default async function BlogPost({ params }: PageProps<"/blog/[slug]">) {
       </nav>
 
       <header className="mt-6 space-y-3">
-        <SectionLabel>{post.type === "history" ? "History of the GIF" : "Tip"}</SectionLabel>
+        <p className="text-sm font-bold text-muted">{post.type === "history" ? "History of the GIF" : "Tip"}</p>
         <h1 className="text-3xl font-bold tracking-tight text-balance sm:text-4xl">{post.title}</h1>
         <p className="text-lg text-muted">{post.description}</p>
-        <p className="text-sm text-subtle">
+        <p className="text-sm text-muted">
           <time dateTime={post.date}>{formatDate(post.date)}</time>
           {post.updated && <> · Updated <time dateTime={post.updated}>{formatDate(post.updated)}</time></>}
           {" · "}{post.readingMinutes} min read
@@ -96,17 +96,18 @@ export default async function BlogPost({ params }: PageProps<"/blog/[slug]">) {
               </li>
             ))}
           </ol>
-          {post.reviewedBy && <p className="text-xs text-subtle">Fact-checked by {post.reviewedBy}.</p>}
+          {post.reviewedBy && <p className="text-sm text-muted">Fact-checked by {post.reviewedBy}.</p>}
         </section>
       )}
 
       {tool && (
-        <Card className="mt-10 flex flex-wrap items-center justify-between gap-4 p-5">
-          <div>
+        <Card className="mt-10 space-y-4 p-6">
+          <div className="space-y-1">
             <p className="font-semibold">{tool.name}</p>
             <p className="text-sm text-muted">{tool.description}</p>
           </div>
-          <Link href={tool.href} className={buttonClass({ variant: "primary" })}>Try it free</Link>
+          {/* Left, under what it's about: a button pushed to the far right is easy to miss. */}
+          <Link href={tool.href} className={buttonClass({ variant: "primary" })}>Open the free tool</Link>
         </Card>
       )}
 
@@ -116,7 +117,7 @@ export default async function BlogPost({ params }: PageProps<"/blog/[slug]">) {
           <ul className="space-y-2">
             {more.map((p) => (
               <li key={p.slug}>
-                <Link href={`/blog/${p.slug}`} className="font-semibold underline-offset-2 hover:underline">{p.title}</Link>
+                <Link href={`/blog/${p.slug}`} className="font-semibold underline decoration-accent decoration-2 underline-offset-4 hover:decoration-fg">{p.title}</Link>
               </li>
             ))}
           </ul>

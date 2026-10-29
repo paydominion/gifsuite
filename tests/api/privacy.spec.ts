@@ -34,6 +34,27 @@ test.describe("public / private", () => {
     expect(gifRow(body.id).nsfw).toBeNull();
   });
 
+  test("a stranger grabbing the same link never gets someone's private GIF", async ({ request, playwright, baseURL }) => {
+    const stranger = await playwright.request.newContext({ baseURL });
+    try {
+      for (const url of ["https://x.com/secretive/status/130", "http://127.0.0.1:3298/files/clip.webm?v=privacy"]) {
+        const mine = await grabPrivate(request, url);
+        expect(mine, url).toMatchObject({ created: true, public: false });
+        // The same browser grabbing again gets its own GIF back.
+        expect((await grabPrivate(request, url)).id, url).toBe(mine.id);
+
+        const theirs = await (await stranger.post("/api/grab", { data: { url }, headers: visitor() })).json();
+        expect(theirs.id, url).not.toBe(mine.id);
+        expect(theirs, url).toMatchObject({ created: true, public: true });
+        // Their public copy is the one everyone else gets from now on.
+        const third = await (await playwright.request.newContext({ baseURL })).post("/api/grab", { data: { url }, headers: visitor() });
+        expect((await third.json()).id, url).toBe(theirs.id);
+      }
+    } finally {
+      await stranger.dispose();
+    }
+  });
+
   test("a private GIF made public is checked, then joins the timeline", async ({ request }) => {
     const body = await grabPrivate(request, "https://x.com/latebloomer/status/125");
     expect(gifRow(body.id).nsfw).toBeNull();

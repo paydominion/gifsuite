@@ -4,7 +4,8 @@ import { listGifs } from "@/db/gifs";
 import { GrabForm } from "@/components/GrabForm";
 import { Hero } from "@/components/marketing/Hero";
 import { Timeline } from "@/components/Timeline";
-import { SectionLabel, cardClass } from "@/components/ui/Card";
+import { cardClass } from "@/components/ui/Card";
+import { buttonClass } from "@/components/ui/Button";
 import { ToolIcon } from "@/components/ui/ToolIcon";
 import { TOOLS } from "@/lib/tools";
 
@@ -27,24 +28,21 @@ export default async function Home() {
   const tools = TOOLS.filter((t) => t.slug !== "grab" && t.status === "live");
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-20">
       <Hero
         eyebrow="The all-in-one GIF suite"
-        title="Grab, convert and make GIFs."
+        title="Grab, convert and make GIFs"
         subtitle="Paste a link from X, Giphy, Reddit or anywhere to grab its GIF in any format and quality, or upload your own."
       >
         <GrabForm />
       </Hero>
 
-      <section aria-labelledby="tools-heading" className="space-y-5">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="space-y-1">
-            <h2 id="tools-heading" className="text-2xl font-bold tracking-tight sm:text-3xl">Every GIF tool, in one place</h2>
-            <p className="text-muted">Free, in your browser, on any phone or computer.</p>
-          </div>
-          <Link href="/tools" className="text-sm font-semibold text-muted hover:text-fg">All tools →</Link>
+      <section aria-labelledby="tools-heading" className="space-y-6">
+        <div className="space-y-2">
+          <h2 id="tools-heading" className="text-2xl font-bold tracking-tight sm:text-3xl">Every GIF tool, in one place</h2>
+          <p className="text-muted">Free, in your browser, on any phone or computer.</p>
         </div>
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {tools.map((tool) => (
             <li key={tool.slug}>
               <Link
@@ -66,24 +64,28 @@ export default async function Home() {
               href="/blog"
               className={`${cardClass} flex h-full flex-col justify-center gap-1 p-4 transition-colors hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
             >
-              <span className="font-semibold">Tips &amp; guides →</span>
+              <span className="font-semibold">Tips and guides →</span>
               <span className="text-sm text-muted">Size limits, formats, and how to post GIFs that look right.</span>
             </Link>
           </li>
         </ul>
+        {/* Under the list and left-aligned, where people finish reading, rather than alone at the far right. */}
+        <Link href="/tools" className={buttonClass({ variant: "tertiary" })}>
+          Compare all tools
+        </Link>
       </section>
 
       <section aria-label="Why GifSuite" className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
         {PROMISES.map(([title, text]) => (
-          <div key={title} className="bg-surface p-5">
+          <div key={title} className="bg-surface p-6">
             <p className="font-semibold">{title}</p>
             <p className="mt-1 text-sm text-muted">{text}</p>
           </div>
         ))}
       </section>
 
-      <section id="latest" className="scroll-mt-20 space-y-4">
-        <SectionLabel>Latest GIFs</SectionLabel>
+      <section id="latest" aria-labelledby="latest-heading" className="scroll-mt-20 space-y-6">
+        <h2 id="latest-heading" className="text-2xl font-bold tracking-tight sm:text-3xl">Latest GIFs</h2>
         <Timeline initial={items} initialCursor={items.length === PAGE ? items[items.length - 1].createdAt : null} />
       </section>
     </div>

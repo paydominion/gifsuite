@@ -10,12 +10,18 @@ import { crawlerOf, dataPoint, deviceOf, isPageView, visitSource, visitorId } fr
 // Other addresses for the production site. Each redirects permanently to gifsuite.com, keeping the
 // path, so search engines see one site rather than several copies.
 const REDIRECT_TO_MAIN = new Set(["www.gifsuite.com", "gifsuite.app", "www.gifsuite.app"]);
+// Local runs (wrangler dev, preview, tests) are plain HTTP; everywhere else moves to HTTPS.
+const LOCAL = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (REDIRECT_TO_MAIN.has(url.hostname)) {
       url.hostname = "gifsuite.com";
+      url.protocol = "https:";
+      return Response.redirect(url.href, 301);
+    }
+    if (url.protocol === "http:" && !LOCAL.has(url.hostname)) {
       url.protocol = "https:";
       return Response.redirect(url.href, 301);
     }

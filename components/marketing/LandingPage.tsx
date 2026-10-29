@@ -12,7 +12,7 @@ import { SpeedTool } from "@/components/tools/SpeedTool";
 import { TrimTool } from "@/components/tools/TrimTool";
 import { MakerTool } from "@/components/tools/MakerTool";
 import { ConvertTool } from "@/components/tools/ConvertTool";
-import { Card, SectionLabel, cardClass } from "@/components/ui/Card";
+import { Card, cardClass } from "@/components/ui/Card";
 
 /** Page metadata for a landing page: its own title, description and canonical address. */
 export async function landingMetadata(slug: string) {
@@ -80,7 +80,7 @@ export async function LandingPage({ slug }: { slug: string }) {
   ];
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-20">
       <script
         type="application/ld+json"
         nonce={nonce}
@@ -98,24 +98,25 @@ export async function LandingPage({ slug }: { slug: string }) {
         </section>
       )}
 
-      <section className="space-y-4">
+      <section className="space-y-6">
         <h2 className="text-2xl font-bold tracking-tight">How it works</h2>
-        <ol className="grid gap-3 sm:grid-cols-3">
+        <ol className="grid gap-4 sm:grid-cols-3">
           {page.steps.map(([title, text], i) => (
-            <li key={title} className={`${cardClass} p-5`}>
-              <span className="grid size-8 place-items-center rounded-full bg-accent text-sm font-black text-accent-ink">{i + 1}</span>
-              <h3 className="mt-3 font-semibold">{title}</h3>
+            <li key={title} className={`${cardClass} p-6`}>
+              {/* Grey, not yellow: the number is information, not something to press. */}
+              <span className="grid size-8 place-items-center rounded-full border border-line-strong text-sm font-bold">{i + 1}</span>
+              <h3 className="mt-4 font-semibold">{title}</h3>
               <p className="mt-1 text-sm text-muted">{text}</p>
             </li>
           ))}
         </ol>
       </section>
 
-      <section className="space-y-4">
+      <section className="space-y-6">
         <h2 className="text-2xl font-bold tracking-tight">Why GifSuite</h2>
-        <ul className="grid gap-3 sm:grid-cols-3">
+        <ul className="grid gap-4 sm:grid-cols-3">
           {page.why.map(([title, text]) => (
-            <li key={title} className={`${cardClass} p-5`}>
+            <li key={title} className={`${cardClass} p-6`}>
               <h3 className="font-semibold">{title}</h3>
               <p className="mt-1 text-sm text-muted">{text}</p>
             </li>
@@ -123,29 +124,29 @@ export async function LandingPage({ slug }: { slug: string }) {
         </ul>
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-2xl font-bold tracking-tight">Questions</h2>
+      <section className="space-y-6">
+        <h2 className="text-2xl font-bold tracking-tight">Common questions</h2>
         <Card className="divide-y divide-line">
           {page.faq.map(([q, a]) => (
-            <details key={q} className="group px-5 py-1">
+            <details key={q} className="group px-6 py-1">
               <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 py-2 font-semibold">
                 {q}
                 <span aria-hidden className="text-muted transition-transform group-open:rotate-45">+</span>
               </summary>
-              <p className="pb-4 text-sm text-muted">{a}</p>
+              <p className="max-w-prose pb-4 text-muted">{a}</p>
             </details>
           ))}
         </Card>
       </section>
 
-      <section className="space-y-4">
-        <SectionLabel>More free GIF tools</SectionLabel>
-        <ul className="grid gap-3 sm:grid-cols-3">
+      <section className="space-y-6">
+        <h2 className="text-2xl font-bold tracking-tight">More free GIF tools</h2>
+        <ul className="grid gap-4 sm:grid-cols-3">
           {related.map((r) => (
             <li key={r.slug}>
               <Link
                 href={`/${r.slug}`}
-                className={`${cardClass} block h-full p-5 transition-colors hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+                className={`${cardClass} block h-full p-6 transition-colors hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
               >
                 <h3 className="font-semibold">{r.eyebrow}</h3>
                 <p className="mt-1 text-sm text-muted">{r.subtitle}</p>

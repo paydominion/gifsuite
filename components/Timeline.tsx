@@ -37,10 +37,10 @@ function Tile({ gif }: { gif: Gif }) {
         className="block h-auto w-full bg-panel"
       />
       <div className="flex items-center justify-between gap-2 px-3 py-2.5 text-sm">
-        <span className="truncate font-medium text-muted group-hover:text-fg">
+        <span className="truncate text-muted group-hover:text-fg">
           {gif.source === "x" ? `@${gif.authorHandle}` : gif.authorName}
         </span>
-        <span className="shrink-0 text-xs text-subtle">{new Date(gif.createdAt).toLocaleDateString()}</span>
+        <span className="shrink-0 text-sm text-muted">{new Date(gif.createdAt).toLocaleDateString()}</span>
       </div>
     </Link>
   );
@@ -84,7 +84,7 @@ export function Timeline({ initial, initialCursor }: { initial: Gif[]; initialCu
           <Tile key={g.id} gif={g} />
         ))}
       </div>
-      <div ref={sentinel} className="py-8 text-center text-sm text-subtle">
+      <div ref={sentinel} className="py-8 text-center text-sm text-muted">
         {cursor === null ? "You're all caught up." : loading ? "Loading…" : ""}
       </div>
     </>

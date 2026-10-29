@@ -50,11 +50,12 @@ test("the Tools menu opens, lists every tool, and closes with Escape", async ({ 
 test("the tools page shows which tools are live", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Tools", exact: true }).click();
-  await page.getByRole("link", { name: "See all tools →" }).click();
+  await page.getByRole("link", { name: "See all tools" }).click();
   await expect(page).toHaveURL("/tools");
   await expect(page.getByRole("heading", { name: "All tools" })).toBeVisible();
-  await expect(page.getByText("Live", { exact: true })).toHaveCount(8);
+  // Every tool is live, so none carries a "Coming soon" label, and all 8 cards are links.
   await expect(page.getByText("Coming soon", { exact: true })).toHaveCount(0);
+  await expect(page.locator("main li > a")).toHaveCount(8);
   await page.getByRole("link", { name: /Grab from any link/ }).click();
   await expect(page).toHaveURL("/");
 });
@@ -63,7 +64,7 @@ test("a missing page shows our own 404, styled and without CSP errors", async ({
   for (const path of ["/no-such-page", "/blog/no-such-post", "/g/nope123456"]) {
     const res = await page.goto(path);
     expect(res!.status(), path).toBe(404);
-    await expect(page.getByRole("heading", { name: "This page didn't loop back." }), path).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Page not found" }), path).toBeVisible();
     await expect(page.getByRole("link", { name: "Grab a GIF" }).last()).toBeVisible();
   }
 });

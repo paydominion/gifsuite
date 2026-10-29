@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { POSTS, formatDate, type Post } from "@/lib/blog";
-import { SectionLabel, cardClass } from "@/components/ui/Card";
+import { cardClass } from "@/components/ui/Card";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +14,10 @@ export const metadata: Metadata = {
 function PostCard({ post }: { post: Post }) {
   return (
     <li>
-      <Link href={`/blog/${post.slug}`} className={`${cardClass} block h-full p-5 transition-colors hover:border-line-strong`}>
+      <Link href={`/blog/${post.slug}`} className={`${cardClass} block h-full p-6 transition-colors hover:border-accent`}>
         <h3 className="font-semibold text-balance">{post.title}</h3>
         <p className="mt-1.5 text-sm text-muted">{post.description}</p>
-        <p className="mt-3 text-xs text-subtle">
+        <p className="mt-4 text-sm text-muted">
           {formatDate(post.date)} · {post.readingMinutes} min read{post.draft ? " · DRAFT" : ""}
         </p>
       </Link>
@@ -36,16 +36,16 @@ export default function BlogIndex() {
       </header>
 
       {tips.length > 0 && (
-        <section className="space-y-4">
-          <SectionLabel>Tips</SectionLabel>
-          <ul className="grid gap-3 sm:grid-cols-2">{tips.map((p) => <PostCard key={p.slug} post={p} />)}</ul>
+        <section className="space-y-6">
+          <h2 className="text-2xl font-bold tracking-tight">Tips</h2>
+          <ul className="grid gap-4 sm:grid-cols-2">{tips.map((p) => <PostCard key={p.slug} post={p} />)}</ul>
         </section>
       )}
 
       {history.length > 0 && (
-        <section className="space-y-4">
-          <SectionLabel>History of the GIF</SectionLabel>
-          <ul className="grid gap-3 sm:grid-cols-2">{history.map((p) => <PostCard key={p.slug} post={p} />)}</ul>
+        <section className="space-y-6">
+          <h2 className="text-2xl font-bold tracking-tight">History of the GIF</h2>
+          <ul className="grid gap-4 sm:grid-cols-2">{history.map((p) => <PostCard key={p.slug} post={p} />)}</ul>
         </section>
       )}
     </div>

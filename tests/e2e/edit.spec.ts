@@ -43,13 +43,16 @@ test("speed & reverse: boomerang at 2×, and the 20-second limit is explained up
   await page.getByRole("radiogroup", { name: "Direction" }).getByRole("radio", { name: "Boomerang" }).click();
   await expect(page.getByText("New length: 4.0s")).toBeVisible();
   const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Apply & download" }).click();
+  await page.getByRole("button", { name: "Change speed & download" }).click();
   expect((await download).suggestedFilename()).toBe("sound-speed.mp4");
 
-  await page.getByRole("button", { name: "Choose another" }).click();
+  await page.getByRole("button", { name: "Choose another file" }).click();
   await page.locator('input[type="file"]').setInputFiles(fixture("mid.mp4"));
-  await expect(page.getByText(/work on clips up to 20 seconds/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Apply & download" })).toBeDisabled();
+  await expect(page.getByRole("alert").filter({ hasText: /work on clips up to 20 seconds/ })).toBeVisible();
+  // The button stays enabled; pressing it keeps the explanation up and doesn't start a doomed upload.
+  await page.getByRole("button", { name: "Change speed & download" }).click();
+  await expect(page.getByRole("button", { name: "Changing speed…" })).toHaveCount(0);
+  await expect(page.getByRole("alert").filter({ hasText: /work on clips up to 20 seconds/ })).toBeVisible();
 });
 
 test("the reverse-gif page opens with Reverse chosen", async ({ page }) => {
@@ -62,7 +65,9 @@ test("add text: live preview, then download", async ({ page }) => {
   await page.locator('input[type="file"]').setInputFiles(fixture("odd.gif"));
   const button = page.getByRole("button", { name: "Add text & download" });
   await expect(page.getByLabel("Caption preview")).toBeVisible();
-  await expect(button).toBeDisabled(); // nothing to add yet
+  // Pressing it before typing says what's missing, instead of a greyed-out button with no reason.
+  await button.click();
+  await expect(page.getByRole("alert").filter({ hasText: "Type your top or bottom text first." })).toBeVisible();
   await page.getByLabel("Top text").fill("when the gif loads");
   await page.getByLabel("Bottom text").fill("first try");
   // The preview canvas now has text drawn on it.

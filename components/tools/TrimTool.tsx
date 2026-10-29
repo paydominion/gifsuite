@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { ErrorMessage } from "@/components/ui/Alert";
 import { Card, SectionLabel } from "@/components/ui/Card";
 import { Segmented } from "@/components/ui/Segmented";
 import { isVideoFile } from "./shared";
@@ -53,6 +54,15 @@ export function TrimTool({ maxUploadMb, initialFormat }: { maxUploadMb: number; 
     if (video.current) video.current.currentTime = (which === "start" ? next[0] : Math.max(next[0], next[1] - 500)) / 1000;
   }
 
+  const [missing, setMissing] = useState<string | null>(null);
+  // The button stays enabled; pressing it too early says what's missing instead.
+  function trim() {
+    if (!clip) return setMissing("Choose a GIF or video first.");
+    if (!info) return;
+    setMissing(null);
+    run(clip, { start: range[0], end: range[1], format });
+  }
+
   const fromPlayhead = (which: "start" | "end") => video.current && set(which, Math.round(video.current.currentTime * 1000));
   const length = range[1] - range[0];
   const pct = (ms: number) => (info ? (ms / info.durationMs) * 100 : 0);
@@ -62,7 +72,7 @@ export function TrimTool({ maxUploadMb, initialFormat }: { maxUploadMb: number; 
       <div className="space-y-4">
         <ClipCard clip={clip} info={info} maxUploadMb={maxUploadMb} busy={busy} onChoose={pick} onReset={reset} onVideo={fromVideo} videoRef={video} />
         {clip && info && (
-          <Card className="space-y-4 p-4">
+          <Card className="space-y-6 p-6">
             {/* The whole clip, with the kept part highlighted. */}
             <div aria-hidden className="relative h-2 rounded-full bg-panel">
               <div className="absolute inset-y-0 rounded-full bg-accent" style={{ left: `${pct(range[0])}%`, width: `${pct(length)}%` }} />
@@ -85,8 +95,8 @@ export function TrimTool({ maxUploadMb, initialFormat }: { maxUploadMb: number; 
                   className="h-11 w-full cursor-pointer accent-[var(--accent)]"
                 />
                 {clip.video && (
-                  <Button size="sm" variant="ghost" disabled={busy} onClick={() => fromPlayhead(which)}>
-                    Set {which} to now
+                  <Button size="sm" variant="tertiary" disabled={busy} onClick={() => fromPlayhead(which)}>
+                    Set {which} to the current frame
                   </Button>
                 )}
               </div>
@@ -96,21 +106,21 @@ export function TrimTool({ maxUploadMb, initialFormat }: { maxUploadMb: number; 
         <ResultCard result={result} />
       </div>
 
-      <Card className="space-y-5 p-5 lg:sticky lg:top-20">
+      <Card className="space-y-6 p-6 lg:sticky lg:top-20">
         <div className="space-y-1">
-          <SectionLabel>Keeping</SectionLabel>
+          <SectionLabel>Length you keep</SectionLabel>
           <p className="text-2xl font-bold tabular-nums">{info ? seconds(length) : "—"}</p>
-          {info && <p className="text-xs text-muted">from {seconds(range[0])} to {seconds(range[1])} of {seconds(info.durationMs)}</p>}
+          {info && <p className="text-sm text-muted">from {seconds(range[0])} to {seconds(range[1])} of {seconds(info.durationMs)}</p>}
         </div>
         <div className="space-y-2">
           <SectionLabel>Save as</SectionLabel>
           <Segmented label="Format" options={EDIT_FORMATS} value={format} onChange={setFormat} disabled={busy} />
-          <p className="text-xs text-muted">MP4 keeps any sound and is much smaller; GIF plays everywhere images do.</p>
+          <p className="text-sm text-muted">MP4 keeps any sound and is much smaller; GIF plays everywhere images do.</p>
         </div>
-        <Button variant="primary" size="lg" className="w-full" disabled={!clip || !info || busy} onClick={() => clip && run(clip, { start: range[0], end: range[1], format })}>
+        <Button variant="primary" size="lg" className="w-full" disabled={busy} onClick={trim}>
           {busy ? "Trimming…" : "Trim & download"}
         </Button>
-        {(error || clipError) && <p role="alert" className="text-sm font-medium text-danger">{error ?? clipError}</p>}
+        {(error ?? clipError ?? (!clip && missing)) && <ErrorMessage>{error ?? clipError ?? missing}</ErrorMessage>}
       </Card>
     </div>
   );

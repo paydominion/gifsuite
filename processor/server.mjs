@@ -20,6 +20,7 @@
 //   GET  /ytdlp?tweetId=…&slot=…         → yt-dlp's JSON for an X post (fallback fetcher)
 //   GET  /fetch?url=…&maxBytes=…&maxDurationMs=…  → the GIF/video behind any link, as MP4
 //        (what the source says about it comes back base64url JSON in x-gifsuite-info)
+import { AsyncLocalStorage } from "node:async_hooks";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import http from "node:http";
@@ -50,6 +51,17 @@ const PORT = Number(process.env.PORT ?? 8080);
 const HOST = process.env.HOST ?? "0.0.0.0";
 const MAX_BODY = Number(process.env.MAX_BODY_MB ?? 60) * 1024 * 1024;
 const MAX_JOBS = Number(process.env.MAX_JOBS ?? 2);
+// Jobs waiting for a slot beyond this, or for longer than this, get "busy" (503) instead.
+const MAX_WAITING = Number(process.env.MAX_WAITING ?? 8);
+const MAX_WAIT_MS = Number(process.env.MAX_WAIT_MS ?? 60_000);
+// Each ffmpeg run gets at most this much memory (Linux only), so one heavy job fails on its own
+// instead of taking the whole container down. GIF palettes keep every frame in memory until the end.
+const FFMPEG_MEMORY_MB = Number(process.env.FFMPEG_MEMORY_MB ?? 1536);
+// Largest picture any route will decode, whatever the file size: a tiny GIF can declare a huge canvas.
+const MAX_SIDE = 8192;
+const MAX_PIXELS = 36_000_000;
+// The request being handled: its signal fires when the visitor disconnects before the answer is sent.
+const job = new AsyncLocalStorage();
 const BIN = {
   ffmpeg: process.env.FFMPEG_PATH ?? "ffmpeg",
   ffprobe: process.env.FFPROBE_PATH ?? "ffprobe",
@@ -64,26 +76,36 @@ class HttpError extends Error {
   }
 }
 
-function run(bin, args, timeoutMs = 120_000) {
+function run(bin, args, timeoutMs = 120_000, { memoryMb } = {}) {
+  const signal = job.getStore()?.signal;
+  if (signal?.aborted) return Promise.reject(new HttpError(499, "cancelled"));
+  // `ulimit -v` caps the address space of the program it starts. macOS doesn't support it.
+  const limited = memoryMb && process.platform === "linux";
+  const [cmd, argv] = limited ? ["sh", ["-c", `ulimit -v ${memoryMb * 1024} && exec "$0" "$@"`, bin, ...args]] : [bin, args];
   return new Promise((resolve, reject) => {
-    const child = spawn(bin, args, { stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(cmd, argv, { stdio: ["ignore", "pipe", "pipe"], env: limited ? { ...process.env, MALLOC_ARENA_MAX: "2" } : process.env });
+    const kill = () => child.kill("SIGKILL");
+    signal?.addEventListener("abort", kill, { once: true });
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (d) => (stdout += d));
     child.stderr.on("data", (d) => (stderr = (stderr + d).slice(-4000)));
-    const timer = setTimeout(() => child.kill("SIGKILL"), timeoutMs);
+    const timer = setTimeout(kill, timeoutMs);
     child.on("error", (err) => {
       clearTimeout(timer);
+      signal?.removeEventListener("abort", kill);
       reject(err);
     });
     child.on("close", (code) => {
       clearTimeout(timer);
-      if (code === 0) resolve(stdout);
+      signal?.removeEventListener("abort", kill);
+      if (signal?.aborted) reject(new HttpError(499, "cancelled"));
+      else if (code === 0) resolve(stdout);
       else reject(new Error(`${bin} exited with ${code}: ${stderr}`));
     });
   });
 }
-const ffmpeg = (args) => run(BIN.ffmpeg, ["-hide_banner", "-loglevel", "error", "-y", ...args]);
+const ffmpeg = (args) => run(BIN.ffmpeg, ["-hide_banner", "-loglevel", "error", "-y", ...args], 120_000, { memoryMb: FFMPEG_MEMORY_MB });
 
 async function probe(file, input = "mov") {
   let out;
@@ -99,6 +121,9 @@ async function probe(file, input = "mov") {
   const video = info.streams.find((s) => s.codec_type === "video");
   if (!video) throw new HttpError(422, "not a video");
   const [num, den] = (video.avg_frame_rate ?? "0/1").split("/").map(Number);
+  if ((video.width ?? 0) > MAX_SIDE || (video.height ?? 0) > MAX_SIDE || (video.width ?? 0) * (video.height ?? 0) > MAX_PIXELS) {
+    throw new HttpError(413, "picture too big");
+  }
   return {
     width: video.width ?? 0,
     height: video.height ?? 0,
@@ -119,11 +144,33 @@ async function encode(src, out, input, format, quality, fps) {
   }
 }
 
-// A few ffmpeg jobs at a time; the rest wait their turn.
+// A few ffmpeg jobs at a time; the rest wait their turn, unless the queue is full or they've waited
+// too long. A job whose visitor has gone leaves the queue rather than running for nobody.
 let active = 0;
 const waiting = [];
 async function withSlot(fn) {
-  if (active >= MAX_JOBS) await new Promise((resolve) => waiting.push(resolve));
+  const signal = job.getStore()?.signal;
+  if (active >= MAX_JOBS) {
+    if (waiting.length >= MAX_WAITING) throw new HttpError(503, "busy");
+    await new Promise((resolve, reject) => {
+      const leave = (err) => {
+        const i = waiting.indexOf(entry);
+        if (i >= 0) waiting.splice(i, 1);
+        clearTimeout(timer);
+        signal?.removeEventListener("abort", onAbort);
+        reject(err);
+      };
+      const onAbort = () => leave(new HttpError(499, "cancelled"));
+      const entry = () => {
+        clearTimeout(timer);
+        signal?.removeEventListener("abort", onAbort);
+        resolve();
+      };
+      const timer = setTimeout(() => leave(new HttpError(503, "busy")), MAX_WAIT_MS);
+      signal?.addEventListener("abort", onAbort, { once: true });
+      waiting.push(entry);
+    });
+  } else if (signal?.aborted) throw new HttpError(499, "cancelled");
   active++;
   try {
     return await fn();
@@ -175,7 +222,7 @@ async function handle(req, res, url) {
     if (!Number.isInteger(maxBytes) || maxBytes < 1 || maxBytes > MAX_BODY) throw new HttpError(400, "bad size limit");
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gifsuite-fetch-"));
     try {
-      const { file, input, info } = await fetchMedia(link, dir, { maxBytes, ytdlp: BIN.ytdlp, spawn });
+      const { file, input, info } = await fetchMedia(link, dir, { maxBytes, ytdlp: BIN.ytdlp, spawn, signal: job.getStore()?.signal });
       return await withSlot(async () => {
         const media = await probe(file, input);
         if (maxDurationMs && media.durationMs > maxDurationMs) throw new HttpError(413, "too long");
@@ -436,8 +483,12 @@ http
   .createServer(async (req, res) => {
     res.setHeader("x-processor-version", VERSION);
     const url = new URL(req.url ?? "/", "http://processor");
+    const controller = new AbortController();
+    res.on("close", () => {
+      if (!res.writableFinished) controller.abort();
+    });
     try {
-      await handle(req, res, url);
+      await job.run({ signal: controller.signal }, () => handle(req, res, url));
     } catch (err) {
       const known = err instanceof HttpError || err instanceof FetchError;
       const status = known ? err.status : 500;

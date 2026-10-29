@@ -3,10 +3,11 @@
 import { humanFetch } from "@/lib/human";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { ErrorMessage } from "@/components/ui/Alert";
 import { Card, SectionLabel } from "@/components/ui/Card";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { Segmented } from "@/components/ui/Segmented";
-import { Preview, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs, revealResult } from "./shared";
+import { FileHeader, ResultPanel, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs } from "./shared";
 
 type Aspect = "free" | "1:1" | "16:9" | "9:16" | "4:5";
 type Format = "gif" | "mp4";
@@ -159,7 +160,9 @@ export function CropTool({ maxUploadMb, initialFormat }: { maxUploadMb: number; 
   }
 
   async function run() {
-    if (!file || !box) return;
+    // The button stays enabled and explains what's missing, rather than greying out with no reason.
+    if (!file) return setError("Choose a GIF or video to crop first.");
+    if (!box) return;
     setBusy(true);
     setError(null);
     setResult(null);
@@ -168,7 +171,7 @@ export function CropTool({ maxUploadMb, initialFormat }: { maxUploadMb: number; 
       const res = await humanFetch(`/api/crop?${q}`, { method: "POST", body: file.file, headers: { "content-type": "application/octet-stream" } });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error ?? "Something went wrong cropping that file.");
+        throw new Error(data.error ?? "Couldn't crop that file. Try again, or try a different file.");
       }
       const blob = await res.blob();
       const next = { url: URL.createObjectURL(blob), name: `${baseName(file.file)}-cropped.${format}`, bytes: blob.size, format };
@@ -199,19 +202,13 @@ export function CropTool({ maxUploadMb, initialFormat }: { maxUploadMb: number; 
         {!file ? (
           <Dropzone accept={UPLOAD_ACCEPT} hint={`GIF, MP4, MOV or WebM, up to ${maxUploadMb} MB. Your file isn't stored.`} onFile={choose} disabled={busy} />
         ) : (
-          <Card className="space-y-3 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate font-semibold">{file.file.name}</p>
-                <p className="text-xs text-muted">
-                  {formatBytes(file.file.size)}
-                  {size && ` · ${size.w}×${size.h}`}
-                </p>
-              </div>
-              <Button size="sm" variant="ghost" disabled={busy} onClick={() => { setFile(null); setResult(null); setError(null); setBox(null); setSize(null); }}>
-                Choose another
-              </Button>
-            </div>
+          <Card className="space-y-4 p-6">
+            <FileHeader
+              name={file.file.name}
+              details={`${formatBytes(file.file.size)}${size ? ` · ${size.w}×${size.h}` : ""}`}
+              busy={busy}
+              onReset={() => { setFile(null); setResult(null); setError(null); setBox(null); setSize(null); }}
+            />
             {/* The picture with the crop box on top. Dimming outside the box is clipped to the picture; the
                 corner handles sit on their own layer so they're never cut off at the edges. The margin
                 leaves room for them. */}
@@ -252,41 +249,30 @@ export function CropTool({ maxUploadMb, initialFormat }: { maxUploadMb: number; 
                 )}
               </div>
             </div>
-            <p className="text-xs text-muted">Drag the box to move it, and its corners to resize. Arrow keys move it too.</p>
+            <p className="text-sm text-muted">Drag the box to move it, and its corners to resize. Arrow keys move it too.</p>
           </Card>
         )}
 
-        {result && (
-          <Card ref={revealResult} className="scroll-mt-20 space-y-3 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <SectionLabel>Result</SectionLabel>
-                <p role="status" className="mt-1 truncate text-sm">Saved {result.name} ({formatBytes(result.bytes)})</p>
-              </div>
-              <Button size="sm" variant="secondary" onClick={() => saveAs(result.url, result.name)}>Download again</Button>
-            </div>
-            <Preview url={result.url} isVideo={result.format === "mp4"} label="Cropped file" />
-          </Card>
-        )}
+        {result && <ResultPanel name={result.name} bytes={result.bytes} url={result.url} isVideo={result.format === "mp4"} label="Cropped file" />}
       </div>
 
-      <Card className="space-y-5 p-5 lg:sticky lg:top-20">
+      <Card className="space-y-6 p-6 lg:sticky lg:top-20">
         <div className="space-y-2">
           <SectionLabel>Shape</SectionLabel>
           <Segmented label="Shape" options={ASPECTS} value={aspect} onChange={pickAspect} disabled={busy} />
-          <p className="text-xs text-muted">
+          <p className="text-sm text-muted">
             {box ? `Crop: ${box.w}×${box.h} pixels` : "1:1 for profiles and posts, 9:16 for stories, 16:9 for widescreen."}
           </p>
         </div>
         <div className="space-y-2">
           <SectionLabel>Save as</SectionLabel>
           <Segmented label="Format" options={FORMATS} value={format} onChange={setFormat} disabled={busy} />
-          <p className="text-xs text-muted">MP4 keeps any sound and is much smaller; GIF plays everywhere images do.</p>
+          <p className="text-sm text-muted">MP4 keeps any sound and is much smaller; GIF plays everywhere images do.</p>
         </div>
-        <Button variant="primary" size="lg" className="w-full" disabled={!box || busy} onClick={run}>
+        <Button variant="primary" size="lg" className="w-full" disabled={busy} onClick={run}>
           {busy ? "Cropping…" : "Crop & download"}
         </Button>
-        {error && <p role="alert" className="text-sm font-medium text-danger">{error}</p>}
+        {error && <ErrorMessage>{error}</ErrorMessage>}
       </Card>
     </div>
   );

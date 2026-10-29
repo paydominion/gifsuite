@@ -44,10 +44,18 @@ const COLUMNS = `
 
 const db = () => bindings().DB;
 
+/**
+ * Private grabs are stored under a key scoped to the grabbing browser, "p:<owner>:<key>", so a
+ * stranger grabbing the same link gets their own copy instead of finding someone's private GIF.
+ */
+export const privateGrabKey = (key: string, ownerKeyHash: string) => `p:${ownerKeyHash.slice(0, 16)}:${key}`;
+const unscopedKey = (key: string) => key.replace(/^p:[0-9a-f]{16}:/, "");
+
 function toGif(row: Record<string, unknown> | null): Gif | null {
   if (!row) return null;
   return {
     ...(row as Omit<Gif, "hasAudio" | "hidden" | "tags" | "isPublic" | "nsfw">),
+    tweetId: unscopedKey(row.tweetId as string),
     hasAudio: row.hasAudio === 1,
     hidden: row.hidden === 1,
     isPublic: row.isPublic === 1,
@@ -66,13 +74,15 @@ export async function getGif(id: string): Promise<Gif | null> {
   return toGif(await db().prepare(`SELECT ${COLUMNS} FROM gifs WHERE id = ?`).bind(id).first());
 }
 
-export async function findGifByTweet(tweetId: string, mediaIndex: number): Promise<Gif | null> {
-  return toGif(
-    await db()
-      .prepare(`SELECT ${COLUMNS} FROM gifs WHERE tweet_id = ? AND media_index = ?`)
-      .bind(tweetId, mediaIndex)
-      .first(),
-  );
+/** The GIF stored under this key, and the hash of the browser that grabbed it. */
+export async function findGifByTweet(tweetId: string, mediaIndex: number): Promise<{ gif: Gif; ownerKeyHash: string | null } | null> {
+  const row = await db()
+    .prepare(`SELECT ${COLUMNS}, owner_key_hash AS ownerKeyHash FROM gifs WHERE tweet_id = ? AND media_index = ?`)
+    .bind(tweetId, mediaIndex)
+    .first<Record<string, unknown>>();
+  if (!row) return null;
+  const { ownerKeyHash, ...rest } = row;
+  return { gif: toGif(rest)!, ownerKeyHash: (ownerKeyHash as string | null) ?? null };
 }
 
 /**
@@ -137,8 +147,12 @@ export async function setNsfw(id: string, nsfw: boolean): Promise<boolean> {
   return meta.changes > 0;
 }
 
+/** Restoring (hidden = false) also marks the reports so far as reviewed: only newer ones count again. */
 export async function setHidden(id: string, hidden: boolean): Promise<boolean> {
-  const { meta } = await db().prepare(`UPDATE gifs SET hidden = ? WHERE id = ?`).bind(hidden ? 1 : 0, id).run();
+  const stmt = hidden
+    ? db().prepare(`UPDATE gifs SET hidden = 1 WHERE id = ?`).bind(id)
+    : db().prepare(`UPDATE gifs SET hidden = 0, reports_reviewed_at = ? WHERE id = ?`).bind(Date.now(), id);
+  const { meta } = await stmt.run();
   return meta.changes > 0;
 }
 
@@ -151,7 +165,10 @@ export async function recordEvent(gifId: string, type: EventType, detail?: strin
 
 export async function countDistinctReporters(gifId: string): Promise<number> {
   const row = await db()
-    .prepare(`SELECT COUNT(DISTINCT visitor) AS n FROM events WHERE gif_id = ? AND type = 'report'`)
+    .prepare(
+      `SELECT COUNT(DISTINCT e.visitor) AS n FROM events e JOIN gifs g ON g.id = e.gif_id
+       WHERE e.gif_id = ? AND e.type = 'report' AND e.created_at > g.reports_reviewed_at`,
+    )
     .bind(gifId)
     .first<{ n: number }>();
   return row?.n ?? 0;

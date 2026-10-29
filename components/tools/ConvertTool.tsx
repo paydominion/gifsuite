@@ -3,10 +3,11 @@
 import { humanFetch } from "@/lib/human";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { ErrorMessage } from "@/components/ui/Alert";
 import { Card, SectionLabel } from "@/components/ui/Card";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { Segmented } from "@/components/ui/Segmented";
-import { Preview, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs, revealResult } from "./shared";
+import { FileHeader, Preview, ResultPanel, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs } from "./shared";
 
 type Format = "gif" | "mp4" | "webm" | "webp";
 type Quality = "low" | "medium" | "high";
@@ -23,8 +24,8 @@ const QUALITIES: { value: Quality; label: string }[] = [
   { value: "high", label: "High" },
 ];
 const QUALITY_HINT: Record<Quality, string> = {
-  low: "320px · 10fps. Smallest, for quick sends.",
-  medium: "480px · 15fps. Balanced size and quality.",
+  low: "320px wide, 10 frames a second. Smallest, for quick sends.",
+  medium: "480px wide, 15 frames a second. Balanced size and quality.",
   high: "Original size and frame rate. Best quality, biggest file.",
 };
 
@@ -62,7 +63,8 @@ export function ConvertTool({ maxUploadMb, initialFormat = "mp4" }: { maxUploadM
   );
 
   async function run() {
-    if (!file) return;
+    // The button stays enabled and explains what's missing, rather than greying out with no reason.
+    if (!file) return setError("Choose a file to convert first.");
     setBusy(true);
     setError(null);
     setResult(null);
@@ -74,7 +76,7 @@ export function ConvertTool({ maxUploadMb, initialFormat = "mp4" }: { maxUploadM
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error ?? "Something went wrong converting that file.");
+        throw new Error(data.error ?? "Couldn't convert that file. Try again, or try a different file.");
       }
       const blob = await res.blob();
       const next = { url: URL.createObjectURL(blob), name: `${baseName(file.file)}-${quality}.${format}`, size: blob.size, format };
@@ -98,48 +100,33 @@ export function ConvertTool({ maxUploadMb, initialFormat = "mp4" }: { maxUploadM
             disabled={busy}
           />
         ) : (
-          <Card className="space-y-3 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate font-semibold">{file.file.name}</p>
-                <p className="text-xs text-muted">{formatBytes(file.file.size)}</p>
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                disabled={busy}
-                onClick={() => {
-                  setFile(null);
-                  setResult(null);
-                  setError(null);
-                }}
-              >
-                Choose another
-              </Button>
-            </div>
+          <Card className="space-y-4 p-6">
+            <FileHeader
+              name={file.file.name}
+              details={formatBytes(file.file.size)}
+              busy={busy}
+              onReset={() => {
+                setFile(null);
+                setResult(null);
+                setError(null);
+              }}
+            />
             <Preview url={file.url} isVideo={isVideoFile(file.file)} label="Your file" />
           </Card>
         )}
 
         {result && (
-          <Card ref={revealResult} className="scroll-mt-20 space-y-3 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <SectionLabel>Result</SectionLabel>
-                <p role="status" className="mt-1 truncate text-sm">
-                  Saved {result.name} ({formatBytes(result.size)})
-                </p>
-              </div>
-              <Button size="sm" variant="secondary" onClick={() => saveAs(result.url, result.name)}>
-                Download again
-              </Button>
-            </div>
-            <Preview url={result.url} isVideo={result.format === "mp4" || result.format === "webm"} label="Converted file" />
-          </Card>
+          <ResultPanel
+            name={result.name}
+            bytes={result.size}
+            url={result.url}
+            isVideo={result.format === "mp4" || result.format === "webm"}
+            label="Converted file"
+          />
         )}
       </div>
 
-      <Card className="space-y-5 p-5 lg:sticky lg:top-20">
+      <Card className="space-y-6 p-6 lg:sticky lg:top-20">
         <div className="space-y-2">
           <SectionLabel>Convert to</SectionLabel>
           <Segmented label="Format" options={FORMATS} value={format} onChange={setFormat} disabled={busy} />
@@ -147,12 +134,12 @@ export function ConvertTool({ maxUploadMb, initialFormat = "mp4" }: { maxUploadM
         <div className="space-y-2">
           <SectionLabel>Quality</SectionLabel>
           <Segmented label="Quality" options={QUALITIES} value={quality} onChange={setQuality} disabled={busy} />
-          <p className="text-xs text-muted">{QUALITY_HINT[quality]}</p>
+          <p className="text-sm text-muted">{QUALITY_HINT[quality]}</p>
         </div>
-        <Button variant="primary" size="lg" className="w-full" disabled={!file || busy} onClick={run}>
+        <Button variant="primary" size="lg" className="w-full" disabled={busy} onClick={run}>
           {busy ? "Converting…" : "Convert & download"}
         </Button>
-        {error && <p role="alert" className="text-sm font-medium text-danger">{error}</p>}
+        {error && <ErrorMessage>{error}</ErrorMessage>}
       </Card>
     </div>
   );

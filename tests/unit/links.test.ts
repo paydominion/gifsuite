@@ -89,6 +89,12 @@ describe("processor helpers for links", () => {
     expect(args.slice(-2)).toEqual(["--", "https://giphy.com/gifs/x"]);
   });
 
+  it("sends yt-dlp through the public-only proxy, with its own downloader", () => {
+    const args = ytdlpDownloadArgs("https://giphy.com/gifs/x", "/tmp/dl.%(ext)s", 1000, "http://127.0.0.1:5555");
+    expect(args.slice(0, 2)).toEqual(["--proxy", "http://127.0.0.1:5555"]);
+    expect(args.slice(args.indexOf("--downloader"), args.indexOf("--downloader") + 2)).toEqual(["--downloader", "native"]);
+  });
+
   it.each([
     ["ERROR: Unsupported URL: https://a.com", 422],
     ["ERROR: File is larger than max-filesize", 413],

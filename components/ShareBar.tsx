@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { track } from "@/lib/track";
 import { Button } from "@/components/ui/Button";
-import { Textarea } from "@/components/ui/Field";
+import { FieldLabel, Textarea } from "@/components/ui/Field";
 
 type Props = { gifId: string; authorHandle: string; pageUrl: string; fromX: boolean };
 type Origin = { status: "checking" } | { status: "available"; mediaUrl: string } | { status: "gone" };
@@ -49,18 +49,12 @@ function XOriginalShare({ gifId, authorHandle, pageUrl }: Omit<Props, "fromX">) 
         </p>
       ) : (
         <>
-          <Textarea
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-            maxLength={260}
-            rows={2}
-            placeholder="Write your caption…"
-          />
-          <Button onClick={postOriginalOnX} disabled={origin.status !== "available"} variant="primary" size="lg" className="w-full">
-            {origin.status === "available" ? "Post on X" : "Checking the original post…"}
+          <CaptionField gifId={gifId} value={caption} onChange={setCaption} />
+          <Button onClick={postOriginalOnX} disabled={origin.status !== "available"} variant="secondary" size="lg" className="w-full">
+            {origin.status === "available" ? "Post on X" : "Checking the post…"}
           </Button>
           {origin.status === "available" && (
-            <p className="text-xs text-muted">
+            <p className="text-sm text-muted">
               Plays the original GIF in your post, credited &ldquo;From @{authorHandle}&rdquo;. Nothing to upload.
             </p>
           )}
@@ -84,12 +78,23 @@ function LinkShare({ gifId, pageUrl }: { gifId: string; pageUrl: string }) {
 
   return (
     <div className="space-y-3">
-      <Textarea value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={260} rows={2} placeholder="Write your caption…" />
-      <Button onClick={postLinkOnX} variant="primary" size="lg" className="w-full">
+      <CaptionField gifId={gifId} value={caption} onChange={setCaption} />
+      <Button onClick={postLinkOnX} variant="secondary" size="lg" className="w-full">
         Post on X
       </Button>
-      <p className="text-xs text-muted">Shares a link to this GIF. To have it play inside your post, download it and attach it.</p>
+      <p className="text-sm text-muted">Shares a link to this GIF. To have it play inside your post, download it and attach it.</p>
       <CopyLink gifId={gifId} pageUrl={pageUrl} />
+    </div>
+  );
+}
+
+/** The post's caption: a visible label instead of placeholder text, marked optional. */
+function CaptionField({ gifId, value, onChange }: { gifId: string; value: string; onChange: (v: string) => void }) {
+  const id = `caption-${gifId}`;
+  return (
+    <div className="space-y-2">
+      <FieldLabel htmlFor={id} optional>Caption</FieldLabel>
+      <Textarea id={id} value={value} onChange={(e) => onChange(e.target.value)} maxLength={260} rows={2} />
     </div>
   );
 }
@@ -100,13 +105,13 @@ function CopyLink({ gifId, pageUrl }: { gifId: string; pageUrl: string }) {
   async function copyLink() {
     await navigator.clipboard.writeText(pageUrl);
     track(gifId, "share", "copy-link");
-    setStatus("Link copied!");
+    setStatus("Link copied");
     setTimeout(() => setStatus(null), 2000);
   }
 
   return (
     <>
-      <Button onClick={copyLink} variant="ghost" size="sm">
+      <Button onClick={copyLink} variant="tertiary" size="sm">
         Copy link to this page
       </Button>
       {status && <p role="status" className="text-sm text-muted">{status}</p>}

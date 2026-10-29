@@ -17,18 +17,20 @@ export default function ToolsPage() {
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">All tools</h1>
         <p className="text-muted">One place for everything GIF. Free, in your browser, with nothing to install.</p>
       </header>
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {TOOLS.map((tool) => {
           const body = (
             <>
               <div className="flex items-center justify-between gap-3">
                 <h2 className="flex items-center gap-2.5 font-semibold">
-                  <span className="grid size-9 place-items-center rounded-lg bg-panel text-accent">
+                  {/* Yellow only on tools you can open. */}
+                  <span className={`grid size-9 place-items-center rounded-lg bg-panel ${tool.status === "live" ? "text-accent" : "text-muted"}`}>
                     <ToolIcon tool={tool.slug} />
                   </span>
                   {tool.name}
                 </h2>
-                {tool.status === "live" ? <Badge tone="accent">Live</Badge> : <Badge>Coming soon</Badge>}
+                {/* Only the exception is labelled: every card you can open is live. */}
+                {tool.status === "soon" && <Badge>Coming soon</Badge>}
               </div>
               <p className="mt-1.5 text-sm text-muted">{tool.description}</p>
             </>
@@ -36,11 +38,11 @@ export default function ToolsPage() {
           return (
             <li key={tool.slug}>
               {tool.status === "live" ? (
-                <Link href={tool.href} className={`${cardClass} dots-corner block h-full p-5 transition-colors hover:border-accent`}>
+                <Link href={tool.href} className={`${cardClass} dots-corner block h-full p-6 transition-colors hover:border-accent`}>
                   {body}
                 </Link>
               ) : (
-                <div aria-disabled className={`${cardClass} h-full p-5 opacity-70`}>{body}</div>
+                <div className={`${cardClass} h-full p-6`}>{body}</div>
               )}
             </li>
           );

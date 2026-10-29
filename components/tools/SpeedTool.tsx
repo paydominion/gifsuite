@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { ErrorMessage } from "@/components/ui/Alert";
 import { Card, SectionLabel } from "@/components/ui/Card";
 import { Segmented } from "@/components/ui/Segmented";
 import { isVideoFile } from "./shared";
@@ -45,6 +46,15 @@ export function SpeedTool({ maxUploadMb, initialDirection, initialFormat }: { ma
   const outMs = info ? (info.durationMs / Number(speed)) * (direction === "boomerang" ? 2 : 1) : 0;
   const tooLongToReverse = !!info && direction !== "forward" && info.durationMs > MAX_REVERSE_MS;
   const tooLong = outMs > 60_000;
+  const [missing, setMissing] = useState<string | null>(null);
+
+  // The button stays enabled; pressing it too early says what's missing instead.
+  function apply() {
+    if (!clip) return setMissing("Choose a GIF or video first.");
+    if (!info || tooLongToReverse || tooLong) return;
+    setMissing(null);
+    run(clip, { speed: Number(speed), direction, format });
+  }
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
@@ -53,7 +63,7 @@ export function SpeedTool({ maxUploadMb, initialDirection, initialFormat }: { ma
         <ResultCard result={result} />
       </div>
 
-      <Card className="space-y-5 p-5 lg:sticky lg:top-20">
+      <Card className="space-y-6 p-6 lg:sticky lg:top-20">
         <div className="space-y-2">
           <SectionLabel>Speed</SectionLabel>
           <Segmented label="Speed" options={SPEEDS} value={speed} onChange={(v) => { setSpeed(v); clearResult(); }} disabled={busy} columns={4} />
@@ -61,26 +71,20 @@ export function SpeedTool({ maxUploadMb, initialDirection, initialFormat }: { ma
         <div className="space-y-2">
           <SectionLabel>Direction</SectionLabel>
           <Segmented label="Direction" options={DIRECTIONS} value={direction} onChange={(v) => { setDirection(v); clearResult(); }} disabled={busy} />
-          <p className="text-xs text-muted">{HINT[direction]}{clip?.video && direction === "forward" ? " The preview plays at the new speed." : ""}</p>
+          <p className="text-sm text-muted">{HINT[direction]}{clip?.video && direction === "forward" ? " The preview plays at the new speed." : ""}</p>
         </div>
         <div className="space-y-2">
           <SectionLabel>Save as</SectionLabel>
           <Segmented label="Format" options={EDIT_FORMATS} value={format} onChange={setFormat} disabled={busy} />
-          <p className="text-xs text-muted">{format === "mp4" ? "MP4 keeps any sound when playing forwards, at the new speed." : "GIF plays everywhere images do."}</p>
+          <p className="text-sm text-muted">{format === "mp4" ? "MP4 keeps any sound when playing forwards, at the new speed." : "GIF plays everywhere images do."}</p>
         </div>
         {info && <p className="text-sm">New length: <span className="font-semibold tabular-nums">{seconds(outMs)}</span></p>}
-        {tooLongToReverse && <p className="text-sm text-danger">Reverse and boomerang work on clips up to 20 seconds. Use Trim first.</p>}
-        {!tooLongToReverse && tooLong && <p className="text-sm text-danger">That would be longer than 60 seconds. Pick a faster speed or trim it first.</p>}
-        <Button
-          variant="primary"
-          size="lg"
-          className="w-full"
-          disabled={!clip || !info || busy || tooLongToReverse || tooLong}
-          onClick={() => clip && run(clip, { speed: Number(speed), direction, format })}
-        >
-          {busy ? "Working…" : "Apply & download"}
+        {tooLongToReverse && <ErrorMessage>Reverse and boomerang work on clips up to 20 seconds. Trim the clip first.</ErrorMessage>}
+        {!tooLongToReverse && tooLong && <ErrorMessage>That would be longer than 60 seconds. Pick a faster speed or trim the clip first.</ErrorMessage>}
+        <Button variant="primary" size="lg" className="w-full" disabled={busy} onClick={apply}>
+          {busy ? "Changing speed…" : "Change speed & download"}
         </Button>
-        {(error || clipError) && <p role="alert" className="text-sm font-medium text-danger">{error ?? clipError}</p>}
+        {(error ?? clipError ?? (!clip && missing)) && <ErrorMessage>{error ?? clipError ?? missing}</ErrorMessage>}
       </Card>
     </div>
   );

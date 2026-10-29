@@ -2,10 +2,9 @@
 
 import { humanFetch } from "@/lib/human";
 import { useCallback, useEffect, useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { Card, SectionLabel } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
 import { Dropzone } from "@/components/ui/Dropzone";
-import { Preview, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, revealResult, saveAs } from "./shared";
+import { FileHeader, ResultPanel, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs } from "./shared";
 
 /** Pieces shared by the Trim, Speed & reverse and Captions tools, which all call POST /api/edit. */
 
@@ -86,7 +85,7 @@ export function useEditRun(tool: "trim" | "speed" | "captions") {
       const res = await humanFetch(`/api/edit?tool=${tool}`, { method: "POST", body: form });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error ?? "Something went wrong with that file.");
+        throw new Error(data.error ?? "Couldn't edit that file. Try again, or try a different file.");
       }
       const blob = await res.blob();
       const suffix = { trim: "trimmed", speed: "speed", captions: "captioned" }[tool];
@@ -130,19 +129,13 @@ export function ClipCard({
     return <Dropzone accept={UPLOAD_ACCEPT} hint={`GIF, MP4, MOV or WebM, up to ${maxUploadMb} MB. Your file isn't stored.`} onFile={onChoose} disabled={busy} />;
   }
   return (
-    <Card className="space-y-3 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate font-semibold">{clip.file.name}</p>
-          <p className="text-xs text-muted">
-            {formatBytes(clip.file.size)}
-            {info && ` · ${info.width}×${info.height} · ${seconds(info.durationMs)}`}
-          </p>
-        </div>
-        <Button size="sm" variant="ghost" disabled={busy} onClick={onReset}>
-          Choose another
-        </Button>
-      </div>
+    <Card className="space-y-4 p-6">
+      <FileHeader
+        name={clip.file.name}
+        details={`${formatBytes(clip.file.size)}${info ? ` · ${info.width}×${info.height} · ${seconds(info.durationMs)}` : ""}`}
+        busy={busy}
+        onReset={onReset}
+      />
       <div className="relative overflow-hidden rounded-xl bg-panel">
         {clip.video ? (
           <video
@@ -167,20 +160,5 @@ export function ClipCard({
 
 export function ResultCard({ result }: { result: Result | null }) {
   if (!result) return null;
-  return (
-    <Card ref={revealResult} className="scroll-mt-20 space-y-3 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <SectionLabel>Result</SectionLabel>
-          <p role="status" className="mt-1 truncate text-sm">
-            Saved {result.name} ({formatBytes(result.bytes)})
-          </p>
-        </div>
-        <Button size="sm" variant="secondary" onClick={() => saveAs(result.url, result.name)}>
-          Download again
-        </Button>
-      </div>
-      <Preview url={result.url} isVideo={result.format === "mp4"} label="Edited file" />
-    </Card>
-  );
+  return <ResultPanel name={result.name} bytes={result.bytes} url={result.url} isVideo={result.format === "mp4"} label="Edited file" />;
 }

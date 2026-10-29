@@ -90,6 +90,7 @@ test.describe("grab from any link", () => {
     "http://[::1]:3298/files/odd.gif",
     "http://10.0.0.1/cat.gif",
     `${SITE}/redirect-private`, // a public-looking link that redirects inward
+    `${SITE}/og-private`, // a page whose preview video is on a private address (must not reach yt-dlp)
   ]) {
     test(`refuses the private address ${link}`, async ({ request }) => {
       const res = await grab(request, link);

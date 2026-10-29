@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dataPoint, deviceOf, siteOf } from "@/lib/analytics";
-import { crawlerOf, isPageView, visitSource, visitorId } from "@/lib/analytics-core";
+import { crawlerOf, isPageView, reporterId, visitSource, visitorId } from "@/lib/analytics-core";
 
 describe("dataPoint", () => {
   const ctx = { country: "NG", visitor: "abc123", device: "ios" };
@@ -105,5 +105,22 @@ describe("page views", () => {
     expect(visitorId("1.2.3.4", "ua", "salt")).toBe(a);
     expect(visitorId("1.2.3.5", "ua", "salt")).not.toBe(a);
     expect(a).not.toContain("1.2.3.4");
+  });
+});
+
+describe("reporterId", () => {
+  it("is the same for one network whatever the browser or day, and differs between networks", () => {
+    expect(reporterId("203.0.113.7", "s")).toBe(reporterId("203.0.113.200", "s"));
+    expect(reporterId("203.0.113.7", "s")).not.toBe(reporterId("203.0.114.7", "s"));
+    expect(reporterId("2001:db8:1:2:aaaa::1", "s")).toBe(reporterId("2001:db8:1:2:bbbb::9", "s"));
+    expect(reporterId("2001:db8:1:2::1", "s")).not.toBe(reporterId("2001:db8:1:3::1", "s"));
+    expect(reporterId("203.0.113.7", "s")).not.toBe(reporterId("203.0.113.7", "other-salt"));
+  });
+});
+
+describe("reporterId with shortened IPv6", () => {
+  it("treats addresses in the same /64 as one network however they're written", () => {
+    expect(reporterId("2001:db8::5", "s")).toBe(reporterId("2001:0db8:0:0:1::9", "s"));
+    expect(reporterId("2001:db8::5", "s")).not.toBe(reporterId("2001:db8:0:1::5", "s"));
   });
 });

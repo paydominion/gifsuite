@@ -39,7 +39,7 @@ export function ToolsMenu() {
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold text-muted transition-colors hover:bg-panel hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-expanded:bg-panel aria-expanded:text-fg"
+        className="inline-flex h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold text-muted transition-colors hover:bg-panel hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-expanded:bg-panel aria-expanded:text-fg"
       >
         Tools
         <svg aria-hidden width="12" height="12" viewBox="0 0 12 12" className={`transition-transform ${open ? "rotate-180" : ""}`}>
@@ -50,7 +50,7 @@ export function ToolsMenu() {
       {open && (
         <div
           id={panelId}
-          className="absolute left-0 top-full z-50 mt-2 w-[min(92vw,26rem)] rounded-2xl border border-line bg-surface p-2 shadow-pop"
+          className="absolute left-0 top-full z-50 mt-2 w-[min(92vw,26rem)] rounded-2xl border border-line bg-panel p-2 shadow-pop"
         >
           <ul className="grid gap-0.5">
             {TOOLS.map((tool) => (
@@ -58,13 +58,13 @@ export function ToolsMenu() {
                 <Link
                   href={tool.status === "live" ? tool.href : "/tools"}
                   onClick={() => setOpen(false)}
-                  className="flex items-start justify-between gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-panel focus-visible:bg-panel focus-visible:outline-none"
+                  className="flex items-start justify-between gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-line focus-visible:bg-line focus-visible:outline-none"
                 >
                   <span>
                     <span className="block text-sm font-semibold">{tool.name}</span>
-                    <span className="block text-xs text-muted">{tool.description}</span>
+                    <span className="block text-sm text-muted">{tool.description}</span>
                   </span>
-                  {tool.status === "soon" && <Badge>Soon</Badge>}
+                  {tool.status === "soon" && <Badge>Coming soon</Badge>}
                 </Link>
               </li>
             ))}
@@ -72,9 +72,9 @@ export function ToolsMenu() {
           <Link
             href="/tools"
             onClick={() => setOpen(false)}
-            className="mt-1 block rounded-xl px-3 py-2 text-center text-xs font-semibold text-muted hover:bg-panel hover:text-fg"
+            className="mt-1 flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-accent underline underline-offset-4 hover:bg-line"
           >
-            See all tools →
+            See all tools
           </Link>
         </div>
       )}

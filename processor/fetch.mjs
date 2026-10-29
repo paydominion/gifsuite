@@ -6,8 +6,11 @@
 //
 // Links come from visitors, so this refuses to reach private or internal addresses (SSRF): every
 // hostname is resolved and checked, and redirects are followed by hand so each hop is checked too.
+// yt-dlp follows links on its own, so it may only go out through egressProxy(), which applies the
+// same check to every connection it makes and connects to the address it checked.
 import dns from "node:dns/promises";
 import fs from "node:fs";
+import http from "node:http";
 import net from "node:net";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
@@ -42,12 +45,76 @@ export async function assertPublicUrl(url) {
   if (url.protocol !== "https:" && url.protocol !== "http:") throw new FetchError(400, "only web links");
   if (url.username || url.password) throw new FetchError(400, "no credentials in links");
   if (ALLOWED_PRIVATE.has(url.host)) return;
-  const host = url.hostname.replace(/^\[|\]$/g, "");
+  await checkedAddress(url.hostname, url.port || (url.protocol === "https:" ? "443" : "80"));
+}
+
+/**
+ * The address to connect to for host:port, once it's known to be public. Throws a FetchError(400)
+ * for private addresses and for ports other than 80 and 443 (except the test sites).
+ */
+async function checkedAddress(hostname, port) {
+  const host = hostname.replace(/^\[|\]$/g, "");
+  const hostPort = `${host.includes(":") ? `[${host}]` : host}:${port}`;
+  if (ALLOWED_PRIVATE.has(hostPort)) return host;
   if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal")) throw new FetchError(400, "private address");
   const addresses = net.isIP(host) ? [{ address: host }] : await dns.lookup(host, { all: true }).catch(() => {
     throw new FetchError(404, "site not found");
   });
   if (addresses.length === 0 || addresses.some((a) => isPrivateAddress(a.address))) throw new FetchError(400, "private address");
+  if (port !== "80" && port !== "443") throw new FetchError(400, "only web ports");
+  return addresses[0].address;
+}
+
+let proxy;
+/**
+ * A local HTTP proxy for yt-dlp (--proxy): plain http:// requests and https:// tunnels (CONNECT)
+ * both go to an address checkedAddress allowed, so the page, its redirects, the media and any
+ * HLS segments are all held to the public-only rule. Resolves to the proxy's URL.
+ */
+export function egressProxy() {
+  proxy ??= new Promise((resolve, reject) => {
+    const server = http.createServer(async (req, res) => {
+      try {
+        const target = new URL(req.url ?? "");
+        if (target.protocol !== "http:") throw new FetchError(400, "only web links");
+        const address = await checkedAddress(target.hostname, target.port || "80");
+        const headers = { ...req.headers, host: target.host };
+        delete headers["proxy-connection"];
+        delete headers["proxy-authorization"];
+        const upstream = http.request(
+          { host: address, port: Number(target.port || 80), method: req.method, path: `${target.pathname}${target.search}`, headers, setHost: false },
+          (up) => {
+            res.writeHead(up.statusCode ?? 502, up.headers);
+            up.pipe(res);
+          },
+        );
+        upstream.on("error", () => res.destroy());
+        req.pipe(upstream);
+      } catch {
+        res.writeHead(403).end();
+      }
+    });
+    server.on("connect", async (req, socket, head) => {
+      socket.on("error", () => {});
+      try {
+        const target = new URL(`http://${req.url}`);
+        const address = await checkedAddress(target.hostname, target.port || "443");
+        const upstream = net.connect(Number(target.port || 443), address, () => {
+          socket.write("HTTP/1.1 200 Connection Established\r\n\r\n");
+          if (head.length) upstream.write(head);
+          upstream.pipe(socket);
+          socket.pipe(upstream);
+        });
+        upstream.on("error", () => socket.destroy());
+        socket.on("close", () => upstream.destroy());
+      } catch {
+        socket.end("HTTP/1.1 403 Forbidden\r\n\r\n");
+      }
+    });
+    server.on("error", reject);
+    server.listen(0, "127.0.0.1", () => resolve(`http://127.0.0.1:${server.address().port}`));
+  });
+  return proxy;
 }
 
 /** GET with redirects followed by hand (each hop checked), at most 5. */
@@ -83,21 +150,50 @@ async function saveCapped(res, file, maxBytes) {
   await pipeline(Readable.fromWeb(res.body), cap, fs.createWriteStream(file));
 }
 
-function run(bin, args, timeoutMs, spawn) {
+/** Total size of the files in `dir`. */
+function dirBytes(dir) {
+  let total = 0;
+  for (const f of fs.readdirSync(dir)) total += fs.statSync(path.join(dir, f), { throwIfNoEntry: false })?.size ?? 0;
+  return total;
+}
+
+/**
+ * Runs yt-dlp. Its --max-filesize can't stop downloads that don't say their size (chunked, HLS), so
+ * the files it writes in `dir` are watched and it's killed once they pass maxBytes (tooLarge).
+ * Also killed when the visitor gives up (signal).
+ */
+function run(bin, args, timeoutMs, spawn, { dir, maxBytes, signal } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(bin, args, { stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";
-    child.stdout.on("data", (d) => (stdout += d));
+    let tooLarge = false;
+    child.stdout.on("data", (d) => (stdout = (stdout + d).slice(-200_000)));
     child.stderr.on("data", (d) => (stderr = (stderr + d).slice(-4000)));
-    const timer = setTimeout(() => child.kill("SIGKILL"), timeoutMs);
-    child.on("error", (err) => {
+    const kill = () => child.kill("SIGKILL");
+    const timer = setTimeout(kill, timeoutMs);
+    const watch = dir && maxBytes
+      ? setInterval(() => {
+        // Room for yt-dlp's audio and video parts sitting side by side before it merges them.
+        if (dirBytes(dir) > maxBytes * 2) {
+          tooLarge = true;
+          kill();
+        }
+      }, 200)
+      : null;
+    signal?.addEventListener("abort", kill, { once: true });
+    const done = () => {
       clearTimeout(timer);
+      if (watch) clearInterval(watch);
+      signal?.removeEventListener("abort", kill);
+    };
+    child.on("error", (err) => {
+      done();
       reject(err);
     });
     child.on("close", (code) => {
-      clearTimeout(timer);
-      resolve({ code, stdout, stderr });
+      done();
+      resolve({ code, stdout, stderr, tooLarge });
     });
   });
 }
@@ -129,7 +225,9 @@ async function firstMedia(candidates, file, maxBytes) {
       await saveCapped(res, file, maxBytes);
       return finalUrl.href;
     } catch (err) {
-      if (err instanceof FetchError && err.status === 413) throw err;
+      // Too big, or pointing at a private address: the grab stops here. A private address must not
+      // fall through to yt-dlp, which would be asked to fetch the same page.
+      if (err instanceof FetchError && (err.status === 413 || err.status === 400)) throw err;
     }
   }
   return null;
@@ -139,7 +237,7 @@ async function firstMedia(candidates, file, maxBytes) {
  * Downloads the media behind `link` into `dir`. Returns the file, its kind (gif/mov/matroska) and
  * what the source says about it.
  */
-export async function fetchMedia(link, dir, { maxBytes, ytdlp, spawn }) {
+export async function fetchMedia(link, dir, { maxBytes, ytdlp, spawn, signal }) {
   const url = new URL(link);
   const { res, finalUrl } = await get(url);
   if (res.status === 404 || res.status === 410) {
@@ -175,7 +273,10 @@ export async function fetchMedia(link, dir, { maxBytes, ytdlp, spawn }) {
 
   if (!file) {
     // Nothing in the page's tags: let yt-dlp find the GIF or video.
-    const { code, stdout, stderr } = await run(ytdlp, ytdlpDownloadArgs(link, path.join(dir, "dl.%(ext)s"), maxBytes), 120_000, spawn);
+    const args = ytdlpDownloadArgs(link, path.join(dir, "dl.%(ext)s"), maxBytes, await egressProxy());
+    const { code, stdout, stderr, tooLarge } = await run(ytdlp, args, 120_000, spawn, { dir, maxBytes, signal });
+    if (tooLarge) throw new FetchError(413, "too large");
+    if (signal?.aborted) throw new FetchError(499, "cancelled");
     if (code !== 0) {
       const { status, message } = ytdlpFailure(stderr);
       console.warn(`[fetch] yt-dlp could not get ${url.hostname}: ${stderr.trim().split("\n").pop()?.slice(0, 200)}`);
@@ -184,8 +285,9 @@ export async function fetchMedia(link, dir, { maxBytes, ytdlp, spawn }) {
     const json = JSON.parse(stdout.trim().split("\n").pop() ?? "{}");
     file = fs.readdirSync(dir).map((f) => path.join(dir, f)).find((f) => path.basename(f).startsWith("dl."));
     if (!file) throw new FetchError(422, "no media");
+    if (fs.statSync(file).size > maxBytes) throw new FetchError(413, "too large");
     // yt-dlp sometimes "downloads" a web page that only claimed to be a video.
-    if (!sniffMedia(fs.readFileSync(file).subarray(0, 16))) throw new FetchError(422, "no media");
+    if (!sniffMedia(readHead(file))) throw new FetchError(422, "no media");
     info = {
       kind: "page",
       title: json.title ?? json.fulltitle ?? "",
@@ -198,12 +300,20 @@ export async function fetchMedia(link, dir, { maxBytes, ytdlp, spawn }) {
     };
   }
 
-  const head = Buffer.alloc(16);
-  const fd = fs.openSync(file, "r");
-  fs.readSync(fd, head, 0, 16, 0);
-  fs.closeSync(fd);
-  const kind = sniffMedia(head);
+  const kind = sniffMedia(readHead(file));
   if (kind === "webp") throw new FetchError(415, "animated webp");
   if (!kind) throw new FetchError(415, "not a gif or video");
   return { file, input: kind, info };
+}
+
+/** The first 16 bytes of a file, enough to tell what it is. */
+function readHead(file) {
+  const head = Buffer.alloc(16);
+  const fd = fs.openSync(file, "r");
+  try {
+    fs.readSync(fd, head, 0, 16, 0);
+  } finally {
+    fs.closeSync(fd);
+  }
+  return head;
 }

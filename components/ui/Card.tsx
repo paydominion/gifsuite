@@ -6,19 +6,16 @@ export function Card({ className = "", ...props }: ComponentProps<"div">) {
   return <div className={`${cardClass} ${className}`} {...props} />;
 }
 
-export function Badge({ tone = "neutral", children }: { tone?: "neutral" | "accent"; children: React.ReactNode }) {
-  const tones = {
-    neutral: "border-line bg-panel text-muted",
-    accent: "border-transparent bg-accent text-accent-ink",
-  };
+/** A small status label. Neutral grey and pill-shaped, so it never looks like a button. */
+export function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${tones[tone]}`}>
+    <span className="inline-flex shrink-0 items-center rounded-full border border-line px-2 py-0.5 text-xs font-semibold text-muted">
       {children}
     </span>
   );
 }
 
-/** Small uppercase label above a section of a page or panel. */
-export function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-xs font-semibold uppercase tracking-wider text-subtle">{children}</h2>;
+/** The heading of a group inside a card or panel, e.g. the label above a set of choices. */
+export function SectionLabel({ children, id }: { children: React.ReactNode; id?: string }) {
+  return <h2 id={id} className="text-base font-bold">{children}</h2>;
 }

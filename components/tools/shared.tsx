@@ -1,3 +1,6 @@
+import { Button } from "@/components/ui/Button";
+import { Card, SectionLabel } from "@/components/ui/Card";
+
 /** Pieces shared by the upload tools (convert, compress, and the ones to come). */
 
 export const UPLOAD_ACCEPT = "image/gif,video/mp4,video/quicktime,video/webm,.gif,.mp4,.mov,.m4v,.webm";
@@ -41,5 +44,51 @@ export function Preview({ url, isVideo, label }: { url: string; isVideo: boolean
         <img src={url} alt={label} className="mx-auto block max-h-80 w-auto" />
       )}
     </div>
+  );
+}
+
+/** The chosen file's name and details, with the way to swap it underneath (left-aligned, where people look). */
+export function FileHeader({ name, details, busy, onReset }: { name: string; details: string; busy: boolean; onReset: () => void }) {
+  return (
+    <div className="min-w-0">
+      <p className="truncate font-semibold">{name}</p>
+      <p className="text-sm text-muted">{details}</p>
+      <Button size="sm" variant="tertiary" disabled={busy} onClick={onReset} className="mt-1">
+        Choose another file
+      </Button>
+    </div>
+  );
+}
+
+/** The finished file: what was saved, a way to save it again, a preview, and any notes. */
+export function ResultPanel({
+  name,
+  bytes,
+  url,
+  isVideo,
+  label,
+  children,
+}: {
+  name: string;
+  bytes: number;
+  url: string;
+  isVideo: boolean;
+  label: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <Card ref={revealResult} className="scroll-mt-20 space-y-4 p-6">
+      <div className="min-w-0 space-y-2">
+        <SectionLabel>Your file is ready</SectionLabel>
+        <p role="status" className="break-words text-sm">
+          Saved {name} ({formatBytes(bytes)})
+        </p>
+        {children}
+        <Button size="sm" variant="secondary" onClick={() => saveAs(url, name)} className="mt-1">
+          Download again
+        </Button>
+      </div>
+      <Preview url={url} isVideo={isVideo} label={label} />
+    </Card>
   );
 }

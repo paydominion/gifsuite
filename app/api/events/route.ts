@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { countDistinctReporters, getGif, recordEvent, setHidden } from "@/db/gifs";
 import { logEvent } from "@/lib/analytics";
-import { clientIp, rateLimit, visitorHash } from "@/lib/request";
+import { clientIp, rateLimit, reporterHash, visitorHash } from "@/lib/request";
 import { setting } from "@/lib/cloudflare";
+import { isHuman, notHuman } from "@/lib/turnstile";
 
 const CLIENT_EVENTS = new Set(["view", "share", "report"]);
 // Browser-only happenings that aren't about one GIF: what people pick and the errors they see.
@@ -23,13 +24,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "bad event" }, { status: 400 });
   }
   if (!rateLimit(`event:${clientIp(req)}`, 120, 60_000)) return new NextResponse(null, { status: 429 });
+  const report = body.type === "report";
+  if (report) {
+    // Reports can take a GIF down, so they must come from a person on this site: browsers mark
+    // requests from other sites, and the human check stops scripts.
+    const site = req.headers.get("sec-fetch-site");
+    if (site && site !== "same-origin") return new NextResponse(null, { status: 403 });
+    if (!(await isHuman(req))) return notHuman();
+  }
   if (!(await getGif(body.gifId))) return NextResponse.json({ error: "not found" }, { status: 404 });
 
   const detail = body.detail?.slice(0, 40);
-  await recordEvent(body.gifId, body.type as "view" | "share" | "report", detail, visitorHash(req));
+  await recordEvent(body.gifId, body.type as "view" | "share" | "report", detail, report ? reporterHash(req) : visitorHash(req));
   logEvent(req, body.type as "view" | "share" | "report", { gifId: body.gifId, detail });
 
-  if (body.type === "report" && (await countDistinctReporters(body.gifId)) >= AUTO_HIDE_REPORTS()) {
+  if (report && (await countDistinctReporters(body.gifId)) >= AUTO_HIDE_REPORTS()) {
     await setHidden(body.gifId, true);
     logEvent(null, "hide", { gifId: body.gifId, outcome: "auto", detail: "reports" });
   }

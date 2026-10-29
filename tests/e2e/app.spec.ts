@@ -53,10 +53,10 @@ test("download a low-quality GIF", async ({ page, request }) => {
   await page.goto(`/g/${id}`);
 
   await page.getByRole("radio", { name: "Low" }).click();
-  await expect(page.getByText(/320px · 10fps/)).toBeVisible();
+  await expect(page.getByText(/320px wide, 10 frames a second/)).toBeVisible();
 
   const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: /GIF Works everywhere/ }).click();
+  await page.getByRole("button", { name: /Download GIF Works everywhere/ }).click();
   expect((await download).suggestedFilename()).toBe(`uiuser-${id}-low.gif`);
   await expect(page.getByRole("status")).toHaveText(new RegExp(`Saved uiuser-${id}-low\\.gif \\(\\d+ (KB|MB)\\)`));
 });
@@ -67,7 +67,7 @@ test("Post on X opens X with the original GIF and the caption", async ({ page, r
 
   const post = page.getByRole("button", { name: "Post on X" });
   await expect(post).toBeEnabled();
-  await page.getByPlaceholder("Write your caption…").fill("this is me on monday");
+  await page.getByLabel("Caption").fill("this is me on monday");
   await expect(page.getByText(/credited “From @uiuser”/)).toBeVisible();
 
   const popup = page.waitForEvent("popup");
@@ -92,7 +92,7 @@ test("copy the page link", async ({ page, context, request }) => {
   const id = await grabId(request, "115", "uiuser");
   await page.goto(`/g/${id}`);
   await page.getByRole("button", { name: "Copy link to this page" }).click();
-  await expect(page.getByText("Link copied!")).toBeVisible();
+  await expect(page.getByText("Link copied")).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(`http://localhost:3299/g/${id}`);
 });
 
@@ -113,7 +113,7 @@ test("grab from another site, then share its page on X", async ({ page, context 
   await expect(page.getByRole("link", { name: /Fake Reddit on 127\.0\.0\.1/ })).toBeVisible();
   await expect(page.locator("video")).toBeVisible();
 
-  await page.getByPlaceholder("Write your caption…").fill("found this");
+  await page.getByLabel("Caption").fill("found this");
   const popup = context.waitForEvent("page");
   await page.getByRole("button", { name: "Post on X" }).click();
   const intent = new URL((await popup).url());

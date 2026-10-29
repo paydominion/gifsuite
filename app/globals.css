@@ -5,21 +5,24 @@
    (bg-surface, text-muted, border-line…), never raw hex values. */
 
 :root {
-  /* Ink and sun: one dark theme. Yellow is the only colour; everything else is a warm grey. */
+  /* Ink and sun: one dark theme. Yellow is the only colour, and it marks what you can press or have
+     selected; everything else is a warm grey. Each grey has one job:
+       fg           text strong: headings, body, labels
+       muted        text weak: supporting text (≥ 4.5:1 on every surface)
+       line-strong  stroke strong: input, switch and dropzone borders, icons (≥ 3:1)
+       line         stroke weak: decorative card edges and dividers
+     Surfaces get lighter as they come closer: bg → surface (cards) → panel (menus, fills). */
   --bg: #111110;
   --surface: #191917;
   --panel: #21211e;
   --line: #2e2d28;
-  --line-strong: #45443c;
+  --line-strong: #8a8678;
   --fg: #f5f2e6;
-  --muted: #aaa695;
-  --subtle: #77746a;
+  --muted: #c8c4b3;
   --accent: #ffdc4a;
-  --accent-hover: #ffe600;
   --accent-ink: #111110;
   --ring: #ffe600;
-  --danger: #ff7a66;
-  --success: #b9e769;
+  --danger: #ff9b8a;
   --shadow-color: 0 0 0;
   --mark-cut: var(--bg);
 }
@@ -32,13 +35,10 @@
   --color-line-strong: var(--line-strong);
   --color-fg: var(--fg);
   --color-muted: var(--muted);
-  --color-subtle: var(--subtle);
   --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
   --color-accent-ink: var(--accent-ink);
   --color-ring: var(--ring);
   --color-danger: var(--danger);
-  --color-success: var(--success);
 
   --font-sans: var(--font-satoshi), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -55,6 +55,12 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-feature-settings: "ss01" on;
+}
+
+/* Every link, button and control shows where keyboard focus is, even ones without their own ring. */
+:where(a, button, summary, input, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 ::selection {
@@ -113,8 +119,8 @@ a.dots-corner:hover::after {
 
 /* ── Blog articles: HTML compiled from Markdown, styled with the same tokens ── */
 .prose {
-  font-size: 1.0625rem;
-  line-height: 1.75;
+  font-size: 1.125rem;
+  line-height: 1.7;
 }
 .prose > * + * {
   margin-top: 1.1em;
@@ -160,10 +166,10 @@ a.dots-corner:hover::after {
   margin-top: 0.4em;
 }
 .prose li::marker {
-  color: var(--subtle);
+  color: var(--muted);
 }
 .prose blockquote {
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--line-strong);
   padding-left: 1em;
   color: var(--muted);
 }
@@ -189,9 +195,7 @@ a.dots-corner:hover::after {
   vertical-align: top;
 }
 .prose th {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--subtle);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--fg);
 }

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { ErrorMessage } from "@/components/ui/Alert";
+import { buttonClass } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
 
 /**
@@ -17,12 +19,8 @@ export function SensitiveGate({ sensitive, poster, children }: { sensitive: bool
       <div className="relative max-w-xs space-y-3 p-6 text-center">
         <p className="text-lg font-bold">Sensitive content</p>
         <p className="text-sm text-muted">This GIF may contain nudity or other adult content. Only continue if you are 18 or older.</p>
-        <button
-          type="button"
-          onClick={() => setRevealed(true)}
-          className="min-h-11 rounded-xl border border-line-strong bg-bg/70 px-4 text-sm font-semibold hover:bg-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          Show anyway
+        <button type="button" onClick={() => setRevealed(true)} className={buttonClass({ variant: "secondary", className: "bg-bg/80" })}>
+          Show the GIF
         </button>
       </div>
     </div>
@@ -64,11 +62,7 @@ export function VisibilityToggle({ gifId, initialPublic, nsfw }: { gifId: string
   return (
     <div className="space-y-1">
       <Switch checked={isPublic} onChange={change} disabled={busy} label="Show on the public timeline" hint={hint} className="w-full" />
-      {error && (
-        <p role="alert" className="text-xs font-semibold text-danger">
-          {error}
-        </p>
-      )}
+      {error && <ErrorMessage>{error}</ErrorMessage>}
     </div>
   );
 }

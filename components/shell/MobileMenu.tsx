@@ -36,17 +36,17 @@ export function MobileMenu() {
       </button>
 
       {open && (
-        <div id={panelId} className="absolute inset-x-0 top-full max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-b border-line bg-bg px-3 pb-4 pt-2 shadow-pop">
-          <p className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-subtle">Tools</p>
+        <div id={panelId} className="absolute inset-x-0 top-full max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-b border-line bg-surface px-3 pb-4 pt-2 shadow-pop">
+          <p className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-muted">Tools</p>
           <ul>
             {TOOLS.map((tool) => (
               <li key={tool.slug}>
                 {tool.status === "live" ? (
                   <Link href={tool.href} onClick={close} className={LINK}>{tool.name}</Link>
                 ) : (
-                  <span className={`${LINK} text-subtle hover:bg-transparent`}>
+                  <span className={`${LINK} text-muted hover:bg-transparent`}>
                     {tool.name}
-                    <Badge>Soon</Badge>
+                    <Badge>Coming soon</Badge>
                   </span>
                 )}
               </li>

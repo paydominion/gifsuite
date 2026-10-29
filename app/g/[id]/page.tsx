@@ -73,46 +73,47 @@ export default async function GifPage({ params }: PageProps<"/g/[id]">) {
           </SensitiveGate>
         </div>
         {/* Each dot sits with the item after it, so a wrapped line never ends on a stray dot. */}
-        <div className="flex flex-wrap items-center gap-y-1 text-xs text-muted [&>*:not(:first-child)]:before:mx-2 [&>*:not(:first-child)]:before:content-['·']">
+        <div className="flex flex-wrap items-center gap-y-1 text-sm text-muted [&>*:not(:first-child)]:before:mx-2 [&>*:not(:first-child)]:before:content-['·']">
           {gif.source === "x" && <span>{gif.tweetLikes.toLocaleString()} likes on X</span>}
           <span>{(gif.durationMs / 1000).toFixed(1)}s</span>
           <span>{gif.width}×{gif.height}</span>
-          <a href={gif.tweetUrl} target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-fg">
-            {gif.source === "x" ? "View original post ↗" : `View on ${gif.source} ↗`}
-          </a>
         </div>
+        {/* A link is an action, not a detail: on its own line, so it never wraps after a stray dot. */}
+        <a href={gif.tweetUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-sm font-semibold text-accent underline underline-offset-4 hover:decoration-transparent">
+          {gif.source === "x" ? "View original post on X ↗" : `View on ${gif.source} ↗`}
+        </a>
       </div>
 
       <aside className="space-y-4">
-        <Card className="space-y-2 p-5">
-          <a href={gif.tweetUrl} target="_blank" rel="noopener noreferrer" className="block font-semibold hover:underline">
+        <Card className="space-y-2 p-6">
+          <a href={gif.tweetUrl} target="_blank" rel="noopener noreferrer" className="block font-semibold underline decoration-line-strong underline-offset-4 hover:decoration-fg">
             {gif.authorName}{" "}
-            <span className="font-medium text-muted">{gif.source === "x" ? `@${gif.authorHandle}` : `on ${gif.source}`}</span>
+            <span className="font-normal text-muted">{gif.source === "x" ? `@${gif.authorHandle}` : `on ${gif.source}`}</span>
           </a>
           {gif.tweetText && <p className="whitespace-pre-line text-sm text-muted">{gif.tweetText}</p>}
         </Card>
 
         {owned && (
-          <Card className="space-y-2 p-5">
-            <SectionLabel>Who sees it</SectionLabel>
+          <Card className="space-y-2 p-6">
+            <SectionLabel>Who can see it</SectionLabel>
             <VisibilityToggle gifId={id} initialPublic={gif.isPublic} nsfw={gif.nsfw} />
           </Card>
         )}
 
-        <Card className="space-y-3 p-5">
+        <Card className="space-y-4 p-6">
           <SectionLabel>Download</SectionLabel>
           <DownloadButtons gifId={id} />
         </Card>
 
-        <Card className="space-y-3 p-5">
+        <Card className="space-y-4 p-6">
           <SectionLabel>Share</SectionLabel>
           <ShareBar gifId={id} authorHandle={gif.authorHandle} pageUrl={pageUrl} fromX={gif.source === "x"} />
         </Card>
 
-        <div className="px-1">
+        {/* Low-key on purpose: rarely needed, so they don't compete with downloading. */}
+        <div className="flex flex-wrap gap-x-6 px-1">
           <ReportButton gifId={id} />
-          <span aria-hidden className="mx-2 text-xs text-subtle">·</span>
-          <a href="/copyright" className="text-xs font-medium text-subtle underline-offset-2 hover:text-fg hover:underline">
+          <a href="/copyright" className="inline-flex min-h-11 items-center text-sm text-muted underline underline-offset-2 hover:text-fg">
             Copyright takedown
           </a>
         </div>

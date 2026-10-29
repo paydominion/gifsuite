@@ -4,8 +4,9 @@ import { humanFetch } from "@/lib/human";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { ErrorMessage } from "@/components/ui/Alert";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Field";
-import { Switch } from "@/components/ui/Switch";
 
 export function GrabForm() {
   const router = useRouter();
@@ -29,7 +30,7 @@ export function GrabForm() {
         body: JSON.stringify({ url: link, public: isPublic }),
       });
       const data = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Something went wrong.");
+      if (!res.ok) throw new Error(data.error ?? "Couldn't grab that link. Check it opens in your browser, then try again.");
       router.push(`/g/${data.id}`);
     } catch (err) {
       setError((err as Error).message);
@@ -55,10 +56,11 @@ export function GrabForm() {
       }}
       className="w-full"
     >
-      <div className="rounded-2xl border border-line bg-surface p-2 text-left shadow-pop">
-        <div className="flex flex-col gap-2 sm:flex-row">
+      <div className="space-y-2 rounded-2xl border border-line bg-surface p-3 text-left shadow-pop">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           {/* Plain text, not type="url": the browser would silently refuse "x.com/…" without https://, or a
-              link pasted with words around it, both of which the server handles. */}
+              link pasted with words around it, both of which the server handles. A single field like a
+              search box, so its placeholder can stand in for a visible label (it meets 4.5:1). */}
           <Input
             type="text"
             inputMode="url"
@@ -71,31 +73,30 @@ export function GrabForm() {
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Paste a link from X, Giphy, Reddit… or any GIF"
             aria-label="GIF or post link"
-            className="min-w-0 flex-1 border-transparent hover:border-transparent"
+            className="min-w-0 sm:flex-1"
           />
-          <div className="flex gap-2">
-            <Button onClick={pasteAndGrab} disabled={busy} size="lg" variant="ghost">
-              Paste
-            </Button>
-            <Button type="submit" disabled={busy} size="lg" variant="primary" className="flex-1 sm:flex-none">
+          {/* Main action first on phones (stacked, full width), and right beside the field on computers. */}
+          <div className="flex flex-col gap-2 sm:flex-row-reverse sm:items-center">
+            <Button type="submit" disabled={busy} size="lg" variant="primary" className="w-full sm:w-auto">
               {busy ? "Grabbing…" : "Grab GIF"}
+            </Button>
+            <Button onClick={pasteAndGrab} disabled={busy} size="lg" variant="tertiary" className="self-center">
+              Paste link
             </Button>
           </div>
         </div>
-        <Switch
+        {/* A checkbox, not a switch: it only takes effect when the GIF is grabbed. */}
+        <Checkbox
           checked={isPublic}
           onChange={setIsPublic}
           disabled={busy}
           label="Show on the public timeline"
           hint={isPublic ? "It joins Latest GIFs after a quick safety check." : "Private: only people with the link can see it."}
-          className="mt-1 w-full px-2"
+          className="px-1"
         />
+        {/* Inside the dark box: on the yellow hero, red text would be unreadable. */}
+        {error && <ErrorMessage>{error}</ErrorMessage>}
       </div>
-      {error && (
-        <p role="alert" className="mx-auto mt-3 w-fit rounded-lg bg-bg px-3 py-1.5 text-sm font-semibold text-danger">
-          {error}
-        </p>
-      )}
     </form>
   );
 }

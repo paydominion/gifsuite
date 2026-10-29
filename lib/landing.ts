@@ -50,7 +50,7 @@ export const LANDINGS: Landing[] = [
     title: "Video Trimmer: trim a video online, free",
     description: "Trim a short video online: pick the start and end on a live preview and download it as MP4 or GIF. Free, no sign-up, for clips up to 60 seconds.",
     eyebrow: "Video trimmer",
-    h1: "Trim a video.",
+    h1: "Trim a video",
     subtitle: "Pick where it starts and ends, watch the preview loop just that part, and download it.",
     tool: { kind: "trim", initialFormat: "mp4" },
     steps: [
@@ -77,7 +77,7 @@ export const LANDINGS: Landing[] = [
     title: "GIF Cutter: trim a GIF to the best moment",
     description: "Cut a GIF down to the part you want: pick the start and end, preview it, and download. Free online GIF trimmer, no sign-up, nothing stored.",
     eyebrow: "GIF cutter",
-    h1: "Cut a GIF down to size.",
+    h1: "Cut a GIF down to size",
     subtitle: "Keep just the best moment. Pick where it starts and ends, and download the shorter GIF.",
     tool: { kind: "trim", initialFormat: "gif" },
     steps: [
@@ -103,7 +103,7 @@ export const LANDINGS: Landing[] = [
     title: "Reverse Video: play a video backwards online",
     description: "Reverse a short video online so it plays backwards, or make a boomerang that plays forward and back. Download as MP4 or GIF. Free, nothing stored.",
     eyebrow: "Reverse video",
-    h1: "Play a video backwards.",
+    h1: "Play a video backwards",
     subtitle: "Reverse a short clip, or make a boomerang that plays forwards and then backwards, on a loop.",
     tool: { kind: "speed", initialFormat: "mp4", initialDirection: "reverse" },
     steps: [
@@ -129,7 +129,7 @@ export const LANDINGS: Landing[] = [
     title: "Reverse GIF: play a GIF backwards online",
     description: "Reverse a GIF so it plays backwards, or make a boomerang GIF. Change its speed in the same step. Free online GIF reverser, no sign-up, nothing stored.",
     eyebrow: "GIF reverser",
-    h1: "Reverse a GIF.",
+    h1: "Reverse a GIF",
     subtitle: "Make it play backwards, or turn it into a boomerang that loops forward and back.",
     tool: { kind: "speed", initialFormat: "gif", initialDirection: "reverse" },
     steps: [
@@ -155,7 +155,7 @@ export const LANDINGS: Landing[] = [
     title: "GIF Speed Changer: speed up or slow down a GIF",
     description: "Speed up or slow down a GIF from 0.25× to 4×, or reverse it. Preview and download as GIF or MP4. Free online GIF speed changer, nothing stored.",
     eyebrow: "GIF speed changer",
-    h1: "Speed up or slow down a GIF.",
+    h1: "Speed up or slow down a GIF",
     subtitle: "From quarter speed to four times faster. Reverse it or make a boomerang in the same step.",
     tool: { kind: "speed", initialFormat: "gif", initialDirection: "forward" },
     steps: [
@@ -181,7 +181,7 @@ export const LANDINGS: Landing[] = [
     title: "Add Text to GIF: captions with live preview, free",
     description: "Add text to a GIF online: top and bottom captions in meme style, with outline, colors and a live preview. Download as GIF or MP4. Free, nothing stored.",
     eyebrow: "Add text to GIF",
-    h1: "Add text to a GIF.",
+    h1: "Add text to a GIF",
     subtitle: "Type your top and bottom text, see it on the GIF as you go, and download.",
     tool: { kind: "captions", initialFormat: "gif" },
     steps: [
@@ -208,7 +208,7 @@ export const LANDINGS: Landing[] = [
     title: "GIF Meme Maker: make a meme GIF in seconds",
     description: "Make a meme GIF: add classic top and bottom meme text to any GIF or short video, with a live preview. Free online GIF meme generator, no sign-up.",
     eyebrow: "GIF meme maker",
-    h1: "Make a meme GIF.",
+    h1: "Make a meme GIF",
     subtitle: "Classic white text with a black outline, top and bottom, on any GIF or short video.",
     tool: { kind: "captions", initialFormat: "gif" },
     steps: [
@@ -234,7 +234,7 @@ export const LANDINGS: Landing[] = [
     title: "GIF Cropper: crop a GIF online, keep it animated",
     description: "Crop a GIF online by dragging a box, or to square, 16:9, 9:16 or 4:5. Every frame is cropped, so it stays animated. Free, nothing stored.",
     eyebrow: "GIF cropper",
-    h1: "Crop a GIF.",
+    h1: "Crop a GIF",
     subtitle: "Drag a box over your GIF, or pick a shape. Every frame is cropped, so it keeps moving.",
     tool: { kind: "crop", initialFormat: "gif" },
     steps: CROP_STEPS,
@@ -257,7 +257,7 @@ export const LANDINGS: Landing[] = [
     title: "Video Cropper: crop a video online, free",
     description: "Crop a short video online: drag a box or pick square, 9:16 or 16:9, and download it as MP4 or GIF. Free for clips up to 60 seconds, nothing stored.",
     eyebrow: "Video cropper",
-    h1: "Crop a video.",
+    h1: "Crop a video",
     subtitle: "Cut a short video down to the part you want, or to square, 9:16 or 16:9. Download it as MP4 or GIF.",
     tool: { kind: "crop", initialFormat: "mp4" },
     steps: CROP_STEPS,
@@ -280,7 +280,7 @@ export const LANDINGS: Landing[] = [
     title: "GIF Maker: make a GIF from pictures, free online",
     description: "Make a GIF from your pictures in seconds: a slideshow from several, or zoom, pan and shake effects from one. Free, no sign-up, no watermark.",
     eyebrow: "GIF maker",
-    h1: "Make a GIF from your pictures.",
+    h1: "Make a GIF from your pictures",
     subtitle: "Several pictures make a slideshow. One picture comes to life with zoom, pan, pulse or shake.",
     tool: { kind: "maker" },
     steps: [
@@ -308,7 +308,7 @@ export const LANDINGS: Landing[] = [
     title: "Image to GIF: turn images into an animated GIF",
     description: "Turn images into an animated GIF online: combine JPEG, PNG or WebP images into a slideshow, with crossfades. Free, no sign-up, nothing stored.",
     eyebrow: "Images to GIF",
-    h1: "Turn images into a GIF.",
+    h1: "Turn images into a GIF",
     subtitle: "Combine JPEG, PNG or WebP images, or screenshots, into one looping animated GIF.",
     tool: { kind: "maker" },
     steps: [
@@ -334,7 +334,7 @@ export const LANDINGS: Landing[] = [
     title: "Photo to GIF: bring a photo to life with motion",
     description: "Turn a photo into a moving GIF with a slow zoom, pan, pulse or shake, or combine several photos into a slideshow. Free online, nothing stored.",
     eyebrow: "Photo to GIF",
-    h1: "Bring a photo to life.",
+    h1: "Bring a photo to life",
     subtitle: "Give one photo a slow zoom, pan, pulse or shake, or add more for a slideshow.",
     tool: { kind: "maker" },
     steps: [
@@ -360,7 +360,7 @@ export const LANDINGS: Landing[] = [
     title: "Twitter GIF Downloader: save X GIFs as GIF or MP4",
     description: "Download any GIF from X (Twitter) as a real GIF, MP4, WebM or WebP. Paste the post link, pick a quality, done. Free, no sign-up.",
     eyebrow: "Twitter / X GIF downloader",
-    h1: "Download GIFs from X (Twitter).",
+    h1: "Download GIFs from X (Twitter)",
     subtitle: "Paste a post link and get its GIF as a real .gif file, or as MP4, WebM or WebP.",
     tool: { kind: "grab" },
     steps: [
@@ -387,7 +387,7 @@ export const LANDINGS: Landing[] = [
     title: "Twitter Video Downloader: save X videos as MP4 or GIF",
     description: "Download short videos from X (Twitter) as MP4, or turn them into a GIF. Paste the post link and save it. Free, for clips up to 60 seconds.",
     eyebrow: "Twitter / X video downloader",
-    h1: "Download short videos from X.",
+    h1: "Download short videos from X",
     subtitle: "Paste a post link to save its video as MP4, or turn it into a GIF. Works with clips up to 60 seconds.",
     tool: { kind: "grab" },
     steps: [
@@ -413,7 +413,7 @@ export const LANDINGS: Landing[] = [
     title: "MP4 to GIF Converter: free, fast, high quality",
     description: "Convert MP4 to GIF online in seconds. Choose the size and quality, and download a GIF that plays everywhere. Free, no sign-up, nothing stored.",
     eyebrow: "MP4 to GIF converter",
-    h1: "Convert MP4 to GIF.",
+    h1: "Convert MP4 to GIF",
     subtitle: "Drop in a short MP4 and get a GIF that loops everywhere: chats, email, documents and forums.",
     tool: { kind: "convert", initialFormat: "gif" },
     steps: [
@@ -440,7 +440,7 @@ export const LANDINGS: Landing[] = [
     title: "Video to GIF Converter: turn any clip into a GIF",
     description: "Turn a video into a GIF online: MP4, MOV from iPhone, or WebM. Pick the quality and download a looping GIF. Free, no sign-up, nothing stored.",
     eyebrow: "Video to GIF converter",
-    h1: "Turn a video into a GIF.",
+    h1: "Turn a video into a GIF",
     subtitle: "MP4, iPhone MOV or WebM in, a looping GIF out. Pick the size and quality that suits where it's going.",
     tool: { kind: "convert", initialFormat: "gif" },
     steps: [
@@ -466,7 +466,7 @@ export const LANDINGS: Landing[] = [
     title: "GIF to MP4 Converter: make GIFs up to 15× smaller",
     description: "Convert a GIF to MP4 online and shrink it by over 90% with no visible loss. Ideal for WhatsApp, Instagram and X. Free, no sign-up.",
     eyebrow: "GIF to MP4 converter",
-    h1: "Convert GIF to MP4.",
+    h1: "Convert GIF to MP4",
     subtitle: "Same animation, a fraction of the size. A 2.2 MB GIF became a 140 KB MP4 in our test.",
     tool: { kind: "convert", initialFormat: "mp4" },
     steps: [
@@ -492,7 +492,7 @@ export const LANDINGS: Landing[] = [
     title: "GIF Compressor: shrink a GIF to any size limit",
     description: "Compress a GIF to fit X, Discord, email or any size limit, keeping as much quality as the limit allows. Free online GIF compressor, nothing stored.",
     eyebrow: "GIF compressor",
-    h1: "Compress a GIF to fit.",
+    h1: "Compress a GIF to fit",
     subtitle: "Pick where it's going (X, Discord, 5 MB or 1 MB) and get the best-looking GIF under that size.",
     tool: { kind: "compress", initialWidth: "0" },
     steps: [
@@ -518,7 +518,7 @@ export const LANDINGS: Landing[] = [
     title: "GIF Resizer: resize a GIF online for free",
     description: "Resize a GIF to 640, 480 or 320 pixels wide online, keeping it animated. Make it smaller for chats, email and forums. Free, nothing stored.",
     eyebrow: "GIF resizer",
-    h1: "Resize a GIF.",
+    h1: "Resize a GIF",
     subtitle: "Make a GIF narrower, and lighter, without losing the animation. 640, 480 or 320 pixels wide.",
     tool: { kind: "compress", initialWidth: "480" },
     steps: [
@@ -544,7 +544,7 @@ export const LANDINGS: Landing[] = [
     title: "Giphy Downloader: save GIFs from Giphy and Tenor",
     description: "Download any GIF from Giphy or Tenor as a real GIF, MP4 or WebM. Paste the link and save it. Free, no sign-up, works on phone and computer.",
     eyebrow: "Giphy & Tenor downloader",
-    h1: "Download GIFs from Giphy and Tenor.",
+    h1: "Download GIFs from Giphy and Tenor",
     subtitle: "Paste the GIF's link and save it as a real GIF, or as MP4 or WebM.",
     tool: { kind: "grab" },
     steps: [

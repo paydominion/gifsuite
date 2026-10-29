@@ -26,7 +26,7 @@ test("make a slideshow GIF: add pictures, reorder, crossfade, download", async (
   expect(await pictures.nth(1).getByRole("img").getAttribute("src")).toBe(firstBefore);
 
   await page.getByRole("radiogroup", { name: "Time per picture" }).getByRole("radio", { name: "0.2s" }).click();
-  await page.getByRole("switch", { name: /Crossfade/ }).click();
+  await page.getByRole("checkbox", { name: /Crossfade/ }).click({ force: true });
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Make GIF" }).click();
   expect((await download).suggestedFilename()).toBe("gifsuite-maker.gif");

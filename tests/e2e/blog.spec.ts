@@ -23,7 +23,7 @@ test("read a post from the blog and follow it to the tool", async ({ page }) => 
   await expect(page.getByText(/min read/)).toBeVisible();
 
   // The "try the tool" box at the end of the post.
-  await page.getByRole("link", { name: "Try it free" }).click();
+  await page.getByRole("link", { name: "Open the free tool" }).click();
   await expect(page).toHaveURL("/tools/compress");
 });
 

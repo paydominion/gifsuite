@@ -3,11 +3,12 @@
 import { humanFetch } from "@/lib/human";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { ErrorMessage } from "@/components/ui/Alert";
 import { Card, SectionLabel } from "@/components/ui/Card";
 import { Dropzone } from "@/components/ui/Dropzone";
-import { Input } from "@/components/ui/Field";
+import { FieldLabel, Input } from "@/components/ui/Field";
 import { Segmented } from "@/components/ui/Segmented";
-import { Preview, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs, revealResult } from "./shared";
+import { FileHeader, Preview, ResultPanel, UPLOAD_ACCEPT, baseName, formatBytes, isVideoFile, saveAs } from "./shared";
 
 const MB = 1024 * 1024;
 
@@ -74,7 +75,9 @@ export function CompressTool({ maxUploadMb, initialWidth = "0" }: { maxUploadMb:
   const targetValid = Number.isFinite(targetBytes) && targetBytes >= 20 * 1024 && targetBytes <= 100 * MB;
 
   async function run() {
-    if (!file || !targetValid) return;
+    // The button stays enabled and explains what's missing, rather than greying out with no reason.
+    if (!file) return setError("Choose a file to compress first.");
+    if (!targetValid) return;
     setBusy(true);
     setError(null);
     setResult(null);
@@ -86,7 +89,7 @@ export function CompressTool({ maxUploadMb, initialWidth = "0" }: { maxUploadMb:
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error ?? "Something went wrong with that file.");
+        throw new Error(data.error ?? "Couldn't compress that file. Try again, or try a different file.");
       }
       const blob = await res.blob();
       const h = (name: string) => res.headers.get(`x-gifsuite-${name}`);
@@ -123,81 +126,49 @@ export function CompressTool({ maxUploadMb, initialWidth = "0" }: { maxUploadMb:
             disabled={busy}
           />
         ) : (
-          <Card className="space-y-3 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate font-semibold">{file.file.name}</p>
-                <p className="text-xs text-muted">{formatBytes(file.file.size)}</p>
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                disabled={busy}
-                onClick={() => {
-                  setFile(null);
-                  setResult(null);
-                  setError(null);
-                }}
-              >
-                Choose another
-              </Button>
-            </div>
+          <Card className="space-y-4 p-6">
+            <FileHeader
+              name={file.file.name}
+              details={formatBytes(file.file.size)}
+              busy={busy}
+              onReset={() => {
+                setFile(null);
+                setResult(null);
+                setError(null);
+              }}
+            />
             <Preview url={file.url} isVideo={isVideoFile(file.file)} label="Your file" />
           </Card>
         )}
 
         {result && (
-          <Card ref={revealResult} className="scroll-mt-20 space-y-3 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 space-y-1">
-                <SectionLabel>Result</SectionLabel>
-                <p role="status" className="text-sm">
-                  Saved {result.name} ({formatBytes(result.size)})
-                </p>
-                <p className="text-xs text-muted">
-                  {result.unchanged
-                    ? `Already under ${formatBytes(result.target)}, so it's unchanged.`
-                    : `${saved > 0 ? `${saved}% smaller · ` : ""}${result.width}px wide · ${result.fps}fps · ${result.colors} colors`}
-                </p>
-                {!result.targetMet && (
-                  <p role="alert" className="text-sm font-medium text-danger">
-                    Couldn&apos;t get under {formatBytes(result.target)}. This is the smallest we could make it; try trimming the clip.
-                  </p>
-                )}
-              </div>
-              <Button size="sm" variant="secondary" onClick={() => saveAs(result.url, result.name)}>
-                Download again
-              </Button>
-            </div>
-            <Preview url={result.url} isVideo={false} label="Compressed GIF" />
-          </Card>
+          <ResultPanel name={result.name} bytes={result.size} url={result.url} isVideo={false} label="Compressed GIF">
+            <p className="text-sm text-muted">
+              {result.unchanged
+                ? `Already under ${formatBytes(result.target)}, so it's unchanged.`
+                : `${saved > 0 ? `${saved}% smaller · ` : ""}${result.width}px wide · ${result.fps} frames a second · ${result.colors} colors`}
+            </p>
+            {!result.targetMet && (
+              <ErrorMessage>
+                Couldn&apos;t get under {formatBytes(result.target)}. This is the smallest it can go; trim the clip to make it smaller.
+              </ErrorMessage>
+            )}
+          </ResultPanel>
         )}
       </div>
 
-      <Card className="space-y-5 p-5 lg:sticky lg:top-20">
+      <Card className="space-y-6 p-6 lg:sticky lg:top-20">
         <div className="space-y-2">
-          <SectionLabel>Make it fit</SectionLabel>
-          <div role="radiogroup" aria-label="Target size" className="grid grid-cols-3 gap-1.5">
-            {TARGETS.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                role="radio"
-                aria-checked={targetId === t.id}
-                disabled={busy}
-                onClick={() => setTargetId(t.id)}
-                className={`rounded-xl border px-2 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                  targetId === t.id ? "border-accent bg-accent text-accent-ink" : "border-line bg-surface text-muted hover:border-line-strong hover:text-fg"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <p className="text-xs text-muted">{target.hint}</p>
+          <SectionLabel>Size limit</SectionLabel>
+          <Segmented label="Target size" options={TARGETS.map((t) => ({ value: t.id, label: t.label }))} value={targetId} onChange={setTargetId} disabled={busy} columns={3} />
+          <p className="text-sm text-muted">{target.hint}</p>
           {targetId === "custom" && (
-            <label className="flex items-center gap-2 text-sm">
+            <div className="space-y-2 pt-2">
+              <FieldLabel htmlFor="compress-custom" hint="Between 0.02 and 100 MB">Size limit in MB</FieldLabel>
+              {/* Sized for a few digits, the length of what goes in it. */}
               <Input
+                id="compress-custom"
+                aria-describedby="compress-custom-hint"
                 type="number"
                 inputMode="decimal"
                 min={0.02}
@@ -205,23 +176,21 @@ export function CompressTool({ maxUploadMb, initialWidth = "0" }: { maxUploadMb:
                 step={0.1}
                 value={customMb}
                 onChange={(e) => setCustomMb(e.target.value)}
-                aria-label="Custom size in MB"
-                className="h-10 w-28"
+                className="w-32"
               />
-              MB
-            </label>
+            </div>
           )}
         </div>
         <div className="space-y-2">
           <SectionLabel>Max width</SectionLabel>
           <Segmented label="Max width" options={WIDTHS} value={width} onChange={setWidth} disabled={busy} />
-          <p className="text-xs text-muted">Smaller widths keep more colors and smoother motion at the same file size.</p>
+          <p className="text-sm text-muted">Smaller widths keep more colors and smoother motion at the same file size.</p>
         </div>
-        <Button variant="primary" size="lg" className="w-full" disabled={!file || busy || !targetValid} onClick={run}>
+        <Button variant="primary" size="lg" className="w-full" disabled={busy} onClick={run}>
           {busy ? "Compressing…" : "Compress & download"}
         </Button>
-        {!targetValid && <p role="alert" className="text-sm font-medium text-danger">Enter a size between 0.02 and 100 MB.</p>}
-        {error && <p role="alert" className="text-sm font-medium text-danger">{error}</p>}
+        {!targetValid && <ErrorMessage>Enter a size between 0.02 and 100 MB.</ErrorMessage>}
+        {error && <ErrorMessage>{error}</ErrorMessage>}
       </Card>
     </div>
   );

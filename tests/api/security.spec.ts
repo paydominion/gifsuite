@@ -51,6 +51,7 @@ test.describe("security headers", () => {
       const h = (await request.get(path)).headers();
       expect(h["x-content-type-options"], path).toBe("nosniff");
       expect(h["x-frame-options"], path).toBe("DENY");
+      expect(h["strict-transport-security"], path).toBe("max-age=31536000");
       expect(h["referrer-policy"], path).toBe("strict-origin-when-cross-origin");
       expect(h["permissions-policy"], path).toContain("camera=()");
       expect(h["x-powered-by"], path).toBeUndefined();

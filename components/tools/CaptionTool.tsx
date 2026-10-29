@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { ErrorMessage } from "@/components/ui/Alert";
 import { Card, SectionLabel } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Field";
+import { FieldLabel, Input } from "@/components/ui/Field";
 import { Segmented } from "@/components/ui/Segmented";
 import { Switch } from "@/components/ui/Switch";
 import {
@@ -52,6 +53,7 @@ export function CaptionTool({ maxUploadMb, initialFormat }: { maxUploadMb: numbe
   // Videos default to MP4, which keeps the sound.
   function pick(file: File) {
     if (!initialFormat) setFormat(isVideoFile(file) ? "mp4" : "gif");
+    setMissing(null);
     choose(file);
   }
 
@@ -67,11 +69,17 @@ export function CaptionTool({ maxUploadMb, initialFormat }: { maxUploadMb: numbe
 
   const update = (patch: Partial<CaptionStyle>) => {
     clearResult();
+    setMissing(null);
     setStyle((s) => ({ ...s, ...patch }));
   };
 
+  const [missing, setMissing] = useState<string | null>(null);
+  // The button stays enabled; pressing it too early says what's missing instead.
   async function make() {
-    if (!clip || !info) return;
+    if (!clip) return setMissing("Choose a GIF or video first.");
+    if (!hasCaption(style)) return setMissing("Type your top or bottom text first.");
+    if (!info) return;
+    setMissing(null);
     const overlay = await captionPng(style, info.width, info.height);
     await run(clip, { format }, overlay);
   }
@@ -93,18 +101,27 @@ export function CaptionTool({ maxUploadMb, initialFormat }: { maxUploadMb: numbe
         <ResultCard result={result} />
       </div>
 
-      <Card className="space-y-5 p-5 lg:sticky lg:top-20">
-        <div className="space-y-2">
-          <label htmlFor="caption-top"><SectionLabel>Top text</SectionLabel></label>
-          <Input id="caption-top" value={style.top} maxLength={MAX_CAPTION_CHARS} placeholder="When the GIF loads first try" disabled={busy} onChange={(e) => update({ top: e.target.value })} />
-          <label htmlFor="caption-bottom" className="block pt-1"><SectionLabel>Bottom text</SectionLabel></label>
-          <Input id="caption-bottom" value={style.bottom} maxLength={MAX_CAPTION_CHARS} placeholder="Optional" disabled={busy} onChange={(e) => update({ bottom: e.target.value })} />
+      <Card className="space-y-6 p-6 lg:sticky lg:top-20">
+        {/* Labels above, the rule before the fields, and no placeholder text standing in for either. */}
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <SectionLabel>Your text</SectionLabel>
+            <p className="text-sm text-muted">Fill in one line or both.</p>
+          </div>
+          <div className="space-y-2">
+            <FieldLabel htmlFor="caption-top">Top text</FieldLabel>
+            <Input id="caption-top" value={style.top} maxLength={MAX_CAPTION_CHARS} disabled={busy} onChange={(e) => update({ top: e.target.value })} />
+          </div>
+          <div className="space-y-2">
+            <FieldLabel htmlFor="caption-bottom">Bottom text</FieldLabel>
+            <Input id="caption-bottom" value={style.bottom} maxLength={MAX_CAPTION_CHARS} disabled={busy} onChange={(e) => update({ bottom: e.target.value })} />
+          </div>
         </div>
         <div className="space-y-2">
           <SectionLabel>Style</SectionLabel>
           <Segmented label="Font" options={FONTS} value={style.font} onChange={(font) => update({ font })} disabled={busy} />
           <Segmented label="Size" options={SIZES} value={style.size} onChange={(size) => update({ size })} disabled={busy} />
-          <Segmented label="Colour" options={COLORS} value={style.color} onChange={(color) => update({ color })} disabled={busy} />
+          <Segmented label="Color" options={COLORS} value={style.color} onChange={(color) => update({ color })} disabled={busy} />
           <Switch checked={style.outline} onChange={(outline) => update({ outline })} disabled={busy} label="Outline" hint="Keeps text readable on any background." className="w-full" />
           <Switch checked={style.uppercase} onChange={(uppercase) => update({ uppercase })} disabled={busy} label="ALL CAPS" className="w-full" />
         </div>
@@ -112,11 +129,10 @@ export function CaptionTool({ maxUploadMb, initialFormat }: { maxUploadMb: numbe
           <SectionLabel>Save as</SectionLabel>
           <Segmented label="Format" options={EDIT_FORMATS} value={format} onChange={setFormat} disabled={busy} />
         </div>
-        <Button variant="primary" size="lg" className="w-full" disabled={!clip || !info || busy || !hasCaption(style)} onClick={make}>
+        <Button variant="primary" size="lg" className="w-full" disabled={busy} onClick={make}>
           {busy ? "Adding your text…" : "Add text & download"}
         </Button>
-        {clip && info && !busy && !hasCaption(style) && <p className="text-sm text-muted">Type your top or bottom text above to see it on the GIF.</p>}
-        {(error || clipError) && <p role="alert" className="text-sm font-medium text-danger">{error ?? clipError}</p>}
+        {(error ?? clipError ?? missing) && <ErrorMessage>{error ?? clipError ?? missing}</ErrorMessage>}
       </Card>
     </div>
   );

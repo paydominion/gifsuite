@@ -57,7 +57,12 @@ export async function readUpload(req: Request): Promise<{ file: ArrayBuffer; kin
 /** Turns a processor failure into the message a person should see. */
 export function processorFailure(err: unknown, tool: string): NextResponse {
   const status = (err as { status?: number })?.status;
+  const message = (err as { message?: string })?.message ?? "";
+  if (status === 413 && message.includes("picture too big")) {
+    return uploadError(413, "That picture is too big to work with (over 8192 pixels across). Try a smaller one.");
+  }
   if (status === 413) return uploadError(413, `That clip is longer than ${maxDurationMs() / 1000}s. Trim it first.`);
+  if (status === 503) return uploadError(503, "The converter is busy right now. Try again in a minute.");
   if (status === 422) return uploadError(422, "That file looks damaged or empty.");
   // The processor doesn't know this command: a deploy is still rolling out its new version.
   if (status === 404) return uploadError(503, "The converter is updating. Try again in a minute.");

@@ -61,17 +61,18 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             {/* Desktop: links in the bar. Phones: everything lives in the menu, so nothing can overflow. */}
             <div className="ml-4 hidden items-center gap-1 sm:flex">
               <ToolsMenu />
-              <Link href="/blog" className="inline-flex h-9 items-center rounded-lg px-3 text-sm font-semibold text-muted transition-colors hover:bg-panel hover:text-fg">
+              <Link href="/blog" className="inline-flex h-11 items-center rounded-lg px-3 text-sm font-semibold text-muted transition-colors hover:bg-panel hover:text-fg">
                 Blog
               </Link>
-              <Link href="/#latest" className="inline-flex h-9 items-center rounded-lg px-3 text-sm font-semibold text-muted transition-colors hover:bg-panel hover:text-fg">
-                Latest
+              <Link href="/#latest" className="inline-flex h-11 items-center rounded-lg px-3 text-sm font-semibold text-muted transition-colors hover:bg-panel hover:text-fg">
+                Latest GIFs
               </Link>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              {/* Hidden on phones via the wrapper: the button's own display class would override `hidden`. */}
+              {/* Hidden on phones via the wrapper: the button's own display class would override `hidden`.
+                  Outlined, not filled, so it never competes with the page's own main button. */}
               <span className="hidden sm:block">
-                <Link href="/" className={buttonClass({ variant: "primary", size: "sm" })}>
+                <Link href="/" className={buttonClass({ variant: "secondary", size: "sm" })}>
                   Grab a GIF
                 </Link>
               </span>
@@ -93,15 +94,16 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 </Link>
               ))}
             </nav>
-            <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-4 text-sm font-medium">
-              <span>© {new Date().getFullYear()} GifSuite · Not affiliated with X Corp.</span>
-              <span className="flex flex-wrap gap-x-1">
-                <Link href="/blog" className="inline-flex min-h-11 items-center px-2 font-bold hover:underline">Blog</Link>
+            {/* Left-aligned, links first: nothing sits alone at the far right, where screen magnifiers miss it. */}
+            <div className="mx-auto max-w-6xl px-2 py-4 text-sm">
+              <div className="flex flex-wrap gap-x-1">
                 <Link href="/tools" className="inline-flex min-h-11 items-center px-2 font-bold hover:underline">All tools</Link>
+                <Link href="/blog" className="inline-flex min-h-11 items-center px-2 font-bold hover:underline">Blog</Link>
                 <Link href="/terms" className="inline-flex min-h-11 items-center px-2 font-bold hover:underline">Terms</Link>
                 <Link href="/privacy" className="inline-flex min-h-11 items-center px-2 font-bold hover:underline">Privacy</Link>
                 <Link href="/copyright" className="inline-flex min-h-11 items-center px-2 font-bold hover:underline">Copyright</Link>
-              </span>
+              </div>
+              <p className="px-2 pt-2">© {new Date().getFullYear()} GifSuite · Not affiliated with X Corp.</p>
             </div>
           </div>
         </footer>

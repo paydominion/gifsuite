@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 import { trackUi } from "@/lib/track";
+import { ErrorMessage } from "./Alert";
+import { buttonClass } from "./Button";
 
 /** True if the file matches an `accept` list of MIME types ("video/mp4", "image/*") and extensions (".gif"). */
 export function accepts(accept: string, file: File): boolean {
@@ -24,7 +26,8 @@ export function Dropzone({
   hint,
   onFile,
   onFiles,
-  title = "Drop a file here, or click to choose",
+  title = "Drag a file here",
+  button = "Choose file",
   disabled,
 }: {
   accept: string;
@@ -34,6 +37,8 @@ export function Dropzone({
   /** Several files at once; turns on multiple selection. */
   onFiles?: (files: File[]) => void;
   title?: string;
+  /** The label on the visible button (the whole box opens the picker too). */
+  button?: string;
   disabled?: boolean;
 }) {
   const [rejected, setRejected] = useState<"picture" | "other" | null>(null);
@@ -67,33 +72,52 @@ export function Dropzone({
   }, [disabled, onFile, onFiles]);
 
   return (
-    <label
-      htmlFor={inputId}
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDragging(true);
-      }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setDragging(false);
-        if (!disabled) deliver(e.dataTransfer.files);
-      }}
-      className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-colors focus-within:ring-2 focus-within:ring-ring ${
-        dragging ? "border-accent bg-panel" : "border-line-strong bg-surface hover:border-accent hover:bg-panel"
-      } ${disabled ? "pointer-events-none opacity-60" : ""}`}
-    >
-      <svg aria-hidden width="28" height="28" viewBox="0 0 24 24" className="text-muted">
-        <path d="M12 16V4m0 0-4.5 4.5M12 4l4.5 4.5M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      <span className="font-semibold">{title}</span>
-      <span className="text-sm text-muted">{hint}</span>
+    <div className="space-y-3">
+      <label
+        htmlFor={inputId}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          if (!disabled) deliver(e.dataTransfer.files);
+        }}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-colors focus-within:ring-2 focus-within:ring-ring ${
+          dragging ? "border-accent bg-panel" : "border-line-strong bg-surface hover:border-accent hover:bg-panel"
+        } ${disabled ? "pointer-events-none opacity-60" : ""}`}
+      >
+        <svg aria-hidden width="28" height="28" viewBox="0 0 24 24" className="text-muted">
+          <path d="M12 16V4m0 0-4.5 4.5M12 4l4.5 4.5M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        {/* Phones can't drag files, so the button is the main way in; "drag" is a bonus for computers. */}
+        <span className="font-semibold max-sm:hidden">{title}</span>
+        <span className="text-sm text-muted max-sm:hidden">or</span>
+        {/* Looks like a button; the label around it is what opens the picker. */}
+        <span aria-hidden className={buttonClass({ variant: "secondary" })}>{button}</span>
+        <span className="mt-1 max-w-sm text-sm text-muted">{hint}</span>
+        <input
+          id={inputId}
+          type="file"
+          accept={accept}
+          multiple={!!onFiles}
+          disabled={disabled}
+          aria-label={button}
+          className="sr-only"
+          onChange={(e) => {
+            deliver(e.target.files);
+            e.target.value = ""; // allow choosing the same file again
+          }}
+        />
+      </label>
       {rejected && (
-        <span role="alert" className="text-sm font-medium text-danger">
+        <ErrorMessage>
           {rejected === "picture" ? (
             <>
               Pictures (PNG, JPEG, WebP) don&apos;t work here. To turn pictures into a GIF, use the{" "}
-              <Link href="/tools/maker" className="underline underline-offset-2">
+              <Link href="/tools/maker" className="font-semibold underline underline-offset-2">
                 GIF maker
               </Link>
               .
@@ -101,20 +125,8 @@ export function Dropzone({
           ) : (
             "That kind of file doesn't work here. Choose one of the types listed above."
           )}
-        </span>
+        </ErrorMessage>
       )}
-      <input
-        id={inputId}
-        type="file"
-        accept={accept}
-        multiple={!!onFiles}
-        disabled={disabled}
-        className="sr-only"
-        onChange={(e) => {
-          deliver(e.target.files);
-          e.target.value = ""; // allow choosing the same file again
-        }}
-      />
-    </label>
+    </div>
   );
 }

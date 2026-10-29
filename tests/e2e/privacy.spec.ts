@@ -17,10 +17,11 @@ test.afterEach(() => {
 
 test("grab a GIF as private, then make it public from its page", async ({ page }) => {
   await page.goto("/");
-  const toggle = page.getByRole("switch", { name: /Show on the public timeline/ });
-  await expect(toggle).toHaveAttribute("aria-checked", "true"); // public by default
-  await toggle.click();
-  await expect(toggle).toHaveAttribute("aria-checked", "false");
+  // A checkbox on the grab form (it applies when you grab), a switch on the GIF's page (it applies at once).
+  const toggle = page.getByRole("checkbox", { name: /Show on the public timeline/ });
+  await expect(toggle).toBeChecked(); // public by default
+  await toggle.click({ force: true });
+  await expect(toggle).not.toBeChecked();
   await expect(page.getByText("Private: only people with the link can see it.")).toBeVisible();
 
   await page.getByLabel("GIF or post link").fill("https://x.com/uiprivate/status/121");
@@ -58,7 +59,7 @@ test("a sensitive GIF is blurred until the visitor chooses to see it", async ({ 
   await expect(page.getByText("Sensitive content")).toBeVisible();
   await expect(page.locator("video")).toHaveCount(0); // not even loaded yet
 
-  await page.getByRole("button", { name: "Show anyway" }).click();
+  await page.getByRole("button", { name: "Show the GIF" }).click();
   await expect(page.locator("video")).toBeVisible();
   await expect(page.getByText("Sensitive content")).toHaveCount(0);
 });

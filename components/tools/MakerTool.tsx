@@ -3,11 +3,12 @@
 import { humanFetch } from "@/lib/human";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { ErrorMessage } from "@/components/ui/Alert";
 import { Card, SectionLabel } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { Segmented } from "@/components/ui/Segmented";
-import { Switch } from "@/components/ui/Switch";
-import { Preview, formatBytes, saveAs, revealResult } from "./shared";
+import { ResultPanel, saveAs } from "./shared";
 
 const MAX_IMAGES = 30;
 const MAX_IMAGE_MB = 10;
@@ -129,7 +130,8 @@ export function MakerTool({ maxUploadMb }: { maxUploadMb: number }) {
   const slideshow = items.length > 1;
 
   async function run() {
-    if (items.length === 0) return;
+    // The button stays enabled and explains what's missing, rather than greying out with no reason.
+    if (items.length === 0) return setError("Choose at least one picture first.");
     setBusy(true);
     setError(null);
     setResult(null);
@@ -143,7 +145,7 @@ export function MakerTool({ maxUploadMb }: { maxUploadMb: number }) {
       const res = await humanFetch("/api/make", { method: "POST", body: form, headers: { "x-gifsuite-images": String(items.length) } });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error ?? "Something went wrong making your GIF.");
+        throw new Error(data.error ?? "Couldn't make your GIF. Try again, or try different pictures.");
       }
       const blob = await res.blob();
       const next = { url: URL.createObjectURL(blob), name: `gifsuite-maker.${format}`, size: blob.size, format };
@@ -164,7 +166,8 @@ export function MakerTool({ maxUploadMb }: { maxUploadMb: number }) {
         {items.length < MAX_IMAGES && (
           <Dropzone
             accept={IMAGE_ACCEPT}
-            title={items.length === 0 ? "Drop pictures here, or click to choose" : "Add more pictures"}
+            title={items.length === 0 ? "Drag pictures here" : "Drag more pictures here"}
+            button={items.length === 0 ? "Choose pictures" : "Add more pictures"}
             hint={`One picture for an effect, or up to ${MAX_IMAGES} for a slideshow. JPEG, PNG, WebP or GIF. Nothing is stored.`}
             onFiles={add}
             disabled={busy}
@@ -172,10 +175,10 @@ export function MakerTool({ maxUploadMb }: { maxUploadMb: number }) {
         )}
 
         {items.length > 0 && (
-          <Card className="space-y-3 p-4">
-            <div className="flex items-center justify-between gap-3">
+          <Card className="space-y-4 p-6">
+            <div className="space-y-1">
               <SectionLabel>{slideshow ? `${items.length} pictures, in this order` : "Your picture"}</SectionLabel>
-              {slideshow && <p className="text-xs text-muted">Drag to reorder, or use the arrows.</p>}
+              {slideshow && <p className="text-sm text-muted">Drag to reorder, or use the arrows.</p>}
             </div>
             <ol className="grid grid-cols-2 gap-2 min-[400px]:grid-cols-3 md:grid-cols-4" aria-label="Pictures">
               {items.map((item, i) => (
@@ -197,15 +200,15 @@ export function MakerTool({ maxUploadMb }: { maxUploadMb: number }) {
                   <span className="absolute left-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-bg/80 text-xs font-bold">
                     {i + 1}
                   </span>
-                  {/* Touch screens get 44px buttons, like the rest of the site. */}
+                  {/* Touch screens get 48px buttons, like the rest of the site. */}
                   <button type="button" aria-label={`Remove picture ${i + 1}`} disabled={busy} onClick={() => remove(item.id)}
-                    className="absolute right-1 top-1 grid size-9 place-items-center rounded-full bg-bg/80 text-muted hover:text-danger pointer-coarse:size-11">✕</button>
+                    className="absolute right-1 top-1 grid size-10 place-items-center rounded-full bg-bg/80 text-fg hover:bg-bg pointer-coarse:size-12">✕</button>
                   {slideshow && (
                     <div className="flex items-center justify-between bg-bg/80 p-1">
                       <button type="button" aria-label={`Move picture ${i + 1} earlier`} disabled={busy || i === 0} onClick={() => move(i, i - 1)}
-                        className="grid size-9 place-items-center rounded-lg hover:bg-panel disabled:opacity-30 pointer-coarse:size-11">←</button>
+                        className="grid size-10 place-items-center rounded-lg hover:bg-panel disabled:opacity-30 pointer-coarse:size-12">←</button>
                       <button type="button" aria-label={`Move picture ${i + 1} later`} disabled={busy || i === items.length - 1} onClick={() => move(i, i + 1)}
-                        className="grid size-9 place-items-center rounded-lg hover:bg-panel disabled:opacity-30 pointer-coarse:size-11">→</button>
+                        className="grid size-10 place-items-center rounded-lg hover:bg-panel disabled:opacity-30 pointer-coarse:size-12">→</button>
                     </div>
                   )}
                 </li>
@@ -214,39 +217,25 @@ export function MakerTool({ maxUploadMb }: { maxUploadMb: number }) {
           </Card>
         )}
 
-        {result && (
-          <Card ref={revealResult} className="scroll-mt-20 space-y-3 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <SectionLabel>Result</SectionLabel>
-                <p role="status" className="mt-1 truncate text-sm">
-                  Saved {result.name} ({formatBytes(result.size)})
-                </p>
-              </div>
-              <Button size="sm" variant="secondary" onClick={() => saveAs(result.url, result.name)}>
-                Download again
-              </Button>
-            </div>
-            <Preview url={result.url} isVideo={result.format === "mp4"} label="Your GIF" />
-          </Card>
-        )}
+        {result && <ResultPanel name={result.name} bytes={result.size} url={result.url} isVideo={result.format === "mp4"} label="Your GIF" />}
       </div>
 
-      <Card className="space-y-5 p-5 lg:sticky lg:top-20">
+      <Card className="space-y-6 p-6 lg:sticky lg:top-20">
         {slideshow ? (
           <>
             <div className="space-y-2">
               <SectionLabel>Time per picture</SectionLabel>
               <Segmented label="Time per picture" options={FRAME_TIMES} value={frameTime} onChange={setFrameTime} disabled={busy} />
             </div>
-            <Switch checked={crossfade} onChange={setCrossfade} disabled={busy} label="Crossfade" hint="Blend smoothly from one picture to the next." className="w-full" />
+            {/* A checkbox, not a switch: it only takes effect when the GIF is made. */}
+            <Checkbox checked={crossfade} onChange={setCrossfade} disabled={busy} label="Crossfade between pictures" hint="Blend smoothly from one picture to the next." className="w-full" />
           </>
         ) : (
           <>
             <div className="space-y-2">
               <SectionLabel>Effect</SectionLabel>
               <Segmented label="Effect" options={EFFECTS} value={effect} onChange={setEffect} disabled={busy} />
-              <p className="text-xs text-muted">{EFFECT_HINT[effect]} Add more pictures for a slideshow.</p>
+              <p className="text-sm text-muted">{EFFECT_HINT[effect]} Add more pictures for a slideshow.</p>
             </div>
             <div className="space-y-2">
               <SectionLabel>Length</SectionLabel>
@@ -258,16 +247,16 @@ export function MakerTool({ maxUploadMb }: { maxUploadMb: number }) {
           <SectionLabel>Size</SectionLabel>
           <Segmented label="Width" options={WIDTHS} value={width} onChange={setWidth} disabled={busy} />
           <Segmented label="Fit" options={FITS} value={fit} onChange={setFit} disabled={busy} />
-          <p className="text-xs text-muted">{fit === "cover" ? "Fills the frame, trimming the edges." : "Shows the whole picture, with bars if needed."} The shape follows your first picture.</p>
+          <p className="text-sm text-muted">{fit === "cover" ? "Fills the frame, trimming the edges." : "Shows the whole picture, with bars if needed."} The shape follows your first picture.</p>
         </div>
         <div className="space-y-2">
-          <SectionLabel>Make a</SectionLabel>
+          <SectionLabel>Save as</SectionLabel>
           <Segmented label="Format" options={FORMATS} value={format} onChange={setFormat} disabled={busy} />
         </div>
-        <Button variant="primary" size="lg" className="w-full" disabled={items.length === 0 || busy} onClick={run}>
+        <Button variant="primary" size="lg" className="w-full" disabled={busy} onClick={run}>
           {busy ? `Making your ${label}…` : `Make ${label}`}
         </Button>
-        {error && <p role="alert" className="text-sm font-medium text-danger">{error}</p>}
+        {error && <ErrorMessage>{error}</ErrorMessage>}
       </Card>
     </div>
   );

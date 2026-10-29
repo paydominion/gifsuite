@@ -28,7 +28,8 @@ export function Hero({
         />
       </div>
       <div className="mx-auto max-w-2xl space-y-6">
-        <p className="inline-flex items-center rounded-full bg-bg px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-accent ring-1 ring-accent/40">
+        {/* A label, not a button: plain light text, without the yellow that marks things you can press. */}
+        <p className="inline-flex items-center rounded-full bg-bg px-3 py-1 text-xs font-bold uppercase tracking-widest text-fg">
           {eyebrow}
         </p>
         <h1 className="text-[2.6rem] font-black leading-[1.02] tracking-tight text-balance text-bg sm:text-7xl">{title}</h1>

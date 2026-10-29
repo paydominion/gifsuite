@@ -1,5 +1,5 @@
 /** Fire-and-forget analytics event from the browser. */
-export function track(gifId: string, type: "view" | "share" | "report", detail?: string) {
+export function track(gifId: string, type: "view" | "share", detail?: string) {
   send({ gifId, type, detail });
 }
 

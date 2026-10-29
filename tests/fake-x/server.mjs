@@ -84,6 +84,10 @@ const POSTS = {
 const deleted = new Set();
 // Post 126 is flaky: X fails twice, then answers (the fetcher's retries should recover it).
 POSTS["126"] = post("126", "flaky", "X fails twice before this loads", [gif("cat.mp4", 320, 240, 2000)]);
+POSTS["127"] = post("127", "uaswapper", "reported by one person posing as many", [gif("cat.mp4", 320, 240, 2000)]);
+POSTS["128"] = post("128", "crosssite", "reported from another site", [gif("cat.mp4", 320, 240, 2000)]);
+POSTS["129"] = post("129", "restored", "reported, restored, then reported again", [gif("dog.mp4", 480, 360, 2000)]);
+POSTS["130"] = post("130", "secretive", "grabbed as private, then by a stranger", [gif("cat.mp4", 320, 240, 2000)]);
 let flakyCalls = 0;
 let leaks = 0;
 
@@ -127,6 +131,12 @@ http
       const type = { ".gif": "image/gif", ".webp": "image/webp", ".webm": "video/webm" }[path.extname(name)] ?? "video/mp4";
       res.writeHead(200, { "content-type": type, "content-length": fs.statSync(file).size });
       return fs.createReadStream(file).pipe(res);
+    }
+    // A page whose link-preview video is on a private address: the grab must stop, not hand the page to yt-dlp.
+    if (url.pathname === "/og-private") {
+      return res.writeHead(200, { "content-type": "text/html" }).end(
+        `<html><head><meta property="og:video" content="http://127.0.0.1:3296/health"></head><body>sneaky</body></html>`,
+      );
     }
     // Web pages; tests/fake-ytdlp.mjs plays yt-dlp's part for these.
     if (url.pathname.startsWith("/page/")) {

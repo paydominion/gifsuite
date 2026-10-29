@@ -1,5 +1,5 @@
 import "server-only";
-import { findGifByTweet, insertGif, newGifId, type Gif, type NewGif, type NsfwVerdict } from "@/db/gifs";
+import { findGifByTweet, insertGif, newGifId, privateGrabKey, type Gif, type NewGif, type NsfwVerdict } from "@/db/gifs";
 import { fetchTweetMedia, GrabError, isXLink } from "@/lib/x/fetchTweetMedia";
 import { extractLink, linkKey, siteName } from "@/lib/links";
 import { fetchLink, probe, ProcessorError, render } from "@/lib/media/processor";
@@ -51,13 +51,32 @@ export type GrabOptions = {
 };
 
 /**
+ * What a grab of `key` finds already stored, and the key a new copy goes under. A public GIF, or one
+ * this browser grabbed, is reused. Someone else's private GIF is never returned (that would hand its
+ * link to anyone pasting the same post); this browser gets its own copy under a key scoped to it.
+ */
+async function existingGrab(key: string, mediaIndex: number, options: GrabOptions): Promise<{ gif: Gif | null; storeKey: string }> {
+  const owner = options.ownerKeyHash;
+  const found = await findGifByTweet(key, mediaIndex);
+  if (found && (found.gif.isPublic || (owner && found.ownerKeyHash === owner))) return { gif: found.gif, storeKey: key };
+  const scoped = owner ? privateGrabKey(key, owner) : null;
+  if (scoped) {
+    const mine = await findGifByTweet(scoped, mediaIndex);
+    if (mine) return { gif: mine.gif, storeKey: scoped };
+  }
+  // Public grabs take the shared key when it's free; private ones (and public ones whose shared key is
+  // held by someone's private GIF) go under this browser's key.
+  return { gif: null, storeKey: options.isPublic && !found ? key : (scoped ?? privateGrabKey(key, crypto.randomUUID().replace(/-/g, ""))) };
+}
+
+/**
  * Grab the GIF/video from an X post link and add it to the library.
  * Returns the existing entry if that post's media was grabbed before; its visibility is left as is.
  */
 export async function ingestFromX(link: string, options: GrabOptions): Promise<{ gif: Gif; created: boolean }> {
   const media = await fetchTweetMedia(link);
 
-  const existing = await findGifByTweet(media.tweetId, media.mediaIndex);
+  const { gif: existing, storeKey } = await existingGrab(media.tweetId, media.mediaIndex, options);
   if (existing) return { gif: existing, created: false };
   if (media.durationMs > MAX_DURATION_MS()) throw tooLong();
 
@@ -69,7 +88,7 @@ export async function ingestFromX(link: string, options: GrabOptions): Promise<{
   // off the timeline; a public one is scanned once this response has gone out.
   return store(video, options, nsfwVerdict(media.sensitive, null), {
     source: "x",
-    tweetId: media.tweetId,
+    tweetId: storeKey,
     mediaIndex: media.mediaIndex,
     mediaType: media.mediaType,
     sourceUrl: media.mp4Url,
@@ -111,7 +130,9 @@ async function store(video: ArrayBuffer, options: GrabOptions, verdict: NsfwVerd
     // Someone else grabbed the same thing at the same moment; keep theirs.
     // (This GIF's files stay in R2 unreferenced; harmless and rare.)
     const raced = await findGifByTweet(details.tweetId, details.mediaIndex);
-    if (raced) return { gif: raced, created: false };
+    if (raced && (raced.gif.isPublic || (options.ownerKeyHash && raced.ownerKeyHash === options.ownerKeyHash))) {
+      return { gif: raced.gif, created: false };
+    }
     throw err;
   }
 }
@@ -152,7 +173,7 @@ export async function ingestFromLink(input: string, options: GrabOptions): Promi
   const url = extractLink(input);
   if (!url) throw new GrabError("That doesn't look like a link. Paste a link to a post or a GIF.");
   const key = linkKey(url);
-  const existing = await findGifByTweet(key, 0);
+  const { gif: existing, storeKey } = await existingGrab(key, 0, options);
   if (existing) return { gif: existing, created: false };
 
   const { video, info } = await fetchLink(url.href, { maxBytes: MAX_BYTES(), maxDurationMs: MAX_DURATION_MS() }).catch(linkFailure);
@@ -162,7 +183,7 @@ export async function ingestFromLink(input: string, options: GrabOptions): Promi
 
   return store(video, options, nsfwVerdict((info.ageLimit ?? 0) >= 18, null, undefined, "site"), {
     source: site,
-    tweetId: key,
+    tweetId: storeKey,
     mediaIndex: 0,
     mediaType: info.hasAudio ? "video" : "animated_gif",
     sourceUrl: info.mediaUrl || url.href,

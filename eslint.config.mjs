@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Installed agent skills (third-party code)
+    ".claude/**",
     // Test run output
     ".next-test/**",
     ".next-leakcheck/**",

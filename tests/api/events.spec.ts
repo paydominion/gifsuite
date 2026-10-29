@@ -44,6 +44,34 @@ test.describe("events, reports and moderation", () => {
     expect(items.map((g: { id: string }) => g.id)).not.toContain(id);
   });
 
+  test("one person can't pass for several by changing their browser name", async ({ request }) => {
+    const id = await grabId(request, "127", "uaswapper");
+    const ip = visitor()["x-forwarded-for"];
+    for (let i = 0; i < 5; i++) await send(request, { gifId: id, type: "report" }, { "x-forwarded-for": ip, "user-agent": `ua-${i}` });
+    expect((await request.get(`/g/${id}`)).status()).toBe(200);
+  });
+
+  test("reports sent from another site are refused", async ({ request }) => {
+    const id = await grabId(request, "128", "crosssite");
+    const res = await send(request, { gifId: id, type: "report" }, { ...visitor(), "sec-fetch-site": "cross-site" });
+    expect(res.status()).toBe(403);
+  });
+
+  test("after an admin restores a GIF, it takes a fresh set of reports to hide it again", async ({ request }) => {
+    const id = await grabId(request, "129", "restored");
+    const people = [visitor(), visitor(), visitor()];
+    for (const p of people) await send(request, { gifId: id, type: "report" }, p);
+    expect((await request.get(`/g/${id}`)).status()).toBe(404);
+
+    const restore = await request.post("/api/admin/hide", { data: { gifId: id, hidden: false }, headers: { "x-admin-token": ADMIN_TOKEN } });
+    expect(restore.status()).toBe(200);
+    await send(request, { gifId: id, type: "report" }, people[0]);
+    await send(request, { gifId: id, type: "report" }, people[1]);
+    expect((await request.get(`/g/${id}`)).status()).toBe(200);
+    await send(request, { gifId: id, type: "report" }, people[2]);
+    expect((await request.get(`/g/${id}`)).status()).toBe(404);
+  });
+
   test("admin hide needs the admin token", async ({ request }) => {
     const id = await grabId(request, "111", "gifmaker");
     const hide = (hidden: boolean, token?: string) =>

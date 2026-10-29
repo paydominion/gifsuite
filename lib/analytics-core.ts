@@ -77,6 +77,25 @@ export function siteOf(text: string): string {
 }
 
 
+/**
+ * Who filed a report, for counting distinct reporters: the network the request came from (IPv4 /24,
+ * IPv6 /64), hashed. Unlike visitorId it ignores the User-Agent and the day, which a client can vary
+ * freely, so one person can't pass for several. People sharing a network count once.
+ */
+export function reporterId(ip: string, salt: string | undefined): string {
+  const network = ip.includes(":") ? ipv6Groups(ip).slice(0, 4).join(":") : ip.split(".").slice(0, 3).join(".");
+  return crypto.createHash("sha256").update(`report|${network}|${salt ?? "gifsuite"}`).digest("hex").slice(0, 16);
+}
+
+/** The 8 groups of an IPv6 address, with "::" filled in: "2001:db8::1" → 2001,db8,0,0,0,0,0,1. */
+function ipv6Groups(ip: string): string[] {
+  const [head, tail] = ip.toLowerCase().split("::");
+  const left = head ? head.split(":") : [];
+  const right = tail ? tail.split(":") : [];
+  const fill = tail === undefined ? [] : Array(Math.max(0, 8 - left.length - right.length)).fill("0");
+  return [...left, ...fill, ...right].map((g) => g.replace(/^0+(?=.)/, ""));
+}
+
 /** Anonymous per-day visitor id: the same person on the same day gets the same id; no IP is kept. */
 export function visitorId(ip: string, userAgent: string | null, salt: string | undefined): string {
   const day = new Date().toISOString().slice(0, 10);
