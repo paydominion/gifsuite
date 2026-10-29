@@ -1,9 +1,87 @@
-# GifSuite
+<p align="center">
+  <a href="https://gifsuite.com"><img src="app/icon.svg" width="96" height="96" alt="GifSuite logo"></a>
+</p>
 
-Paste an X (Twitter) post link, get the GIF, download it as GIF / MP4 / WebM / WebP in low, medium or high quality, and post it back to X as the original GIF.
-Every grabbed GIF lands on a public timeline.
+<h1 align="center">GifSuite</h1>
 
-Runs entirely on Cloudflare: Next.js on Workers (OpenNext), D1 for the database, R2 for files, and a Container for ffmpeg. See `DEPLOY.md`.
+<p align="center">
+  <strong>Grab, convert and make GIFs. Free, in your browser.</strong><br>
+  <a href="https://gifsuite.com"><strong>gifsuite.com</strong></a> ·
+  <a href="https://gifsuite.com/tools">All tools</a> ·
+  <a href="https://gifsuite.com/blog">Blog</a>
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-ffdc4a" alt="MIT license"></a>
+  <img src="https://img.shields.io/badge/Next.js-16-black" alt="Next.js 16">
+  <img src="https://img.shields.io/badge/runs%20on-Cloudflare%20Workers-f38020" alt="Runs on Cloudflare Workers">
+  <img src="https://img.shields.io/badge/iOS-SwiftUI-0a84ff" alt="iOS app in SwiftUI">
+</p>
+
+<p align="center">
+  <a href="https://gifsuite.com"><img src="docs/screenshots/home.png" alt="GifSuite home page: paste a link from X, Giphy, Reddit or anywhere to grab its GIF" width="900"></a>
+</p>
+
+GifSuite is a free GIF toolkit. Paste a link from X (Twitter), Giphy, Tenor, Reddit, Imgur or almost any site and get its GIF in GIF, MP4, WebM or WebP, in low, medium or high quality. You can also post it back to X as a real GIF. It also has upload tools to convert, compress, resize, trim, crop, speed up or reverse a GIF, add meme text, or turn pictures into a GIF. Nothing to install and no account needed.
+
+**Try it live at [gifsuite.com](https://gifsuite.com).**
+
+## Features
+
+- **Grab from any link.** Paste an X post, Giphy, Tenor, Reddit, Imgur or a direct file and get the GIF. X GIFs come through X's public embed endpoint, with yt-dlp as a fallback for everything else.
+- **Every format and quality.** Download as GIF, MP4, WebM or WebP at 320px, 480px or up to 1080px wide. Each version is made on first request and cached.
+- **Post back to X.** Share to X so the post plays the original GIF, credited to its author. Nothing to re-upload.
+- **Upload tools.** Convert, compress to a size limit (for X, Discord and others), resize, trim, crop, change speed, reverse or boomerang, add top and bottom text, and make a GIF from one or more pictures with zoom, pan, pulse or shake.
+- **Public timeline.** Grabbed GIFs can appear on a public "Latest" feed. Whoever grabbed a GIF can make it private at any time.
+- **Safety built in.** An open-source NSFW model (nsfwjs) checks GIFs before they reach the timeline, and nothing leaves the system for that check. Reports auto-hide GIFs after enough distinct reporters, and copyright takedowns are supported.
+- **Private by design.** No accounts and no stored IP addresses. Analytics count unique visitors with a salted hash. Files uploaded to the tools are processed and never stored.
+- **Bot protection.** Invisible Cloudflare Turnstile checks, rate limits, and a circuit breaker that pauses calls to X when X is failing.
+- **Fast everywhere.** Runs on Cloudflare's edge, with server-rendered pages, link previews and a sitemap for search.
+- **Native iOS app.** A SwiftUI app shares the same API (work in progress, see [`ios_app/`](ios_app/)).
+
+## Screenshots
+
+| Grab any GIF, then download or share it | Every tool in one place |
+| --- | --- |
+| [![GIF page with download and share options](docs/screenshots/gif-page.png)](https://gifsuite.com) | [![All tools](docs/screenshots/tools.png)](https://gifsuite.com/tools) |
+| **GIF maker:** pictures to a GIF, with effects | **Compress and resize** to fit any size limit |
+| [![GIF maker](docs/screenshots/maker.png)](https://gifsuite.com/tools/maker) | [![Compress tool](docs/screenshots/compress.png)](https://gifsuite.com/tools/compress) |
+| **Add text:** meme-style captions | **Blog** |
+| [![Add text tool](docs/screenshots/captions.png)](https://gifsuite.com/tools/captions) | [![Blog](docs/screenshots/blog.png)](https://gifsuite.com/blog) |
+
+### On your phone
+
+| Mobile web | GIF page on mobile | iOS app: Grab | iOS app: Timeline | iOS app: Tools |
+| --- | --- | --- | --- | --- |
+| <img src="docs/screenshots/mobile-home.png" width="170" alt="Mobile home page"> | <img src="docs/screenshots/mobile-gif.png" width="170" alt="Mobile GIF page"> | <img src="docs/screenshots/ios-grab.png" width="170" alt="iOS app grab screen"> | <img src="docs/screenshots/ios-timeline.png" width="170" alt="iOS app timeline"> | <img src="docs/screenshots/ios-tools.png" width="170" alt="iOS app tools"> |
+
+## Tech stack
+
+| Layer | What |
+| --- | --- |
+| Web app | [Next.js](https://nextjs.org) 16 (App Router), React 19 and Tailwind CSS 4 |
+| Hosting | [Cloudflare Workers](https://workers.cloudflare.com) via [OpenNext](https://opennext.js.org/cloudflare) |
+| Database | Cloudflare D1 (SQLite) |
+| File storage | Cloudflare R2 |
+| Media processing | A Cloudflare Container running Node with ffmpeg, gif2webp, yt-dlp and nsfwjs |
+| Analytics | Workers Analytics Engine and Cloudflare Web Analytics |
+| iOS | SwiftUI (iOS 17+), project generated by XcodeGen |
+| Tests | Vitest and Playwright (API and end-to-end) |
+
+## Project layout
+
+```text
+app/          Next.js routes: pages, tools, blog and the /api endpoints
+components/   React UI (tools, shell, marketing pages, design system)
+lib/          Server logic: grabbing, links, media conversion, moderation, analytics
+db/           D1 queries
+migrations/   D1 schema migrations
+processor/    The media processor (ffmpeg, yt-dlp, NSFW model); a Container in production
+content/      Blog posts in Markdown
+ios_app/      Native SwiftUI app, with its feature plan and backlog
+tests/        Unit, API and end-to-end tests, plus a fake X server for offline testing
+worker.ts     Cloudflare Worker entry: redirects, cron jobs and the Container
+```
 
 ## Run it on your Mac
 
@@ -58,3 +136,19 @@ Plain settings live in `wrangler.jsonc` under `vars`, per environment (`dev`, `t
 ## Tests
 
 See `TESTING.md`. In short, run `npm run check` before every commit and `npm run check:all` for everything.
+
+## Deploying your own
+
+Everything runs on one Cloudflare account: a D1 database, an R2 bucket and a Container. Secrets are set with `wrangler secret put`, and `DEPLOY.md` covers bot protection, analytics and the first production deploy. The GitHub Actions workflow tests every push, deploys `main` to staging, and deploys to production when you choose. In `wrangler.jsonc`, replace the database IDs, routes and `PUBLIC_BASE_URL` with your own, and set `CLOUDFLARE_ACCOUNT_ID` in `.github/workflows/deploy.yml`.
+
+## Contributing
+
+Issues and pull requests are welcome. Before opening a PR:
+
+1. Run `npm install` to install the pre-commit hook, which blocks secrets from being committed.
+2. Run `npm run check`, which runs the secret scan, typecheck, lint, unit tests and API tests.
+3. For UI changes, also run `npm run test:e2e`.
+
+## License
+
+[MIT](LICENSE) © 2026 dominusmaster. GifSuite is not affiliated with X, Giphy, Tenor or Reddit. Grabbed GIFs belong to their creators. See the [copyright policy](https://gifsuite.com/copyright) for takedowns.
